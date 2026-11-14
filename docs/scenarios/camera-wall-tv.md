@@ -28,7 +28,7 @@ A URL that a TV, or a Raspberry Pi behind it, opens once and keeps showing: the 
 
 1. **Try the wall signed in.** On the Printers page switch **Cards / Cam wall**, or open `http://your-bamdude:8000/camwall` in your own browser. That is the full wall — tiles are clickable and the gear opens its settings. Note what looks right: the tile size, the snapshot interval.
 
-2. **Make a token for the TV.** **Settings → API Keys → Camera and monitor tokens → create**: name it after the screen — *Workshop TV* — scope **Cam Wall**, and an expiry (a year at most; *never* is refused by design). Copy the token: it is shown once.
+2. **Make a token for the TV.** **Settings → Camera → Camera and monitor tokens → create**: name it after the screen — *Workshop TV* — scope **Cam Wall**, and an expiry (a year at most; *never* is refused by design). Copy the token: it is shown once.
 
 3. **Build the URL.**
 
@@ -40,7 +40,7 @@ A URL that a TV, or a Raspberry Pi behind it, opens once and keeps showing: the 
 
 4. **Point the TV at it.** A browser in kiosk mode on the Pi, or the TV's own browser, full screen. That is all the configuration there is.
 
-5. **Retire it one day.** **Settings → API Keys → Camera and monitor tokens**, find *Workshop TV* by name or by its prefix, **Revoke**. The wall goes dark on its next request; there is no cache to wait out.
+5. **Retire it one day.** **Settings → Camera → Camera and monitor tokens**, find *Workshop TV* by name or by its prefix, **Revoke**. The wall goes dark on its next request; there is no cache to wait out.
 
 ## :material-cogs: What BamDude does on its own after that
 

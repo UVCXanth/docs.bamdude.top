@@ -25,6 +25,7 @@ The on-demand and scheduled local backups produce the same ZIP layout. Top-level
 | `projects/` | Order attachments. |
 | `products/` | Product attachments. |
 | `certs/` | Virtual-printer TLS certificates and keys. |
+| `overlay_branding/` | The custom logo of the [stream overlay](camera.md#your-own-logo). |
 | `.mfa_encryption_key` | Encryption key, when the source install stores it in a file. |
 | `zigbee/zigbee.db` | Zigbee driver database, including network state, when present. |
 | `.install_id` | Existing anonymous telemetry identity, when present. |
