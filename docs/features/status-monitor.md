@@ -65,7 +65,7 @@ Print time and queue time are separate. Times under an hour use minutes; longer 
 
 ## Leave a TV signed out
 
-1. Open **Settings → API Keys → Camera and monitor tokens → Create new token**.
+1. Open **Settings → Camera → Camera and monitor tokens → Create new token**.
 2. Choose **Status monitor**, name the display and set an expiry. Creating it requires API key creation, printer read and queue read permissions.
 3. Copy the TV URL immediately. The secret is shown only once.
 4. Open the URL in the TV's browser, choose **Printers** or **Queue**, and enter full screen.

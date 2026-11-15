@@ -107,7 +107,7 @@ Connect external network cameras to replace the built-in printer camera. Useful 
 
 ### Configuration
 
-1. **Settings** → **General** → **Camera**.
+1. **Settings** → **Camera**.
 2. Find your printer in the **External Cameras** section.
 3. Toggle the switch to enable.
 4. Enter the camera **URL**.
@@ -120,7 +120,7 @@ Connect external network cameras to replace the built-in printer camera. Useful 
 !!! tip "go2rtc and IP cameras: warm-up-frame skip + Snapshot URL override"
     Many MJPEG sources — go2rtc most notably, plus several IP cameras — emit a "warm-up" / often-black frame on the byte that follows connection accept (the encoder's last keyframe before it catches up to live content). Since 0.4.4 BamDude reads past the first frame and returns the second on every single-frame capture path (notification thumbnails, finish photo, layer-timelapse, plate detection, Obico inference). Slow / single-frame streams that don't deliver a second frame within the timeout fall back to the first so callers always get *something*. No configuration needed.
 
-    **Optional: Snapshot URL override.** For **MJPEG**, **RTSP**, and **USB** types you can also fill in a separate **Snapshot URL** below the live-stream URL. When set, BamDude fetches single-frame captures (notification thumbnails, finish photos, layer timelapse, plate detection, Obico inference) from this URL via plain HTTP GET — bypassing the warm-up dance entirely. Useful for go2rtc setups (`http://<host>:1984/api/frame.jpeg?src=<name>` is a dedicated single-frame endpoint that never returns the encoder's stale keyframe) or IP cams with a `/snapshot.jpg`-style endpoint. Click **Test** next to the Snapshot URL to verify it returns a valid frame. The live-view stream always uses the main URL; the override only changes single-frame captures, since polling a snapshot endpoint at 1 fps for live view would be a regression for everyone who doesn't have this problem. Hidden when camera type is `Snapshot` — the live URL is already a single-frame endpoint, so an override would be redundant. Leave blank to use the warm-up-frame skip on the live stream.
+    **Optional: Snapshot URL override.** For **MJPEG**, **RTSP**, and **USB** types you can also fill in a separate **Snapshot URL** below the live-stream URL. When set, BamDude fetches single-frame captures (notification thumbnails, finish photos, layer timelapse, plate detection, Obico inference) from this URL via plain HTTP GET — bypassing the warm-up dance entirely. Useful for go2rtc setups (`http://<host>:1984/api/frame.jpeg?src=<name>` is a dedicated single-frame endpoint that never returns the encoder's stale keyframe) or IP cams with a `/snapshot.jpg`-style endpoint. Click **Test** next to the Snapshot URL to verify it returns a valid frame. The live-view stream always uses the main URL; the override only changes single-frame captures, since polling a snapshot endpoint at 1 fps for live view would be a regression for everyone who doesn't have this problem. Hidden when camera type is `Snapshot` — the live URL is already a single-frame endpoint, so an override would be redundant. Leave blank to use the warm-up-frame skip on the live stream. A camera with a Snapshot URL also stops borrowing the viewer's frame for its stills — see *One camera, one reader* below.
 
 ### USB / V4L2 setup
 
@@ -199,6 +199,7 @@ BamDude enforces that on two axes:
 - **Background capture vs a viewer.** While anyone is watching the live view, every background consumer — layer timelapse, finish photo, AI failure detection, the plate check, notification snapshots — **reuses the live view's frame** instead of opening its own connection. This has always been true for the built-in printer camera; **external cameras now publish their frames the same way**. Before that, watching an external camera during a print meant the layer timelapse recorded almost nothing and the finish photo arrived empty.
 - **Background capture vs background capture.** With nobody watching, each consumer correctly concluded it was competing with no one — and then opened its own connection at the same moment as the next one. Two captures 207 ms apart were enough to knock over a running camera-wall stream. **Simultaneous captures now share one connection:** the first opens it, the rest wait for the same frame.
 - **A single picture vs a viewer.** A snapshot request, the camera test, a notification photo and a Telegram photo are answered with the live view's frame while somebody is watching — a printer's camera and a standalone one alike — never by a second connection. A view that is still starting has no frame to lend yet: for that moment a snapshot answers *busy — try again in a moment* (HTTP `503` with `Retry-After`), and the camera test says the camera is in use by its live view.
+- **A camera with its own Snapshot URL.** An external camera that has a **Snapshot URL (optional)** filled in is the exception to borrowing the viewer's frame: snapshots, notification photos, finish photos, layer-timelapse frames and the plate check take the still from that address even while somebody is watching the stream. It is a plain HTTP request beside the stream, not a second reader of it. Only when the still cannot be fetched is the live view's frame used instead. AI failure detection (Obico) keeps taking the live view's frame while somebody is watching.
 
 !!! note "It coalesces; it does not cache"
     A capture that arrives *after* the shared one finished still takes a fresh
@@ -326,7 +327,8 @@ The 60-min UI-side token is the wrong shape for a wall-mounted dashboard, a Home
 Assistant camera entity, or a Frigate front-end that re-fetches the same URL for
 months. BamDude mints **long-lived tokens** for those cases.
 
-**Settings → API Keys → Camera and monitor tokens → Create new token.** Give it a name,
+**Settings → Camera → Camera and monitor tokens → Create new token.** (The **API Keys** tab
+keeps a card of the same name that leads here.) Give it a name,
 pick a **scope** (below) and a lifetime (1–365 days, default 90), and click
 Create. The token is shown **exactly once**.
 
@@ -438,7 +440,7 @@ browser, so opening a kiosk link once won't overwrite your own wall preferences.
 
 ### Revoking a token
 
-1. **Settings → API Keys → Camera and monitor tokens**.
+1. **Settings → Camera → Camera and monitor tokens**.
 2. Find the row by name or by `lookup_prefix`.
 3. Click **Revoke**, confirm in the modal.
 
@@ -456,7 +458,7 @@ Any device using that token loses access on the next request — no grace period
 
 The camera viewer has two modes, configurable per-user in **Settings > Camera**:
 
-- **Embedded** (default) -- The viewer overlays directly on top of the printer card. Multiple printers can have their cameras open at once and each viewer tracks its own size/position via local state. The page header's status bar continues to drive the rest of the UI.
+- **Embedded** -- The viewer is a floating window over the page. There is one such window for the whole app: it stays open while you move between pages, and opening another camera replaces the one it shows. The page header's status bar continues to drive the rest of the UI.
 - **Window** -- The viewer launches in a separate browser window (or PWA window). Useful for parking a single camera on a second monitor.
 
 Embedded is the right default for live monitoring; window mode is for setups where the camera lives on a different screen from the printer dashboard.
@@ -468,10 +470,12 @@ When using embedded mode, the camera appears as a floating window with the follo
 - **Draggable** — click and drag the header to reposition.
 - **Resizable** — drag the bottom-right corner to resize.
 - **Persistent position** — position and size are remembered per printer across sessions.
-- **Navigation persistence** — leaving Printers closes its media requests; returning restores the last selected camera.
+- **Open on every page** — the window is not tied to the Printers page: it stays open, with its stream running, while you go to the queue, the archive, Settings or anywhere else in the app, and it comes back after a page reload.
+- **Closes by itself** — when you sign out, when its printer or camera is removed or switched off, or when your right to view cameras is taken away. The next sign-in does not reopen it.
+- **Lets go in a hidden tab** — once the browser tab has stayed hidden for five minutes, the window releases its stream, and with it the printer's single camera connection; it resumes the moment the tab is shown again. Looking something up in another tab for a minute restarts nothing.
 - **Minimize** — collapse to the title bar and stop the live request; expand to start it again.
 - **Close** — click X to close the viewer.
-- **One viewer** — clicking another printer replaces the current camera and cancels the old stream. Old saved multi-camera lists restore only the last camera.
+- **One viewer** — clicking another printer, or a standalone camera, replaces the current camera and cancels the old stream. Old saved multi-camera lists restore only the last camera.
 
 !!! tip "Embedded mode for the whole farm"
     Use the single floating viewer to inspect a printer; use Camera Wall for the whole fleet.
@@ -614,7 +618,7 @@ that remains the per-print choice made by the slicer or printer.
 
 An external camera above is a **replacement** for one printer's camera: that printer's live view, finish photo, plate check and Obico frames all come through it. A camera that watches a room, a shelf or a filament dryer is a different thing, and lives in its own list.
 
-1. **Settings → Printing → Camera → Other cameras → Add camera.**
+1. **Settings → Camera → Other cameras → Add camera.**
 2. Give it a **name** (it is what the tile, the button and the window title say, so it must be unique), pick the **type** — MJPEG, RTSP, Snapshot or USB — and enter the **URL** or device path. The same optional **Snapshot URL** override and **rotation** as above are available.
 3. Optionally pick a **Location** — the same places printers and Zigbee sensors are filed under.
 4. **Test** opens the source once and confirms a frame, exactly as it does for a printer's camera.
@@ -641,7 +645,7 @@ Where it then appears:
 
 A dark chamber makes a dark photo. BamDude can switch the chamber light on for the camera and off again afterwards — for every use of it: a photo in Telegram, a browser stream, the Camera Wall, the finish photo, the plate check, the camera diagnostics. (A standalone camera above has no printer, so none of this applies to it.)
 
-1. **Settings → Printing → Camera → Light for the camera.** Off by default — nothing changes for a farm that does not switch it on. This is the master switch: with it off, nothing below applies.
+1. **Settings → Camera → Light for the camera.** Off by default — nothing changes for a farm that does not switch it on. This is the master switch: with it off, nothing below applies.
 2. In the same card, the **External cameras** list, per printer: **Light for the camera** — *As on the farm* / *No*. The printer that must not glow towards the window says *No*. The selector is shown only while the farm toggle is on, and not for a connected printer that has reported no controllable light.
 3. **Also for Obico failure detection** — a separate toggle, off by default, shown only when the farm toggle is on and Obico detection is enabled. Obico looks at the camera every few seconds for the whole print, so with this on the light stays on for the whole print.
 
@@ -853,7 +857,7 @@ http://your-bamdude:8000/overlay/{printer_id}
 
 ### Streaming Overlay token
 
-1. **Settings → API Keys → Camera and monitor tokens.**
+1. **Settings → Camera → Camera and monitor tokens.**
 2. Create a token with the **Streaming Overlay** scope and copy it.
 3. Append it to the overlay URL, with the printer number matching the printer's
    own URL on the Printers page (`/overlay/1` is printer 1, and so on):
@@ -874,7 +878,7 @@ poll — the token can't open a WebSocket, and the poll is the feed.
 
 ### Overlay builder
 
-You do not have to write the address by hand. The **Streaming Overlay** card under **Settings → API Keys**, below the tokens, builds it: pick the **Printer**, tick the **Fields to show**, set the options, and press **Copy** beside the **Overlay URL** — or **Open** to see it in a tab. **Show preview** draws the overlay right in the card; it opens a real camera stream, so it stays off until you ask for it.
+You do not have to write the address by hand. The **Streaming Overlay** card under **Settings → Camera**, below the tokens, builds it: pick the **Printer**, tick the **Fields to show**, set the options, and press **Copy** beside the **Overlay URL** — or **Open** to see it in a tab. **Show preview** draws the overlay right in the card; it opens a real camera stream, so it stays off until you ask for it.
 
 | In the builder | What it sets |
 |---|---|
@@ -884,11 +888,22 @@ You do not have to write the address by hand. The **Streaming Overlay** card und
 | **Layout** — *Fit the browser source* / *Landscape (1920 × 1080)* / *Portrait (1080 × 1920)* / *Both: landscape and portrait* | `layout`. *Both* gives two addresses, each labelled with the browser source size to set in OBS. |
 | **Text size**, **Frame rate** | `size`, `fps` |
 | **Custom progress colours** — **Start colour**, **End colour** | `progressFrom`, `progressTo` |
+| **Logo** — **Show the logo on the overlay** | `logo` — see [Your own logo](#your-own-logo) |
 
 - **Creating a token.** **Create token** beside the token field asks for a **Token name** and **Valid for (days)** — 90 by default, 365 at most — creates a Streaming Overlay token for your account and puts it into the address. It then appears in the token list above, where you can revoke it. The button needs the `camera:view` permission. Copy the address straight away: once you leave the page, the token cannot be shown again.
 - **The token stays hidden until asked for.** The address on screen shows `****` in place of the token, and the eye button (**Show token** / **Hide token**) reveals it. **Copy** and **Open** always use the real address.
 - **Importing an existing address.** Paste an address from a scene into **Import an overlay address** and press **Import** to edit it. Only its settings are read: the address built here always points at this server, and a token in it is used as it is.
 - **Your choices are remembered in this browser** — printer, fields, design, layout, sizes and colours — so the builder reopens as you left it. **The token never is**: it is kept in the open page only and is never stored in the browser, so after a reload you paste or create it again. **Reset choices** returns to the defaults and leaves the token in place.
+
+### Your own logo {#your-own-logo}
+
+The overlay can carry your logo — one per installation, drawn above the BamDude mark in the corner of the overlay, in both designs.
+
+- **Upload it in the builder.** In the **Logo** block of the Streaming Overlay card, **Upload a logo** takes a PNG, JPEG or WebP picture of up to 2 MiB and at most 4 million pixels; an animated picture is refused, and so is any other format, SVG included. **Replace the logo** and **Remove logo** are in the same block. All three need the right to change settings (`settings:update`); everyone else sees the saved logo and can still switch it on for an address.
+- **What is stored.** Never the file as sent. The picture is turned upright, scaled down to 512 pixels on its longer side and saved again as a PNG without its metadata — no EXIF, no GPS position, no camera serial number.
+- **Showing it.** Tick **Show the logo on the overlay** and the address gets `logo=1`. An address without that parameter looks exactly as it did, and an installation with no logo saved draws none whatever the address says. Removing the logo takes it off every overlay that shows it, including the ones already in a scene.
+- **Who can see it.** Anyone who has an overlay address: a Streaming Overlay token reads the logo the same way it reads the overlay's status.
+- **Backups.** The logo is part of a [backup](backup.md) and comes back with a restore.
 
 ### What's included
 
@@ -896,6 +911,7 @@ You do not have to write the address by hand. The **Streaming Overlay** card und
 |---------|-------------|
 | **Camera feed** | Full-screen live camera view. |
 | **BamDude logo** | Branding in the top-right corner. |
+| **Your logo** | The installation's own logo, above the BamDude mark — opt-in, see `logo` below. |
 | **Filename** | Current print file name. |
 | **Status** | Printing, Paused, Idle, etc. |
 | **Progress bar** | Visual progress with percentage. |
@@ -918,6 +934,7 @@ You do not have to write the address by hand. The **Streaming Overlay** card und
 | `design` | `2` | Selects the **Version 2** design. Absent, or anything else: **Classic**. |
 | `backgroundTransparency` | a whole number `0`–`100` | Version 2 only: how see-through its dark panels are, in percent. `0` is solid; at `100` only the text and the bar are left. |
 | `layout` | `landscape` / `portrait` | Draws the overlay on a fixed canvas — 1920 × 1080 or 1080 × 1920 — and scales it to the browser source. Without the parameter the overlay is sized by its window. |
+| `logo` | `1` | Draws the installation's [own logo](#your-own-logo) above the BamDude mark, in both designs. Only the exact value `1` counts, and nothing is drawn while no logo is saved. |
 
 A value the overlay does not understand is ignored, never an error: that option simply keeps its default. Every option above is opt-in, so an overlay address already pasted into a scene keeps working and looks exactly as it did.
 

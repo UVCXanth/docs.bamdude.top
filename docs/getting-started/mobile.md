@@ -112,7 +112,7 @@ The same MJPEG / snapshot URLs that work on desktop work on mobile. Streams rend
 Some platform quirks to know about:
 
 - **iOS Safari** pauses background tabs after roughly 60 seconds — when you bring the tab back to the foreground the stream reconnects automatically (the stream-token sync hook re-runs on focus).
-- **Cellular data** — MJPEG streams burn roughly 5 MB/min depending on resolution and FPS. Consider lowering FPS in **Settings → Camera** or using the snapshot view if you're on a metered connection.
+- **Cellular data** — MJPEG streams burn roughly 5 MB/min depending on resolution and FPS. On a metered connection open the camera page with a lower frame rate — add `?fps=5` to its address (1–30, 15 by default) — or use the snapshot view.
 - **Service worker** intentionally does **not** cache `/camera/stream` or `/camera/snapshot` — Safari's SW had streaming-response bugs, so these go straight to the network.
 
 ---
@@ -152,7 +152,7 @@ This is enough to glance at "what was on screen last" without internet, but it i
 ## :material-battery-alert: Battery & data tips
 
 - **Close camera streams** when you aren't actively monitoring — they're the single biggest battery + data drain.
-- **Lower stream FPS** in **Settings → Camera** if you don't need 30 fps for casual checking.
+- **Lower the stream's frame rate** for casual checking: add `?fps=5` to the camera page's address (1–30, 15 by default).
 - **Use Wi-Fi** for live monitoring; switch to snapshot-only view on cellular.
 - **Telegram > browser tab** for "did the print finish?" alerts — keeps the BamDude tab from sitting open burning battery.
 
