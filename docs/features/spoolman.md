@@ -104,7 +104,7 @@ If you only run BamDude, the built-in inventory above already does everything Sp
 
 ### :material-link: Connecting
 
-1. **Settings** → **Integrations** → **Spoolman**
+1. **Settings** → **Filament** → **Filament Tracking** → **Spoolman**
 2. Set the **URL** (e.g. `http://192.168.1.50:7912` or a docker-compose service alias like `http://spoolman:7912`)
 3. (Optional) **API Key** — required only if your Spoolman instance is behind authentication; leave blank for the default open setup.
 4. **Save**
@@ -135,11 +135,27 @@ The extra fields BamDude keeps on a spool (the RFID tag, the slicer preset, the 
 - **AMS slot ↔ Spoolman spool** — Each loaded slot maps to a Spoolman spool ID. Material, brand, colour, and (unless `disable_weight_sync` is on) remaining weight are kept in step. A clear or translucent spool keeps its transparency in Spoolman's `color_hex` (eight characters); an opaque one stays six characters, exactly as your existing filaments are stored, so nothing already there is rewritten or duplicated.
 - **Print consumption** — Each completed print reports the grams used to Spoolman as a usage event. Cancelled / failed prints respect `spoolman_report_partial_usage`.
 - **Location** — the **Storage Location** you pick for a spool is written to Spoolman's `location` field, and Spoolman's location names appear in BamDude's Storage Location list. A printer slot is not a storage location: which spool is loaded where is tracked by slot assignments, not written to `location`.
-- **RFID** — Bambu Lab tray UUIDs are passed through to Spoolman's tag field.
+- **RFID** — Bambu Lab tray UUIDs are passed through to Spoolman's `extra.tag` field and, on Spoolman 0.27 and newer, linked as Spoolman's native tags as well (see [Tags](#spoolman-tags)).
+
+!!! note "Weights wait for the print to be booked"
+    While a print is running, and until its usage has been charged, the automatic weight sync of tagged spools and **Sync AMS Weights to Spoolman** leave that printer out — otherwise the printer's remaining-percent reading would be written first and the print's own grams taken off on top of it. Sync again once the print is finished and booked.
 
 ### :material-link-off: Unlinking
 
 In `manual` sync mode, each Bambu spool card shows an **Unlink** button — useful when you want to migrate a spool from Spoolman back to BamDude-only inventory without breaking the AMS assignment.
+
+### :material-tag-multiple: Tags {#spoolman-tags}
+
+BamDude keeps a spool's tag in Spoolman's `extra.tag` field. Spoolman 0.27 and newer also links tags to spools itself; with such a server BamDude works with both:
+
+- A spool tagged in Spoolman itself is recognised as that spool when its reel shows up in an AMS — no second spool is created beside it.
+- Linking a tag writes `extra.tag` **and** Spoolman's native tag, so Spoolman and other tag readers find the same spool. `extra.tag` is always written, so an older reader loses nothing.
+- Unlinking a spool, or **Clear RFID Tag** in the spool form, removes both.
+- Linking a tag that another spool already holds is refused, and the refusal names that spool — an archived one included. Unlink the tag there first.
+
+Spools linked while the server had no native tags carry `extra.tag` alone. **Settings → Filament → Filament Tracking** shows a **Spoolman native tags** block for a connected Spoolman that supports them: **Check tags** lists what would be copied, what is already in Spoolman, and every conflict (two spools sharing one tag, a tag that belongs to another or an archived spool, a tag linked to a filament); **Copy tags** then copies the ones without a conflict. Conflicts are never settled for you — decide in Spoolman which spool each tag belongs to and check again. AMS slot IDs that stand in for a tag and the tags of archived spools are not copied.
+
+Older Spoolman versions work through `extra.tag` alone.
 
 ### :material-poll: Sync Results
 
@@ -158,12 +174,14 @@ Each completed print reports per-filament consumption to Spoolman as a usage eve
 
 1. BamDude extracts per-filament usage data from the archived 3MF file (slicer estimates).
 2. For partial prints (failures, cancellations), per-layer G-code analysis provides precise consumption up to the exact failure layer. If the reel changed during the print — an AMS backup taking over, or a new reel loaded into the same slot, on single- and multi-colour prints alike — that consumption is divided by the stretch each reel actually printed before the stop, exactly as the built-in inventory divides it (see [Inventory](inventory.md)).
-3. On completion, each spool's usage is reported individually — multi-material prints update each linked spool separately. The tray each filament came from is the one the print was sent with; for a print BamDude did not send and whose mapping it could not see (an A1 publishes none), a one-filament print is charged to the tray the printer itself reported feeding from. Only when nothing names a tray is it charged by tray position — a guess, logged as a warning, and then the archive keeps the colour and material the file was sliced with rather than taking them from a spool picked by position.
-4. **AMS remain-% fallback for slots the 3MF didn't cover.** When a slot has no 3MF estimate — a no-3MF "Untitled" print (the `.gcode.3mf` was never downloadable, so the archive is a fallback row) **or** partial 3MF coverage where a loaded slot wasn't in the slice info — BamDude falls back per-slot to the AMS remaining-percentage drop. At completion it writes `(remain% at start − remain% at end) × the spool's Spoolman filament reference weight` grams as the usage event. It uses the Spoolman reference weight (not the AMS's unreliable reported tray weight) and **skips any slot swapped mid-print** (tray UUID changed), since it can't split consumption across two spools. Before this, no-3MF "Untitled" prints reported zero weight change to Spoolman.
+3. On completion, each spool's usage is reported individually — multi-material prints update each linked spool separately. The tray each filament came from is the one the print was sent with; for a print BamDude did not send and whose mapping it could not see (an A1 publishes none), a one-filament print is charged to the tray the printer itself reported feeding from. Only when nothing names a tray is it charged by tray position — a guess, logged as a warning, and then the archive keeps the colour and material the file was sliced with rather than taking them from a spool picked by position. On a printer with two external holders (X2D, H2D) a print fed from an external spool charges the holder that was actually used.
+4. **AMS remain-% fallback for slots the 3MF didn't cover.** When a slot has no 3MF estimate — a no-3MF "Untitled" print (the `.gcode.3mf` was never downloadable, so the archive is a fallback row) **or** partial 3MF coverage where a loaded slot wasn't in the slice info — BamDude falls back per-slot to the AMS remaining-percentage drop. At completion it writes `(remain% at start − remain% at end) × the spool's size in Spoolman` grams as the usage event — the spool's own size, or its filament's weight when the spool states none (see [Spool size, tare and price](#spoolman-spool-size)). It uses that Spoolman weight (not the AMS's unreliable reported tray weight) and **skips any slot swapped mid-print** (tray UUID changed), since it can't split consumption across two spools. Before this, no-3MF "Untitled" prints reported zero weight change to Spoolman.
 
-This matches BamDude's per-spool tracking model — the same numbers feeding the Stats page also feed Spoolman, just routed through Spoolman's usage-history table on top of BamDude's local archive.
+This matches BamDude's per-spool tracking model — the same numbers feeding the Stats page also feed Spoolman. A failed or cancelled print is charged by the same calculation in both inventories. Spoolman itself keeps a spool's totals and no per-print log; the per-print record is BamDude's own (see [Usage history and Forecast](#spoolman-usage-history)).
 
-**The archive learns what was charged.** Each charge that lands is priced from its own spool — the spool's price when set, else its filament's, over the filament's net weight — so a multi-material print bills each slot at its own rate, and grams no spool could price are covered at the farm's default filament rate. The archive's filament weight follows the same rule as the built-in inventory: a failed print, or one whose 3MF never arrived, records the grams actually charged; a completed print keeps its slicer estimate. A spool with no price leaves the recorded cost alone. **Recalculate Costs** on the Stats page keeps a cost priced this way rather than re-pricing it at the default rate, and says how many it kept.
+**Usage Spoolman did not take is reported.** If Spoolman does not answer when a print ends, that print's usage is not written and is not retried later. BamDude sends the **Filament not charged** notification naming the slots and the grams, and the server log names the print, the spools and the grams, so the weight can be corrected by hand.
+
+**The archive learns what was charged.** Each charge that lands is priced from its own spool — the spool's price over the spool's size when set, else its filament's price over the filament's weight — so a multi-material print bills each slot at its own rate, and grams no spool could price are covered at the farm's default filament rate. The archive's filament weight follows the same rule as the built-in inventory: a failed print, or one whose 3MF never arrived, records the grams actually charged; a completed print keeps its slicer estimate. A spool with no price leaves the recorded cost alone. **Recalculate Costs** on the Stats page keeps a cost priced this way rather than re-pricing it at the default rate, and says how many it kept.
 
 ### :material-tray-full: AMS slot mapping (hover card)
 
@@ -199,7 +217,7 @@ Each AMS slot's hover card carries a primary action button whose label depends o
 | **Unlinked, Bambu Lab spool, no candidates** | **Link to Spoolman** (disabled) | No unlinked Spoolman spools currently available — add one in Spoolman first. |
 | **Non-Bambu Lab spool** | **Manual Link** | Manually associate this slot with a Spoolman spool — bypasses RFID matching for refilled cores or third-party spools. |
 
-To **unlink**: open the spool in Spoolman and clear the `extra.tag` field.
+To **unlink**: open the spool's form on the **Filament** page and press **Clear RFID Tag** — it clears `extra.tag` and, on Spoolman 0.27 and newer, the spool's native tags.
 
 ### :material-database: Adding spools — AMS vs Inventory view comparison
 
@@ -238,6 +256,43 @@ This is the main reason most farm operators choose to run Spoolman alongside Bam
 
 When you run BamDude against Spoolman, the **Inventory page** (`/inventory`) and **Printers page** (`/`) light up a full first-class Spoolman experience: AMS slot assignments live in BamDude's own tables (so the assignment survives reboots and travels in BamDude backups), K-profiles per spool round-trip across BamDude installs that share the same Spoolman backend, and a free-form storage label sits next to every spool. Built on upstream Bambuddy [#1241](https://github.com/maziggy/bambuddy/pull/1241) ported in BamDude **0.4.4**.
 
+### :material-table: The Filament page in Spoolman mode
+
+With Spoolman switched on, the **Filament** page is BamDude's own page fed by Spoolman's data — the table and the cards, the spool form, labels and bulk actions all work on Spoolman's spools. When a Spoolman address is set, an **Open Spoolman** button in the page header opens Spoolman's own interface in a new tab.
+
+A few things differ from the built-in inventory:
+
+- **Material number** shows the filament's article number from Spoolman and is read-only — change it in Spoolman.
+- **Last dried** is recorded for Spoolman spools as well: by a drying cycle in the AMS the spool sits in, or by hand in the spool form.
+- **Reset counter** zeroes the consumed figure BamDude shows and leaves Spoolman's own numbers — used and remaining weight — alone. A bulk reset says which spools could not be reset.
+- **Import CSV** / **Export CSV** are disabled — use Spoolman's own CSV import and export.
+- **Re-price usage** on the **Statistics** page works on the built-in inventory's records only and is not available in Spoolman mode.
+
+### :material-history: Usage history and Forecast {#spoolman-usage-history}
+
+Spoolman keeps a spool's totals and no per-print log, so BamDude keeps its own record of every print it charges to a Spoolman spool. That record feeds the **History** view of the Filament page, the usage history in the spool form, the **Forecast** tab and the **Reorder Alert** / **Stock Break Alert** notifications — the same views the built-in inventory has (see [Inventory → History](inventory.md#history)).
+
+- **The record starts with the first print BamDude charges.** Prints charged before BamDude kept this record cannot be recovered from Spoolman, which stores no per-print data.
+- **Removing records does not touch Spoolman.** Deleting one record or clearing a spool's history removes BamDude's records only; the spool's weight in Spoolman is not changed.
+- **History belongs to a Spoolman address.** When the Spoolman URL changes, the records made for the previous address are kept aside and the views start empty for the new one; putting the previous address back brings its history back. If the new address is the same Spoolman database (the host was renamed or moved), **History** says how many records are kept aside and offers **Same database — keep the history** to bring them over.
+- **Forecast needs Spoolman.** The stock is kept in Spoolman, so while Spoolman does not answer there is no forecast to show.
+
+The [Git backup](backup.md) carries this history with the **Spool Inventory** category and restores it onto the Spoolman the restoring installation uses.
+
+### :material-weight-gram: Spool size, tare and price {#spoolman-spool-size}
+
+Spoolman keeps how much filament a full spool holds on the spool itself and falls back to the filament's weight only when the spool has none — so one filament can have spools of different sizes. BamDude reads it the same way everywhere: the list, the weight syncs, usage tracking and the price per gram all use the spool's own size.
+
+- **Label Weight** — creating a spool writes its size to that spool; editing it changes only that spool, never the filament or its other spools.
+- **Empty Spool Weight** — the spool's own tare, then its filament's, then the vendor's empty-spool weight, in Spoolman's own order.
+- **Cost per kg** — Spoolman stores a spool's price as what *that spool* cost, not as a rate. The spool form shows it converted through the spool's size and converts back when you save: a 250 g spool that cost 10 reads as 40 per kg, and typing 40 per kg for a 250 g spool stores a price of 10. A price set on the filament is spread over the filament's weight.
+- **What a print is charged** — the spool's price, or the filament's when the spool has none. The **Cost/kg** column shows that charged rate, and the print dialog prices each slot and shows its grams left from the Spoolman spool bound to that slot.
+
+!!! note "A price that was meant as a rate"
+    Because the price on a Spoolman spool is the price of that spool, a spool that is not 1 kg and whose price was entered as a per-kg rate reads a different cost per kg: a 250 g spool carrying a price of 40 shows 160 per kg. Nothing stored is rewritten — correct the cost in the spool form.
+
+**Spools whose size differs from their filament.** A spool's size in Spoolman is set when the spool is created and does not follow a later change of the filament's weight, so a spool can show a size other than the one you expect from its filament. For a connected Spoolman, **Settings → Filament → Filament Tracking** lists every such active spool with its own size, its filament's size and the grams left. **Use the filament's size for this spool** changes that one spool after a confirmation; what it has consumed stays, so its grams left change with the size.
+
 ### :material-table-row: Three new pieces of state
 
 | Where | What | Why it isn't on Spoolman directly |
@@ -267,6 +322,13 @@ Per slot the hover card carries:
 | **Open in Spoolman** | Slot is RFID-linked. Opens the spool's Spoolman edit page in a new tab. |
 
 The Link button auto-suppresses when a slot already has either a Spoolman SlotAssignment OR a local SpoolAssignment, so the operator can't accidentally double-bind.
+
+What an assignment does to the slot:
+
+- **The spool's own filament preset configures the slot.** When no calibration is linked to the spool, the preset stored on it — set in the spool form, or taken from the tray when BamDude created the spool — tells the printer what is loaded. A preset of another material than the spool's is ignored, and the slot gets a stand-in profile for the spool's material instead.
+- **A pressure-advance profile is selected by default.** When no profile was linked to the spool by hand, the slot gets the active calibration for that printer, filament, nozzle diameter, flow type and extruder — as in the built-in inventory.
+- **An archived spool cannot be assigned** to a slot.
+- **While Spoolman is switched on but unreachable**, the printer card neither offers nor accepts an assignment — it says *Spoolman is unreachable. Spools can be assigned once it responds again.* Spools of the built-in inventory are not offered in its place.
 
 ### :material-flash: K-profile auto-reapply on AMS change
 
@@ -344,7 +406,7 @@ run is easy to spot and undo.
 
 **Wrong spool linked**
 
-- Open the spool in Spoolman, clear the `extra.tag` field to unlink.
+- Open the spool's form on the **Filament** page and press **Clear RFID Tag** to unlink.
 - From BamDude's AMS hover card, **Manual Link** → pick the correct Spoolman spool.
 - Verify the RFID tag UUID matches what Spoolman has stored — mismatched UUIDs are the most common cause of "linked, but pointing at the wrong row".
 

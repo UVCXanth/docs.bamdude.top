@@ -542,6 +542,8 @@ Designer attribution is searchable via the archive search box, so "all prints by
 
 Each card shows the thumbnail, filename, printer / model line, duration, status badge, filament, tags, and the order badge. The order badge is clickable — it jumps to that order's page (the click doesn't bubble up to open the archive modal).
 
+The cost of a print that is **still running** is an estimate and is shown with a `~` prefix (`~12.50`), on cards and in the list view: it is the filament weight at the default filament price, and the cost is taken from the spools when the print ends. Hovering the figure says so.
+
 The printer / model line is **uniform across provenance**: archives tied to a real BamDude printer used to render `H2D-1 GCODE …` while slicer-only uploads rendered `Sliced for X1C GCODE …` — two different shapes on the same line. The `Sliced for ` prefix is gone, so both now read as `<name-or-model> [bed-icon] GCODE <hash>` and scan identically regardless of whether the archive came from a live printer or a slicer-only upload.
 
 The **build-plate icon** sits next to the printer / model name and reflects the plate the 3MF was sliced for (Cool / Cool SuperTack / Engineering / High Temp / Textured PEI / Smooth PEI), with the full plate name in the hover tooltip — so you don't have to open the source 3MF in a slicer just to read the bed setting before a re-print. The icon is populated from `curr_bed_type` in the 3MF's `slice_info.config` (per-plate, authoritative) with a fallback to `project_settings.config` for older 3MF shapes; archives created before this feature shipped show no icon until you hit the per-archive **Rescan** action, which re-parses the on-disk 3MF.

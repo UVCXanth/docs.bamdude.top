@@ -25,8 +25,9 @@ The Inventory page opens with five summary cards above the spool list, each clic
 
 The toolbar above the list combines a free-form search box with chip strips and view-mode toggles:
 
-- **Search box** — matches the spool **name your display-name template composes**, not just the raw columns behind it, so anything the list shows is findable: with a template of `{brand}/{material}`, typing `LU/PET` finds it. Brand, material, colour, subtype, note and slicer preset are always matched too, as are the spool's **id** and **lot number** — those two whatever your template says, because they are the numbers written on the reel. Every token has to match something, so `SUN Bl` finds a SUNLU Black spool. Press `/` from anywhere on the page to focus it.
+- **Search box** — matches the spool **name your display-name template composes**, not just the raw columns behind it, so anything the list shows is findable: with a template of `{brand}/{material}`, typing `LU/PET` finds it. Brand, material, colour, subtype, note and slicer preset are always matched too, as are the spool's **id** and **lot number** — those two whatever your template says, because they are the numbers written on the reel. The [material number](#material-number) is matched too. Every token has to match something, so `SUN Bl` finds a SUNLU Black spool. A token written as `#123` finds exactly the spool with that number and no other; a bare `123` stays an ordinary substring search. Press `/` from anywhere on the page to focus it.
 - **Material dropdown** — single-select.
+- **Material number dropdown** — single-select, with a **No material number** entry for spools that carry none. It appears once at least one spool has a [material number](#material-number).
 - **Colour dropdown** — single-select. Options are the colours you actually have in stock — built from your existing (non-archived) spools — and grouped by the resolved colour-catalog name, so two near-identical hexes that both read as "Cobalt Blue" filter together regardless of brand. The dropdown only appears once at least one in-stock spool has a resolvable colour.
 - **Storage Location chip** — narrows the spool list to a single storage location from the [managed locations catalog](#storage-locations-catalog), so you can see just the spools kept in one box / shelf / dry-box.
 - **Status tabs** — Active / Archived / All, plus quick filters Used / New, plus stock filter All / Stock (no slicer profile) / Configured (has slicer profile).
@@ -61,7 +62,9 @@ Every spool row (cards view + table view + grouped rows) has a **Copy** button n
 
 ### Bulk edit — change many spools at once
 
-The toolbar's **Bulk edit** button (internal inventory only) opens a dialog to change a field across several spools at once. Pick which spools to edit (it starts with all the currently-filtered ones; deselect any you want to leave alone in the left-hand list) and **tick the fields to apply**: slicer preset, material, brand, subtype, label weight, colour, empty-spool weight, date of purchase, diameter, cost/kg, note, category, low-stock threshold, extra colour stops, visual effect, storage location.
+The toolbar's **Bulk edit** button (internal inventory only) opens a dialog to change a field across several spools at once. Pick which spools to edit (it starts with all the currently-filtered ones; deselect any you want to leave alone in the left-hand list) and **tick the fields to apply**: slicer preset, material, brand, subtype, label weight, colour, empty-spool weight, date of purchase, diameter, cost/kg, note, category, low-stock threshold, extra colour stops, visual effect, storage location, material number, **Last dried** and **Unlock weight**.
+
+Two of those are actions rather than values. **Last dried** stamps the selected spools as dried now, or clears the date (**Clear the date**) — for a batch dried in an external dryer; see [Last dried](#last-dried). **Unlock weight** releases the lock a hand-entered weight puts on a spool, so the AMS weight sync may update the selected spools again; the weights themselves stay as they are — see [A weight entered by hand is locked](#hand-entered-weight-lock).
 
 Each ticked field pre-fills only when the selection already shares one value (otherwise it shows *"— varies —"*); **only the fields you tick are written**, the rest are left exactly as they were, and **consumed weight and RFID tags are never touched**. Inputs mirror the single-spool form — preset / effect / diameter / empty-spool / storage location are dropdowns; material / brand / subtype autocomplete from everything the system knows (slicer presets + colour catalog + built-ins, not just the selected spools); the colour list comes from your colour catalog filtered by the brand + material being applied and refreshes when you change them.
 
@@ -73,6 +76,8 @@ Two buttons in the inventory header move whole spool lists in and out as CSV —
 - **Import** bulk-adds spools from a CSV. Instead of writing straight away, it first shows a **preview table** that marks every row as *valid*, *error*, or *skipped* — and flags rows where a colour was auto-filled from the colour catalogue, or where a matching spool already exists — **before anything is written**. A confirm click then saves only the valid rows.
 
 CSV headers are case- and spacing-tolerant, so a column titled `Label Weight`, `label_weight`, or `LABELWEIGHT` all resolve the same way. Only `material` is required; every other column is optional, and the same validation as the manual add-spool form applies to each row.
+
+The file carries the `material_number` and `last_dried_at` columns as well; `last_dried_at` is an ISO date/time. A blank `material_number` cell means "no number" — an imported spool does not inherit one from its filament.
 
 CSV import/export is **local-inventory only**. In **Spoolman mode** both buttons are disabled, with a hint pointing you at Spoolman's own CSV tools instead.
 
@@ -181,10 +186,39 @@ Custom materials work like built-ins for inventory tracking, usage history, filt
 
 | Field | Description |
 |---|---|
-| **Empty Spool Weight** | Pick from the [Spool Catalog](#spool-catalog) (90+ entries) or enter manually — used for accurate remaining-weight calculation. |
+| **Empty Spool Weight** | Pick from the [Spool Catalog](#spool-catalog) (90+ entries) or enter manually — used for accurate remaining-weight calculation. An empty-spool weight of 0 g is a value of its own and is kept as 0. |
 | **Remaining Weight** | Live `label_weight - weight_used` with a reference maximum bar. |
 | **Cost per kg** | Per-spool cost; feeds [cost tracking](#cost-tracking) and archive cost roll-ups. |
+| **Last dried** | When the spool was last dried — see [Last dried](#last-dried). Shown when editing a spool. |
+| **Material number** | Your own article code for the filament — see [Material number](#material-number). |
 | **Note** | Free-text. |
+
+#### Material number {#material-number}
+
+**Material number** is a free-text internal article code, next to **Lot**: the number your shop or accounting uses for a filament, whatever the brand calls it. The field suggests the numbers already in use.
+
+- A new spool of a filament that already has a number gets it automatically — "the same filament" being what **Group similar** groups by (brand, material, colour name, label weight, subtype). A number you type is never replaced, and editing a spool never changes it by itself. CSV import does not inherit: a blank cell there states "no number".
+- It is available as an optional table column (off by default — enable it in the column settings), as a filter, in the search box, in **Bulk edit**, as a level in [Spool order](#spool-order), as the `{material_number}` variable of the spool display-name template and of label templates, and as the `material_number` column of the CSV export and import.
+- [Stats](stats.md#by-material-number) totals consumption and cost per material number.
+- In Spoolman mode the field shows the article number of the filament in Spoolman and is read-only — change it in Spoolman.
+
+#### Last dried {#last-dried}
+
+A spool remembers when it was last dried. When a drying cycle in an AMS has run for at least half its time, every spool assigned to a slot of that unit gets the date, together with the temperature and the hours when they are known. The record belongs to the spool, so it stays after the spool moves to another AMS or onto a shelf. A cycle stopped early marks nothing and does not overwrite an earlier drying. This works with the built-in inventory and with Spoolman.
+
+For a spool dried elsewhere, set the date by hand: the **Last dried** field in the spool form has a **Now** button, and clearing the field removes the record; **Bulk edit** does the same for a whole selection. A date set by hand carries no temperature or hours.
+
+The date is shown on the spool card, can be turned on as the **Last dried** table column (off by default), is carried by the CSV export and import as `last_dried_at`, and can be used as a level in [Spool order](#spool-order).
+
+#### A weight entered by hand is locked {#hand-entered-weight-lock}
+
+When you type a spool's used weight yourself, BamDude locks that weight against the AMS weight syncs: neither the automatic sync nor the **Sync Weights from AMS** button overwrites it. Prints still deduct what they use. A weight that came in through CSV import is locked the same way.
+
+Releasing the lock is an explicit action. Open the spool: a note says the weight was entered by hand, with the checkbox **Let the AMS weight sync update this spool again** below it. For many spools at once, tick **Unlock weight** in **Bulk edit**. Either way the stored weight stays as it is; only later syncs may change it.
+
+#### Assign to slot from the form {#assign-to-slot-from-form}
+
+A spool that sits in no slot — and is not archived — has an **Assign to slot** button at the bottom of its form. Choose the printer, the **AMS unit** and the **Slot**, and the usual assignment dialog takes over with all its checks, exactly as if you had started from the printer card. A slot holding a Bambu Lab RFID spool cannot be picked — the printer manages that slot.
 
 ### PA Profile tab
 
@@ -215,6 +249,9 @@ The last one is deliberately a separate, explicit action rather than the default
 
 Archive, Restore and Delete ask for confirmation first.
 
+!!! warning "A used spool is archived, not deleted"
+    **Delete** removes only a spool that nothing refers to. A spool that has usage history, sits in a slot or belongs to a running print is refused, with a hint to archive it instead — its records, and the prints costed from them, would otherwise lose their spool. In a bulk delete the spools that can go are deleted and the refused ones are reported. Use **Archive** for a reel you have finished.
+
 All of this works in **Spoolman mode** as well as with the built-in inventory. Because Spoolman is a separate service that can be briefly unreachable, individual rows can fail: when that happens you get an honest **"7 done, 2 failed"** rather than a success message, and the selection is kept so you can retry the rest.
 
 !!! tip "The Edit dialog shows what it is about to change"
@@ -225,6 +262,13 @@ All of this works in **Spoolman mode** as well as with the built-in inventory. B
 Once a spool exists, you can park it in a specific AMS slot on a specific printer. The right-side AMS panel on each printer card shows the four slots (or eight, on AMS-HT) and lets you drop a spool into each slot.
 
 Behind the scenes, this is the `spool_assignment` table — one row per `(printer, ams_id, tray_id)` triple. Two assignments to the same physical slot can't exist simultaneously; assigning a new spool releases the previous one (which goes back to "available, not in any printer").
+
+The reverse holds as well: **a spool sits in one slot only**. Assigning a spool that is still recorded in another slot — on the same printer or on another one — takes it out of that slot. The assignment is refused when that other slot is feeding a running print: finish or stop the print, or pick another spool.
+
+Two things do **not** remove an assignment:
+
+- **A single "empty" report from an idle AMS.** A slot that reports no spool while nothing prints loses its assignment only when it still reports empty about 25 seconds later. One stray status message therefore leaves the assignments alone, while a reel you really took out is unlinked shortly afterwards.
+- **Unplugging an AMS.** The unit leaves the printer card, and its spools stay assigned for when it is plugged back in.
 
 Two extra niceties:
 
@@ -257,7 +301,7 @@ Assigning a spool is the simplest workflow — it handles tracking + printer con
 
 A third inventory tab next to **Table** / **Cards** that turns the raw `spool_usage_history` table into reorder intelligence:
 
-- **Daily-consumption rate** — exponentially-weighted moving average with a 30-day half-life, computed per **colour group** (material / subtype / brand / colour name). Five colours of the same PLA Basic become five independent forecast rows, each with its own runway and reorder date — so running low on black doesn't hide behind a full spool of white. One spool of recent prints weighs more than a year-old burst.
+- **Daily-consumption rate** — exponentially-weighted moving average with a 30-day half-life, computed per **colour group** (material / subtype / brand / colour name). Five colours of the same PLA Basic become five independent forecast rows, each with its own runway and reorder date — so running low on black doesn't hide behind a full spool of white. One spool of recent prints weighs more than a year-old burst. A colour with too little recorded history for a trend is estimated from its spools' totals instead: each spool's consumption is spread over the time it was actually printed with — from its first use to its last — and only what falls inside the last 90 days counts. Time a spool spent on the shelf before it was opened is not use, so a filament bought months ago and opened last week forecasts at the pace of that week; a filament not printed for 90 days shows no consumption.
 - **Days-left projection** — current stock divided by daily rate, with a 95%-service-level safety stock factored in (`σ × √lead_time × 1.65`).
 - **Reorder-by date** — when to place the order so the new spool arrives *before* you run out, given the configured lead time.
 - **Reserved by orders** — how many known grams of that colour your active orders still have to take off the shelf: the plan they have not printed yet plus what is already waiting in the queues, counted exactly as the order pages count it and projected onto the SKUs that can serve it (split by remaining weight when several brands match). If any active-order slicer channel has no trustworthy weight, the panel warns that **Reserved** and **Reorder by** cover only the known part; it never invents grams or assigns that uncertainty to a SKU. Beneath it sits what is left to promise, and **Reorder by** counts down from *that* rather than from everything on the shelf — **Empty by** deliberately does not, because the consumption rate already contains those orders being printed. Promise more than the shelf holds and the row reads **Over-committed**, which counts as an alert even before the SKU has a consumption rate. Need in a colour you do not stock is listed under the table instead of being spread over the colours you do.
@@ -265,9 +309,9 @@ A third inventory tab next to **Table** / **Cards** that turns the raw `spool_us
 - **Per-colour expanded editors** — lead-time-days, safety-margin (dual-unit days|grams), alert-snooze toggle. Each setting persists across sessions in the `filament_sku_settings` table; colours with no settings yet fall back to the global lead-time floor (Settings → Inventory → **Forecast global lead time**). Overrides you saved before the colour split are carried onto the matching colour rows on first load, so no per-SKU tuning is lost in the migration.
 - **Top-5 chart** — stacked-area, multi-series projection of the five fastest-burning colours with ROP reference lines. Timeframe toggle: 1W / 1M / 6M.
 - **Shopping list (Logistics view)** — separate panel below the forecast table. Add SKUs to a `pending → purchased → received` queue. Marking an item *received* auto-creates `category='Stock'` spools via bulk-create (uses the average historical spool weight). CSV export + clear-all helpers.
-- **Notification toggles** — two new notification-provider events appear in **Settings → Notifications → Inventory Alerts**: *Reorder Alert* (SKU crossed reorder point) and *Stock Break Alert* (will run out before lead time). **These toggles are currently visual-only on the provider** — the forecast panel surfaces alerts in-app; a future scheduled aggregator can fire them via the existing templates without a schema change.
+- **Notification toggles** — two new notification-provider events appear in **Settings → Notifications → Inventory Alerts**: *Reorder Alert* (SKU crossed reorder point) and *Stock Break Alert* (will run out before lead time). Both are sent through the provider like any other event; see [Notifications](notifications.md).
 
-The forecast tab is **hidden in Spoolman mode** because BamDude proxies the spool list there and doesn't populate the per-print usage history. To use forecasting, run BamDude in local-inventory mode.
+The forecast tab works in **Spoolman mode** too: BamDude keeps its own record of every print it charges to a Spoolman spool and forecasts from it. See [Spoolman → Usage history and Forecast](spoolman.md#spoolman-usage-history).
 
 Permissions: `inventory:forecast_read` (see the panel) and `inventory:forecast_write` (modify SKU settings + shopping list) are added to existing groups automatically on upgrade — viewers get read, operators get both.
 
@@ -314,7 +358,7 @@ Nothing about accounting changes: a replace runs exactly the code path an unassi
 
 Every print BamDude dispatches reads the per-filament `weight` from the source 3MF. On `print_complete`, the dispatched grams are deducted from the spool that was assigned to the matching AMS slot at the time the print started:
 
-- The `spool_usage_history` table records every deduction (one row per print × per spool).
+- The `spool_usage_history` table records every deduction (one row per filament of a print × spool — two filaments of one file printed from the same spool give two history records).
 - `spool.used_grams` is the running total.
 - `spool.weight - spool.used_grams` is what's left.
 
@@ -360,7 +404,7 @@ A ends at exactly 0 g remaining (250 + 1750 = its 2 kg label); B carries only it
 
 Two runouts of the same slot in one long print (two short reels back-to-back) are handled as separate episodes, each with its own boundary and close-out. Everything works identically in Spoolman mode. Tune it under **Settings → Filament → Usage accuracy**: the close-out toggle, an optional per-auto-switch purge charge (the emergency purge isn't in the slicer's estimate), the two-way AMS sync below, and how long the per-print event journal is kept for troubleshooting (72 h default).
 
-**A print that moves between trays** — an AMS backup that later returns to the refilled slot, or a loader that reports another tray for a moment on every load (a P1S with a BMCU reports the external holder that way) — is charged stretch by stretch: each stretch once, to the spool the journal recorded for it, so a reel loaded into the same slot after a runout gets its share. A tray reported within a single layer fed nothing the layer count can see and is not charged. Grams no spool can be named for are reported in the **Filament not charged** notification, in built-in inventory and in Spoolman alike.
+**A print that moves between trays** — an AMS backup that later returns to the refilled slot, or a loader that reports another tray for a moment on every load (a P1S with a BMCU reports the external holder that way) — is charged stretch by stretch: each stretch once, to the spool the journal recorded for it, so a reel loaded into the same slot after a runout gets its share. A tray reported within a single layer fed nothing the layer count can see and is not charged. Grams no spool can be named for are reported in the **Filament not charged** notification, in built-in inventory and in Spoolman alike. On a two-holder printer, an external filament whose holder the print did not name is likewise reported as not recorded rather than charged to the first holder.
 
 **A print that stopped after a reel change** divides only what it printed. A cancelled print that stopped at layer 50 of 200, with reel B taking over from reel A at layer 40, used — say — 10 g; A printed 40 of those 50 layers and B 10, so A is charged 8 g and B 2 g. A reel that arrived on or after the last printed layer is charged nothing of it. The layer the print stopped at, the plate's layer count and the progress are the ones the printer reported when the print ended, so a print started on the same printer before the books are written cannot change them. Without per-layer G-code the stretches are measured by layer count, which is exact only when the layers use about the same filament. When the printer reported no layer the print stopped at, nothing tells where the change sits relative to the stop: the weight is then reported as not recorded instead of being shared out equally — unless the same reel fed every stretch, which then gets it all. A finished print needs no such layer when its G-code is available.
 
@@ -388,6 +432,8 @@ Since 0.7.0, **Settings → Filament → Usage accuracy → Archive the spool it
 ### Two-way AMS weight sync for tagged spools (0.5.5)
 
 For spools with a valid Bambu RFID tag, idle AMS readings can now correct the books **downward** as well as upward — the firmware's own remaining estimate is the same number Bambu Studio mirrors into its filament manager. A downward correction is deliberately cautious: the same value must repeat across two reports at least a minute apart, so a garbled report after a reconnect can never rewrite a spool. Untagged spools are never touched by this path.
+
+The sync waits for the print to be booked. While a print runs, and until its filament has been charged at completion, no AMS reading is written to the spools of that printer — the remaining-percent reading already contains part of what the print used, and writing it would count that filament twice. A [weight entered by hand](#hand-entered-weight-lock) is not touched by the sync at all.
 
 ### Live "filament so far" (0.5.5)
 
@@ -419,7 +465,7 @@ Every part of the list is computed by the **server** — the page, the sort orde
 
 Spools you have since archived or deleted keep their rows, marked rather than hidden — the grams they carry were still printed, and dropping them would make these totals disagree with the [archives](archiving.md). Spool names follow your [display-name template](#display-name-follows-your-template) and a retired printer reads as *Printer 5 (Archived)*, exactly as everywhere else. Clicking a spool opens it.
 
-The view is **hidden in Spoolman mode**, where Spoolman keeps this record instead.
+In **Spoolman mode** the view shows BamDude's own record of the prints it charged to Spoolman spools — see [Spoolman → Usage history and Forecast](spoolman.md#spoolman-usage-history).
 
 ### Removing usage records
 
@@ -454,11 +500,13 @@ cost = (weight_used_grams / 1000) × cost_per_kg
 
 ### Recalculating costs
 
-If you update spool prices or add cost data retroactively, the **Recalculate Costs** button on the Archives page re-derives every archive's cost using the current spool data, in this priority order:
+A print keeps the cost it was booked with: every usage record stores what its grams cost at the spool's price at that moment. The **Recalculate Costs** button on the [Stats](stats.md#recalculate-costs) page rebuilds every archive's cost from those records — the recorded prices are kept — in this priority order:
 
-1. `spool_usage_history` records joined to `archive_id` (most accurate, per-spool actuals).
+1. `spool_usage_history` records joined to `archive_id` (most accurate, per-spool actuals), plus the default rate for any grams no spool covered.
 2. Legacy usage records joined by print name (for older archives without the FK link).
-3. Filament catalog prices (when no usage records exist at all).
+3. The default filament cost (when no usage records exist at all).
+
+To correct prints that were booked at a wrong spool price, change the spool's **Cost per kg** and use [Re-price usage](stats.md#re-price-usage) on the Stats page — it re-prices the recorded usage of one spool or one period at the spools' current prices.
 
 !!! tip "Set costs early"
     For accurate cost tracking, set `cost_per_kg` on each spool when you add it to inventory. The default is a rough estimate — individual spool prices give you precise per-print data and make the **Recalculate Costs** button useful.
@@ -536,7 +584,7 @@ Both accept `{spools: [{id, display_name?}], template}` and return `application/
 | `inventory:read` | View spool list and AMS assignments; **render PDF labels**. |
 | `inventory:create` | Add new spools. |
 | `inventory:update` | Edit spool fields, assign to slots, set spool-specific K-profile overrides. |
-| `inventory:delete` | Remove spools (deletes related assignments too). |
+| `inventory:delete` | Remove spools. A spool with usage history, in a slot or in a running print is archived instead — see [Mass actions](#mass-actions). |
 | `inventory:view_assignments` | Specifically the spool-on-slot indicators rendered on printer cards. Granted to Viewers separately so a non-operator can see "what's loaded where" without getting `inventory:read`. |
 
 ## :material-clipboard-list: Settings reference
@@ -551,11 +599,29 @@ The relevant settings keys (all under Settings → Inventory):
 | `default_filament_cost` | `25` | Per-kg fallback cost when a spool's `cost` field is unset. |
 | `spoolman_enabled` | `false` | Toggle the Spoolman integration. See [Spoolman](spoolman.md). |
 
+### Spool order {#spool-order}
+
+**Settings → Filament → Spool order** sets the order spools are offered in. It is a list of sort levels — a field and a direction (**Ascending** / **Descending**) each — applied top to bottom: the second level orders the spools the first one leaves equal. Material, then brand, then the least remaining first is a typical setup. Pick a field under **Add a level…**, arrange the levels with the up and down arrows, and press **Save order**; **Reset to built-in** removes every level.
+
+Two places follow it:
+
+- **The dialog for putting a spool into a slot** lists the spools in this order.
+- **The Filaments page**, while no column is chosen: a line above the table reads *Order from settings: …* and names the levels. Clicking a column header still sorts by that column.
+
+The fields are **Name (by template)** — the spool name as your display-name template composes it — **Material**, **Subtype**, **Brand**, **Colour name**, **Slicer profile**, **Remaining, g**, **Remaining, %**, **Used, g**, **Label weight**, **Added**, **Purchased**, **Last used**, **Last dried**, **Storage location**, **Cost per kg**, **Lot**, **Material number** and **Spool number**.
+
+With no levels set, the slot dialog orders by material, brand and colour, and the Filaments page by spool number. The order applies to Spoolman inventories too.
+
 ### Sync Weights from AMS (recovery tool)
 
 When the built-in inventory is in use, **Settings → Filament** exposes a **Sync Weights from AMS** button below the mode selector. It force-syncs all inventory spool weights from the live AMS `remain%` sensor values on currently-connected printers.
 
 Use this **only** to recover from corrupted weight data — for example, if a printer power-off event reset all spools' tracked grams to zero. The sync overwrites stored `weight_used` values with what the AMS reports right now. Printers must be online for the sync to read sensor values.
+
+Two kinds of spools are left out, and counted as skipped in the result:
+
+- **Spools on a printer whose print is not booked yet** — a print that is running, or finished but not yet charged. The AMS reading already contains part of that print's filament, so syncing it would count the filament twice. A second message says how many printers were left out; sync again once their prints are finished. The **Sync AMS Weights to Spoolman** button of Spoolman mode waits the same way.
+- **Spools with a [weight entered by hand](#hand-entered-weight-lock)** — unlock them first if the AMS reading should replace your figure.
 
 !!! warning "Low resolution — recovery only"
     AMS `remain%` is integer-precision (1 % steps = ~10 g for a 1 kg spool). For day-to-day tracking, rely on the automatic 3MF-based deduction described above — it's accurate to the gram. **Sync Weights from AMS** is a recovery tool, not the normal accounting path.

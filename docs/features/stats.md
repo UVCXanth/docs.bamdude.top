@@ -131,13 +131,20 @@ Layout is **persisted per-user** in the backend, so the same login on a differen
 | Widget | What it shows |
 |---|---|
 | **Print Success Rate** | Donut gauge with a completed / failed / **Cancelled** split. Per-printer filterable. See the note below on how cancelled prints are counted. |
-| **Filament by Type** | Pie chart of material distribution (PLA / PETG / ABS / ...). Click segments to filter. |
+| **Filament by Type** | Pie chart of material distribution (PLA / PETG / ABS / ...). Click segments to filter. A print that used the same material from two slots counts once for that material. |
+| **Filament Trends** | Filament consumption over the selected range, with the [By material number](#by-material-number) table below it. |
 | **Print Activity Calendar** | GitHub-style heatmap, daily print count, click any day to drill into that day's archives. |
 | **Print Duration Distribution** | Bucket bar chart: `<30m`, `30m–1h`, `1–2h`, `2–4h`, `4–8h`, `8–12h`, `12–24h`, `24h+`. Surfaces your typical print length. |
 | **Time Accuracy** | Predicted-vs-actual print times. Per-printer averages and trend — answers "is calibration drifting?" Prints that BamDude had to recover after a disconnect are excluded: their end time is reconstructed from the estimate, so they'd score a perfect 100% nobody measured. |
 | **Printer Utilization** | Hours of active printing per printer; idle-time percentage. |
 | **Recent Activity** | Feed of the last 10 completed prints; click to open the archive card. |
 | **Quick Stats** | KPI tiles (prints, filament, time, cost, energy) for the active range. |
+
+### By material number {#by-material-number}
+
+The **Filament Trends** widget ends with a **By material number** table: the filament drawn from the spools that carry each [material number](inventory.md#material-number) in the selected range, and what it cost. Its columns are **Material number**, **Spools** (how many different spools were printed from), **Consumed** and **Cost**; the heaviest consumer is listed first.
+
+The table is read from the built-in inventory's usage records, so it counts prints only — AMS weight corrections and runout close-outs are left out — and spools without a material number are not listed. It appears once at least one numbered spool was printed from in the range, and stays empty in Spoolman mode.
 
 ### Printer Selection
 
@@ -192,11 +199,26 @@ Cost tiles only show numbers when the underlying inputs are configured.
 
 ### Recalculate Costs
 
-Existing archives keep the prices that were active when they completed — historical data isn't auto-rewritten when you bump rates. To bring everything up to current pricing:
+Existing archives keep the prices that were active when they completed — historical data isn't auto-rewritten when you bump rates. **Recalculate Costs** rebuilds every print's filament cost from its recorded usage:
 
 1. Click **Recalculate Costs** in the dashboard header
-2. Every archive's filament + energy costs are recomputed against current spool / config rates
+2. Every archive's filament cost is summed again from its usage records. The prices recorded with those records are kept; filament no spool covered is priced at today's default rate
 3. The dashboard re-renders against the new totals
+
+To change what past prints cost because a spool's price was wrong, use **Re-price usage** below.
+
+### Re-price usage {#re-price-usage}
+
+A print keeps the cost it was booked with. When a spool's price was entered wrong — 200 per kg typed for 20 — every print from that spool carries the wrong cost, and recalculating does not fix it, because the recorded prices are kept. **Re-price usage** in the dashboard header is the correction for that case:
+
+1. Correct the spool's **Cost per kg** in the [inventory](inventory.md#cost-tracking).
+2. Click **Re-price usage**. In the **Re-price recorded usage** dialog choose a **Spool number**, a period (**From** / **To**), or both. Leaving the spool number empty takes every spool in the period; a period needs both its first and its last day.
+3. Click **Preview**. Nothing is written yet: the dialog shows how many usage records would change, how many prints would get a new cost, how many orders would move, and the filament cost of the selection before and after.
+4. Click **Re-price** to apply. The button stays unavailable until a preview has been made and has something to change.
+
+The recorded usage in the selection is priced again at each spool's current price, and each print's cost moves by exactly the difference — another spool's share of the same print stays as it was recorded. Filament weights and energy are never touched. Usage records whose spool has been deleted keep their cost.
+
+Re-pricing needs the same permission as **Recalculate Costs** (`archives:update_all`) and works with the built-in inventory only; it is not available in Spoolman mode.
 
 !!! info "Reprint cost behaviour"
     Reprints are **additive** — a reprint cost adds to the original archive's total instead of overwriting it, so the per-archive total reflects the cumulative spend across every run of that file. This means stats numbers track real money spent, not "what the original print would cost at today's rate."
@@ -221,6 +243,7 @@ Everything this page reads lives under `/api/v1/statistics/`:
 | `GET /statistics/aggregate` | The time series, breakdowns and records the charts and the archive calendar fold |
 | `GET /statistics/failures` | Failure analysis — see [Failure analysis](failure-analysis.md) |
 | `GET /statistics/export` | The failure-analysis summary as CSV, or `?format=xlsx` — see [Export](export.md) |
-| `POST /statistics/recalculate-costs` | Recalculate every archive's filament cost at current prices |
+| `POST /statistics/recalculate-costs` | Rebuild every archive's filament cost from its recorded usage |
+| `POST /statistics/reprice-usage` | Re-price the recorded usage of one spool and / or one period at the spools' current prices; a preview unless asked to apply |
 
 Earlier releases answered under `/api/v1/archives/…` (`/archives/stats`, `/archives/aggregate`, `/archives/analysis/failures`, `/archives/stats/export`, `/archives/recalculate-costs`). Those paths are gone, not redirected. `/api/v1/statistics/reports` is reserved for the reports that will be built here.

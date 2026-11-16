@@ -28,6 +28,8 @@ Each AMS slot displays:
 
 Where the slot menu offers RFID re-reading, use it to refresh a tagged spool after a change. AMS Lite also identifies Bambu spools by RFID; untagged and third-party spools can be configured manually. The visibility of an auto-read setting is separate from the presence of an RFID reader.
 
+The result is reported as it happened: when the printer refuses the read, BamDude shows the refusal — with the printer's reason where it gives one — instead of a success message.
+
 ### Configure AMS Slot
 
 For repeated loading of full, untagged reels, the optional per-printer [automatic stock assignment](inventory.md#automatic-stock-assignment) links a spool from a selected inventory group when insertion is observed. The guide covers setup, manual/RFID priority and returning a partial reel after runout.
@@ -94,6 +96,8 @@ authoritative "a spool is physically here" signal Bambu Studio does, so:
   BamDude what's loaded.
 - **Empty** — the slot really is empty.
 
+A slot the printer reports blank while a spool is assigned to it in BamDude — after a runout, for example, when a new reel was put in and assigned — shows that spool instead of "?". The slot is drawn in the spool's colour, and its hover card names the spool, notes *Assigned in BamDude; the printer has not taken it yet*, and offers **Replace spool** and **Unassign**. A slot that is feeding a print gets its setting once the print is over; any other slot is configured at once. A "?" slot with no spool assigned offers **Assign Spool**.
+
 ### When a print pauses on a filament runout
 
 The printer's own message says to reload *"the same AMS slot"*, which is wrong
@@ -119,7 +123,7 @@ When you open the Configure AMS Slot modal for a slot that already has a configu
 
 On supported printer/AMS combinations, multiple units provide additional slots. AMS Lite on A1 and A1 mini provides four slots in one unit; do not apply the four-unit limit of a full AMS setup to AMS Lite. External feeding is available independently of whether an AMS is attached; the print's feed policy decides which source may be used.
 
-On the printer card the filament section has three rows, each laid out by the card's own width: regular AMS units up to two per row, AMS-HT units in a row of their own up to three per row, and the external spool(s) in a row of their own. A card too narrow for that shows fewer per row rather than squeezing the slots, and the units grow with the L and XL card sizes.
+On the printer card the filament section has three rows, each laid out by the card's own width: regular AMS units up to two per row, AMS-HT units in a row of their own up to three per row, and the external spool(s) in a row of their own. A card too narrow for that shows fewer per row rather than squeezing the slots, and the units grow with the L and XL card sizes. A unit is an AMS-HT by its unit number, not by how many trays it lists — a regular AMS that reports a single tray stays among the regular units with all four slots.
 
 ### Assign Spool from Inventory
 
@@ -129,12 +133,20 @@ The AMS slot menu's **Assign Spool** option pairs a physical inventory row (from
 - **Manually-added inventory rows without RFID** — refills, third-party brands, untagged spools (#1047). Earlier builds required exact `slicer_filament_name` equality and hid every spool that didn't carry a slicer profile name; the picker now also accepts partial-material match (a `PLA` spool shows up for a `PLA Basic` slot, and vice versa).
 - **External slots (`amsId 254/255`)** — those have no RFID reader so the picker shows the full inventory.
 
+A spool sits in one slot only: assigning it removes it from any other slot it was still recorded in. The assignment is refused when that other slot is feeding a running print.
+
 !!! tip "Filter by slicer filament name"
     When a 3MF is loaded on the printer, the picker can be filtered by the slicer's expected filament profile (extracted from the active 3MF). Narrows the list to spools that match the print's required material — drops the chance of accidentally assigning a wrong spool. Toggle off the filter to see the full list, with a one-line warning when material doesn't match.
 
+### When a slot reads empty
+
+While nothing prints, a slot that reports no spool loses its assignment — the reel was taken out. A single "empty" report is not enough for that: the spool is unlinked only when the slot is still reported empty about 25 seconds later, so a one-off status message that shows a loaded AMS as empty takes nothing out of it. During a print an emptied slot is a runout, and the spool stays assigned.
+
+An AMS that is unplugged keeps its spools: they stay assigned for when the unit comes back.
+
 ### Load / Unload from a slot
 
-Drive **Load** and **Unload** directly from any AMS slot or external spool — no walk to the touchscreen:
+Drive **Load** and **Unload** directly from any AMS slot — AMS-HT included — or external spool — no walk to the touchscreen:
 
 1. Hover over the slot on the printer card.
 2. Click :material-dots-vertical: in the slot's hover menu.
@@ -164,6 +176,8 @@ Give your AMS units friendly names so you can tell them apart in multi-AMS setup
    - **Firmware Version** — parsed from the printer's `get_version` response.
    - **Friendly Name** — editable text field.
 3. Type a name (e.g. *Silk Colours*, *Workshop AMS*) → press **Enter** or click **Save**. Clear the field + save to remove the label.
+
+An AMS Lite shows its serial number and firmware version in the same popover.
 
 A name longer than the unit's header — on an AMS or an AMS-HT — stays on one line and ends in "…"; the full name is in the same popover.
 
@@ -295,6 +309,8 @@ Where the advertised profile differs from the real spool, the slot card carries 
 ## :material-lan: AMS Discovery & Wiring
 
 BamDude auto-discovers AMS units when a printer connects — no manual configuration. Updates flow in whenever the AMS configuration changes (a unit added / removed / re-cabled).
+
+A unit the printer itself reports as gone leaves the printer card and, through a [Virtual Printer](virtual-printer.md), the slicer. Its spools stay assigned to their slots: plug the AMS back in and they are still there. A different reel in one of those slots is noticed as usual.
 
 ### Dual-nozzle wiring {#dual-nozzle-wiring-h2d-h2d-pro}
 
@@ -451,27 +467,39 @@ Power-related issues also surface as HMS (Health Management System) errors in th
 !!! tip "Drying badge"
     While a cycle is active, the AMS card shows a **Drying** badge with the active filament and target temperature — e.g. *Drying · PETG @ 65°C* — alongside the time remaining, so you can see what's cooking at a glance. Bambu only echoes the drying time on later pushes, so BamDude caches the filament + target locally when it starts the cycle.
 
+A cycle that has run at least half its time stamps every spool assigned to a slot of that AMS with a **Last dried** date, and the spool keeps it when it moves to another AMS or onto a shelf — see [Inventory](inventory.md).
+
+### Drying not running
+
+A printer can accept a drying command, keep the countdown and not heat — its power budget is spent, or a print is in progress. BamDude recognises such a timer by the countdown itself: a running cycle ticks down every minute, so a remaining time that has not changed for more than 150 seconds while the AMS reports no drying phase is a timer with no cycle behind it.
+
+The AMS card then shows a grey **Drying not running** bar instead of the **Drying** badge and its countdown. From there you can take the timer off with **Stop Drying**, or open the flame button and start a fresh cycle. The rest of BamDude treats the unit as not drying:
+
+- **The queue does not wait for it** — a parked timer never reaches zero by itself, so it holds no job even with **Wait for drying to complete** on.
+- **A scheduled run** is stopped and reported as **did not happen** — or counted as done when it had already run nearly its whole time (the last tenth). Under a running print it yields like any other scheduled cycle and comes back after the print.
+- **Auto-drying** stops a cycle of its own that parked and tries again later. After two in a row it pauses auto-drying for that unit and sends a notification; a humidity reading back at or below the threshold resumes it. A timer somebody else set is left as it is.
+
 ### Queue Auto-Drying
 
 Automatically dry filament between scheduled prints when humidity exceeds the threshold.
 
 - Enable in **Settings** > **AMS Display Thresholds** > **Queue Auto-Drying** (`queue_drying_enabled`).
 - **Non-blocking** (default, `queue_drying_block=false`) — drying runs in the background; prints in the queue take priority.
-- **Blocking** (`queue_drying_block=true`) — the queue stalls until drying completes. Use this when you really want a dry spool before the next print starts and don't mind the wait.
+- **Blocking** (**Wait for drying to complete**, `queue_drying_block=true`) — the queue stalls until drying completes. Use this when you really want a dry spool before the next print starts and don't mind the wait. Blocking does not stop drying ahead of a later job: only a job that could start right away keeps a new cycle from starting on its printer — a job scheduled for later, waiting for a manual start or sitting in a paused queue does not. While a cycle holds a printer's queue, the [Auto-Queue](auto-queue.md) prefers an equally suitable printer that is not held, and the farm forecast counts the rest of the cycle as a wait for that printer — whichever kind of drying holds it: queue auto-drying, ambient drying or a scheduled run.
 - Per-filament temperature + duration come from the configurable presets (Settings → AMS Display Thresholds → Drying Presets), not hard-coded defaults — AMS 2 Pro and AMS-HT have separate columns since they reach different temperatures.
 
 #### Detailed flow
 
-1. The scheduler watches every idle printer that has at least one **scheduled** queue item — items in pure "Queue Only" mode don't trigger auto-drying.
+1. The scheduler watches every idle printer that has at least one **scheduled** queue item due within the next **12 hours** — items in pure "Queue Only" mode don't trigger auto-drying, and a job scheduled for next week does not keep the AMS drying until then. A scheduled Auto-Queue job for "any printer of a model" counts too, on every printer that could take it.
 2. For each AMS unit, BamDude reads the live humidity over MQTT.
-3. If humidity exceeds the **Fair (orange)** threshold from Settings, drying starts using the per-filament preset (see below).
-4. Drying runs for a **minimum of 30 minutes** — even if humidity drops below the threshold sooner. This stops rapid start/stop cycling when humidity is right at the threshold.
-5. After 30 min BamDude rechecks humidity each scheduler cycle; once at or below threshold, drying stops early.
+3. If humidity exceeds the **Fair (orange)** threshold from Settings, drying starts using the per-filament preset (see below). Drying ahead of a scheduled job starts at once — the [sustained-humidity wait](#wait-for-sustained-humidity) does not apply to it.
+4. A cycle that has started runs for its preset duration. It is not cut short when the humidity reading drops: the reading is unreliable while the heater runs.
+5. After a cycle ends, the unit is left alone for **30 minutes** before its humidity is acted on again. This stops back-to-back cycles when humidity sits right at the threshold.
 6. When the next scheduled print is ready to run, any in-progress drying is stopped (non-blocking mode) and the print starts. In blocking mode the queue waits.
 
 #### When auto-drying stops
 
-- Humidity drops at or below the Fair threshold (only after 30 min minimum)
+- The cycle reaches the end of its preset duration
 - A scheduled print is ready to start (non-blocking mode)
 - The queue item's schedule is removed or flipped to "Queue Only"
 - All scheduled items leave the queue
@@ -491,7 +519,7 @@ Worked example: AMS holds PLA + PETG → temperature = 50 °C (PLA cap), duratio
 
 #### Requirements
 
-- At least one **scheduled** queue item ("Queue Only" doesn't count)
+- At least one **scheduled** queue item due within 12 hours ("Queue Only" doesn't count)
 - AMS 2 Pro or AMS-HT (original AMS has no heater)
 - Supported printer firmware (see [Printer firmware requirements](#printer-firmware-requirements))
 - Humidity above the Fair threshold
@@ -541,9 +569,9 @@ How a scheduled run behaves:
 - It starts only on an idle printer and makes the same checks as the drying button: a model and firmware that can dry, the unit's temperature ceiling, no [`dry_sf_reason`](#dry_sf_reason-codes) blocker. While it cannot start it waits, and the printer card says why — printing, offline, power adapter, filament at the outlet. If it can never run on that unit (a model that dries only from its own screen, firmware without drying, a temperature above the unit's ceiling), it fails at once and says so.
 - A repeating schedule's run that could not start before its **Not later than** time is skipped for that day and reported. Without one, the window lasts until the schedule's next day.
 - An offline printer, or one that has just reconnected and not reported yet, is waited for — never judged by its empty state.
-- **Any print that starts on the printer** — from the queue, **Print now**, the printer's screen or the slicer — **stops a scheduled cycle on every model** — even one that can dry while printing, because a scheduled temperature is yours, not the mid-print cap — and the cycle resumes after the print while its window is still open. Whether the queue waits for a scheduled cycle instead is the same **Block queue until drying completes** switch (`queue_drying_block`) that governs auto-drying.
+- **Any print that starts on the printer** — from the queue, **Print now**, the printer's screen or the slicer — **stops a scheduled cycle on every model** — even one that can dry while printing, because a scheduled temperature is yours, not the mid-print cap — and the cycle resumes after the print while its window is still open. Whether the queue waits for a scheduled cycle instead is the same **Wait for drying to complete** switch (`queue_drying_block`) that governs auto-drying.
 - Auto-drying leaves a unit alone while a schedule holds it.
-- A cycle stopped by hand on an idle printer counts as cancelled, not failed; one stopped in its last tenth counts as done. A cycle the AMS accepted but never began counts as **did not happen** and is reported.
+- A cycle stopped by hand on an idle printer counts as cancelled, not failed; one stopped in its last tenth counts as done. A cycle the AMS accepted but never began counts as **did not happen** and is reported — and so does one whose timer the printer holds without running it (see [Drying not running](#drying-not-running)).
 - Days missed while BamDude was down are skipped quietly — no burst of notifications on restart.
 - Archiving a printer cancels its waiting runs and pauses its schedules; deleting it removes both.
 
@@ -555,7 +583,7 @@ API: `GET` / `POST /api/v1/scheduled-dryings`, `DELETE /api/v1/scheduled-dryings
 
 ### Ambient Drying
 
-A separate path that doesn't depend on the queue. Enable under **Settings** > **Print Queue** > **Ambient Drying** (`ambient_drying_enabled`). On any idle printer where humidity is above the threshold, BamDude starts drying without setting a target temperature — useful as a 24/7 humidity-keeper for an idle farm.
+A separate path that doesn't depend on the queue. Enable under **Settings** > **Print Queue** > **Ambient Drying** (`ambient_drying_enabled`). On any idle printer where humidity is above the threshold — and has [stayed there for the set time](#wait-for-sustained-humidity) — BamDude starts drying without setting a target temperature — useful as a 24/7 humidity-keeper for an idle farm.
 
 ### Continue drying while printing
 
@@ -574,6 +602,22 @@ A1, A1 Mini, P1P / P1S, X1 (non-C) and X1E are excluded — their firmware rejec
 
 !!! note "Temperature is capped mid-print"
     While a print is running, the drying temperature is capped **5 °C below the idle preset**, with a floor of **40 °C** — Bambu warns the drying temperature must stay below the filament's softening point during a print. Example: a PETG preset of 65 °C dries at 60 °C mid-print.
+
+### Wait for sustained humidity
+
+Opening an AMS lid lets room air in, and the humidity reading jumps for a few minutes. So that such a spike does not start hours of heating, auto-drying starts a cycle only after the reading has **stayed above the threshold for a set time**.
+
+| Setting | Where | Default |
+|---|---|---|
+| **Wait for sustained humidity** | **Settings → Filament → AMS Display Thresholds → Queue Auto-Drying** | on |
+| **Sustained time (minutes)** | shown while the switch is on; 5–240 | **15** |
+
+Switching **Wait for sustained humidity** off stores `0` (`auto_drying_sustained_minutes`), and a cycle then starts on the first reading above the threshold.
+
+- A single reading back at or below the threshold restarts the count. So does a stretch in which the unit could not be observed — a printer that was offline, for example.
+- The wait covers [ambient drying](#ambient-drying) and drying that starts [during a print](#continue-drying-while-printing).
+- A printer with a scheduled job ahead (see [Queue Auto-Drying](#queue-auto-drying)) dries at once: that drying has a deadline.
+- After a finished cycle the count starts afresh and runs alongside the 30-minute pause that follows a cycle — the two waits overlap rather than add up.
 
 ---
 

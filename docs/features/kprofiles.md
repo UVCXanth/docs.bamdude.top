@@ -85,8 +85,10 @@ Use this after manual on-printer calibration — it pulls the freshly-tuned valu
 
 **Saving and deleting wait for the printer's verdict.** They used to be fire-and-forget — BamDude reported success the moment the bytes left the process, and the printer's actual answer was thrown away in a debug log. If the printer says no, you now see **its own reason**.
 
-!!! note "A printer that stays silent is still treated as success"
-    No answer is not evidence of refusal.
+!!! note "A printer that stays silent: sent, not confirmed"
+    No answer is not evidence of refusal, so the save or delete still goes through — but it is not reported as confirmed either. On a printer that has answered such a write earlier in the same connection, a missing answer shows as a warning: *K-profile sent, but the printer did not confirm it. Refresh to check.* (deletes and imports say the same about themselves). Firmware that never answers these writes gets no such warning — there silence says nothing.
+
+**A table the printer did not answer for is not an empty table.** When the printer does not reply to the K-profile request, the page shows **K-profiles could not be read** — *The printer did not answer the request. Its profiles are still on the printer - refresh to read them again.* — instead of **No K-Profiles**, and nothing BamDude knows about that nozzle's profiles is removed. The **Configure AMS Slot** dialog says the same in its K-profile block; saving it then keeps the K-profile the slot is on.
 
 ### Nozzle size on a profile
 
@@ -161,6 +163,16 @@ Three ways to create a profile from scratch:
 Auto-matching between spools and profiles keys on the family — which is what
 lets a custom filament (your own vendor and name) find its own calibration
 instead of collapsing onto Generic.
+
+A spool needs no link of its own. Unless you picked a profile for it by hand,
+a spool assigned to a slot gets the **active calibration of its filament** for
+that printer, the nozzle the slot feeds and that nozzle's flow type — a new
+spool of a filament you already calibrated prints with that calibration.
+
+On a two-nozzle printer every slot is bound against the nozzle it feeds. Right
+after connecting the printer may not have said yet which nozzle an AMS feeds;
+such a slot is left unbound rather than given the right-hand nozzle's profile
+by guess, and is bound once the printer reports it.
 
 ### From calibration result
 

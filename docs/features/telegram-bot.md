@@ -272,7 +272,10 @@ only from the chat's printers, and the bot itself lists, snapshots and
 commands only them (printer list, cameras, queue view, controls; a button
 from an old message aimed at an out-of-scope printer is refused). Events
 that name no printer (test messages, farm-wide news) still reach every
-chat. This replaced the old provider-level printer filter — for telegram
+chat — with two exceptions that go only to chats left on all printers: the
+**AutoQueue needs attention** summary and alerts of a room or storage
+sensor (see [Notifications → Per-Printer Filtering](notifications.md#per-printer-filtering)).
+This replaced the old provider-level printer filter — for telegram
 the provider binding is migrated onto existing chats and then cleared, like
 every other provider-level knob.
 

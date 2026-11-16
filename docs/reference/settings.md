@@ -54,7 +54,8 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | Key | Default | Effect |
 |---|---|---|
 | `queue_drying_enabled` | `false` | Allow auto-drying between queue items when the next print's filament needs it. |
-| `queue_drying_block` | `false` | Block the next print until drying completes (rather than running it in parallel with the current print). |
+| `queue_drying_block` | `false` | Hold the printer's queue while a drying cycle is really running. It does not prevent a cycle ahead of a job that cannot start yet; the AutoQueue prefers an equally suitable printer that is not held. |
+| `auto_drying_sustained_minutes` | `15` | Minutes an AMS must read above its humidity threshold before auto-drying starts a cycle no scheduled job is waiting for; `0` starts on the first reading. See [AMS & Humidity](../features/ams.md). |
 | `ambient_drying_enabled` | `false` | Auto-dry AMS filament on idle printers when humidity exceeds threshold, regardless of queue state. |
 | `print_drying_enabled` | `false` | Allow auto-drying to also fire on a printer that's currently **printing**, when its model + firmware supports concurrent drying (H2D 01.03.00.00+, H2C/H2S/P2S/H2D Pro 01.02.00.00+, X2D/A2L 01.01.00.00+, X1C 01.11.02.00+). Mid-print drying temp is capped 5 °C below the idle preset (floor 40 °C). See [AMS & Humidity](../features/ams.md). |
 | `drying_presets` | empty | JSON object of per-filament drying presets. Empty = use built-in defaults. |
@@ -136,6 +137,7 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | `spoolman_sync_mode` | `auto` | `auto` syncs immediately on changes; `manual` requires explicit button press. |
 | `spoolman_disable_weight_sync` | `false` | Don't push BamDude-tracked usage back to Spoolman — only update location. |
 | `spoolman_report_partial_usage` | `true` | Report estimated usage on failed / cancelled prints based on layer progress. |
+| `spool_sort_order` | empty | Sort levels (a field and a direction each) for the slot-assignment dialog and for the Filaments page while no column is chosen. Empty keeps the built-in order. See [Spool order](../features/inventory.md#spool-order). |
 | `spool_display_template` | `{brand} {material} {subtype} {color_name}` | Template for the synthesised spool display name. Placeholders: `{brand}`, `{material}`, `{subtype}`, `{color_name}`, `{color_hex}`, `{slicer_filament_name}`, `{note}`, `{label_weight_g}`, `{label_weight_kg}`, `{remaining_g}`, `{remaining_kg}`, `{remaining_pct}`, `{cost_per_kg}`. Unknown placeholders are kept verbatim so typos surface. |
 
 ## :material-network: Network / connectivity

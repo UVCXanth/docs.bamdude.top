@@ -54,7 +54,8 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 | Key | Default | Ефект |
 |---|---|---|
 | `queue_drying_enabled` | `false` | Дозволити auto-drying між queue-items, коли пластик наступного друку це потребує. |
-| `queue_drying_block` | `false` | Блокувати наступний друк до завершення drying (замість паралельно з поточним). |
+| `queue_drying_block` | `false` | Тримати чергу принтера, поки цикл сушіння справді триває. Не заважає циклу перед завданням, яке ще не може стартувати; AutoQueue віддає перевагу такому самому придатному принтеру без утримання. |
+| `auto_drying_sustained_minutes` | `15` | Скільки хвилин AMS має показувати вологість вище порога, перш ніж автосушіння почне цикл, якого не чекає заплановане завдання; `0` — старт за першим показом. Див. [AMS і вологість](../features/ams.md). |
 | `ambient_drying_enabled` | `false` | Auto-сушити AMS-філамент на idle-принтерах, коли humidity вище порогу — незалежно від стану черги. |
 | `print_drying_enabled` | `false` | Дозволити auto-drying стріляти й на принтері, який зараз **друкує**, коли його модель + firmware підтримують concurrent drying (H2D 01.03.00.00+, H2C/H2S/P2S/H2D Pro 01.02.00.00+, X2D/A2L 01.01.00.00+, X1C 01.11.02.00+). Температура сушіння під час друку капається на 5 °C нижче idle-пресету (floor 40 °C). Див. [AMS та вологість](../features/ams.uk.md). |
 | `drying_presets` | пусто | JSON-об'єкт пресетів сушіння per-філамент. Пусто = вбудовані дефолти. |
@@ -136,6 +137,7 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 | `spoolman_sync_mode` | `auto` | `auto` синкає одразу на кожну зміну; `manual` чекає кнопки. |
 | `spoolman_disable_weight_sync` | `false` | Не пушити BamDude-tracked usage назад у Spoolman — оновлювати лише локацію. |
 | `spoolman_report_partial_usage` | `true` | Звітувати оцінену витрату на failed / cancelled друках за progress-у шарів. |
+| `spool_sort_order` | порожньо | Рівні сортування (поле й напрям) для діалогу призначення слота і сторінки «Філамент», поки не обрано колонку. Порожнє значення лишає вбудований порядок. Див. [Порядок котушок](../features/inventory.md#spool-order). |
 | `spool_display_template` | `{brand} {material} {subtype} {color_name}` | Шаблон синтезованого display-name котушки. Placeholder-и: `{brand}`, `{material}`, `{subtype}`, `{color_name}`, `{color_hex}`, `{slicer_filament_name}`, `{note}`, `{label_weight_g}`, `{label_weight_kg}`, `{remaining_g}`, `{remaining_kg}`, `{remaining_pct}`, `{cost_per_kg}`. Невідомі placeholder-и лишаються як є — щоб одруки виплили. |
 
 ## :material-network: Мережа / зв'язок

@@ -336,12 +336,21 @@ The pause-state is also visualised on the Printers page in real time — a pause
 | Event | Fires when |
 |-------|------------|
 | `queue_job_added` / `queue_job_started` / `queue_job_skipped` / `queue_job_failed` | Self-explanatory queue lifecycle events. Only the events you opt into. |
-| `queue_job_waiting` | New actionable AutoQueue obstacles, aggregated once per routing pass. Ordinary busy printers stay silent; see [AutoQueue notifications](auto-queue.md#notifications-about-obstacles). |
+| `queue_job_waiting` | New actionable AutoQueue obstacles, aggregated once per routing pass. Ordinary busy printers stay silent; see [AutoQueue notifications](auto-queue.md#notifications-about-obstacles). Not sent to a provider or Telegram chat [limited to some printers](#per-printer-filtering). |
 | `queue_completed` | The **entire install's** queues drain — fires only once every printer is idle with nothing pending. |
 | `printer_queue_completed` | An **individual printer's own** queue drains — fires the moment that printer finishes its last pending job, regardless of what other printers are doing. |
 
 !!! note "Global vs. per-printer queue completion"
     On a single-printer setup the two are equivalent. On a **multi-printer farm** they differ: `queue_completed` waits for *every* printer to go idle, so a long job on one printer suppresses it for all the others. `printer_queue_completed` fires per printer the moment that printer's own queue empties — pick this one if you want a "this machine is free, load the next plate" ping per printer. `printer_queue_completed` is **ON** by default for new providers; `queue_completed` is off by default.
+
+**Inventory:**
+
+| Event | Fires when |
+|-------|------------|
+| `stock_reorder_alert` | A filament has reached its reorder point in the stock forecast. |
+| `stock_break_alert` | A filament will run out before a replenishment could arrive. |
+
+Both are off by default on providers and Telegram chats. The message names the filament in full — material, subtype and **colour** — in its title and body, so Black and White of one product are two different messages. A filament is in one state or the other, and a break is the more urgent news: a recipient subscribed to both events gets the break message only, while a recipient subscribed to **reorder alerts only** gets the reorder message for a filament that is already in break. Nobody receives both for the same filament.
 
 **User / system:**
 
@@ -499,6 +508,18 @@ Templates substitute `{variable}` placeholders. The schema is locked per event, 
 | `{missing_slots}` | Comma-separated slot labels (`A1, A3`) for `print_missing_spool_assignment` |
 | `{missing_slot_details}` | Per-slot breakdown with expected profile (`- A1: PLA Basic`) |
 
+**Inventory events** (`stock_reorder_alert`, `stock_break_alert`):
+
+| Variable | Meaning |
+|---|---|
+| `{filament}` | The filament the alert is about — material, subtype and colour in one name |
+| `{material}`, `{subtype}`, `{color}` | The same three parts on their own |
+| `{brand}` | Brand |
+| `{stock_g}` | Stock left, grams |
+| `{rate_g_day}` | Consumption rate, grams per day |
+| `{days_left}` | Days of stock left |
+| `{lead_time_days}` | Lead time in days (`stock_break_alert` only) |
+
 **Common to every event:** `{timestamp}`, `{app_name}` (always `"BamDude"`).
 
 Click **Reset to default** in the editor to restore the original template from `notification_templates_{en,uk}.json`.
@@ -537,6 +558,13 @@ Each non-telegram provider has a printer scope — **All** (default), one, or an
 - One Discord webhook per workshop — each scoped to that workshop's printers
 - A "VIP printer" Telegram chat scoped to your one revenue-generating production unit
 - A maintenance-only ntfy provider scoped to printers due for filter changes / belt swaps
+
+News that names no printer is split in two. Farm-wide news — the whole farm's queue completing, stock alerts, test messages — still reaches every provider and chat, restricted or not. Two kinds do **not** reach a recipient limited to some printers:
+
+- the **AutoQueue needs attention** summary (`queue_job_waiting`) — it describes the whole farm's obstacles and names no printer, so it goes to unrestricted providers, unrestricted Telegram chats and the inbox only;
+- alerts of a **room or storage sensor** — one that stands on a location, not on a printer. An alert of a sensor placed on a printer follows that printer's scope.
+
+A provider or chat that should receive these has to be left on **All** printers.
 
 ---
 

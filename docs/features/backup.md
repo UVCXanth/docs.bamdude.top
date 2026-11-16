@@ -206,7 +206,7 @@ Toggle each independently. Defaults are tuned for "back up the things most opera
 |----------|-------------|:-------:|
 | **K-profiles** | Per-printer pressure-advance profiles (organized by serial number). | :material-check: On |
 | **Cloud profiles** | Filament, printer, and process profiles from Bambu Cloud. | :material-check: On |
-| **Spools** | Full inventory dump (rows + usage history). | :material-check: On |
+| **Spools** | Full inventory dump: every spool's full record, archived spools included, plus the complete usage history with the print each record belongs to — of the built-in inventory and of [Spoolman mode](spoolman.md#spoolman-usage-history). | :material-check: On |
 | **Archives (metadata)** | Print history metadata — filament, temperatures, times, costs, energy (no 3MF / no thumbnails). | :material-check: On |
 | **App settings** | Application settings table (sensitive fields excluded). | :material-close: Off |
 | **Archives (3MF + thumbnails)** | Bulk 3MF + thumbnail file content — bumps repo size by ~50–500 MB per 100 prints. | :material-close: Off |
@@ -233,12 +233,19 @@ repo/
 │   └── app_settings.json
 ├── spools/
 │   ├── inventory.json
-│   └── usage_history.json
+│   ├── usage_history.json
+│   └── spoolman_usage_history.json
 └── archives/
     └── print_history.json
 ```
 
 The flat structure makes partial restore unambiguous — you can pull just `kprofiles/{serial}/` for one printer, or just `spools/inventory.json` for inventory recovery, without touching the rest.
+
+What a restore brings back for these categories:
+
+- **Spool usage history** — every record is restored with its spool and its print. The link to a print is resolved through the print archives restored in the same run, so select **Print Archives** alongside **Spool Inventory** to keep it; without them the records come back unlinked, and the restore says how many. A backup whose usage file does not name the prints restores its records without that link too.
+- **Spoolman-mode usage history** — `spools/spoolman_usage_history.json` is written whatever the inventory mode and is restored onto the Spoolman the restoring installation uses. Records already present are not written twice. With no Spoolman address set on the restoring installation they are skipped, and the restore says so.
+- **K-profiles** — a nozzle whose K-profile table the printer did not answer for is skipped: its profiles are not restored, and the result names the printer and the nozzle. Restore again once the printer answers.
 
 ### :material-monitor-dashboard: Status panel
 
