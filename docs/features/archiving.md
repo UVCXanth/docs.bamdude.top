@@ -215,6 +215,8 @@ A recovered file must be the plate that was printed: a candidate whose sliced pl
 
 Concurrent triggers don't race: a per-archive `asyncio.Lock` returns `"in_progress"` immediately if another retry is already running. Five distinct return statuses (`recovered`, `already_has_file`, `in_progress`, `failed`, `error`) map to clean toasts in the UI. The print-start download takes the same lock even though it doesn't come from this service — a printer reconnect part-way through it would otherwise open a second FTP session for a file already on its way, and attach a second copy on top of the first. So does the download for a print BamDude adopts at start-up (below).
 
+One attempt fetches a file at most once. When a download starts and then fails, the attempt ends there instead of trying the other candidate names over a connection that has just failed; the next trigger asks again. From built-in storage the file is checked as it arrives — every frame, and the whole file against the printer's own checksum when the printer sends one — and is written straight to disk rather than held in memory.
+
 While the row has no file yet:
 
 - **Thumbnails and 3D preview won't render** — the 3MF doesn't exist locally yet.
@@ -431,7 +433,9 @@ That catalogue names the print each recording belongs to, so the video is matche
 
 On both media the printer also reports the full path of the recording it has just finished writing, and the automatic scan takes **that** file by name instead of assuming the one new recording is the right one. It is still only accepted if it appeared after this print started — otherwise a video recorded from the printer's own screen mid-print, which the printer would honestly report as its most recent, could be attached to the wrong job.
 
-If the printer's storage did not answer when the print started, BamDude could not see what was already there, so "new since this print started" tells it nothing. A single new recording, or the one the printer names, is still attached. Between several others it will not guess — they stay on the printer for **Scan for timelapse**, rather than an arbitrary one being attached (and, with the clean-up below on, deleted from the printer).
+If the printer's storage did not answer completely when the print started — a folder it did not list, or a reply with a line BamDude could not read — BamDude could not see what was already there, so "new since this print started" tells it nothing. A folder the card simply does not have still counts as an answer. A single new recording, or the one the printer names, is still attached. Between several others it will not guess — they stay on the printer for **Scan for timelapse**, rather than an arbitrary one being attached (and, with the clean-up below on, deleted from the printer).
+
+A recording is downloaded for as long as it keeps arriving; only a connection that has gone quiet is dropped. When a printer's file service refuses the connection, the automatic scan leaves that printer alone for a short while that grows with each refusal and starts over once the printer answers. **Scan for timelapse** is never held back.
 
 !!! note "Which printers keep timelapses internally"
     Not the same set as those that keep models internally — a machine can do one and not the other, so BamDude checks the two capabilities separately and only asks for a catalogue the printer says it has.
