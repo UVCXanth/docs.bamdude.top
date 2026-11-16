@@ -243,14 +243,16 @@ pending setup) нічого не читає і нічого не робить, �
 
 ### Фільтр подій
 
-Виберіть, які з 23 типів подій (`backend/app/models/telegram_chat.py::ALL_NOTIFY_EVENTS`) цей чат має отримувати. Це **єдина** authority для per-event фільтра в telegram — provider-row на рівні бота не гейтує події. Дефолти відображають те, що цікавить більшість операторів:
+Виберіть, які з 41 типу подій (`backend/app/models/telegram_chat.py::ALL_NOTIFY_EVENTS`) цей чат має отримувати. Це **єдина** authority для per-event фільтра в telegram — provider-row на рівні бота не гейтує події. Дефолти відображають те, що цікавить більшість операторів:
 
 | Дефолтно увімкнено |
 |---|
-| `print_complete`, `print_failed`, `print_stopped`, `plate_not_empty`, `queue_job_waiting`, `queue_job_skipped`, `queue_job_failed` |
+| `print_complete`, `print_failed`, `print_stopped`, `print_paused`, `plate_not_empty`, `filament_deficit`, `queue_job_waiting`, `queue_job_skipped`, `queue_job_failed`, `printer_queue_completed`, `ams_drying_suspended`, `scheduled_drying_failed` |
 
-Усе інше (`print_start`, `print_progress`, `printer_offline`,
-`maintenance_due`, AMS humidity/temperature, події черги тощо) opt-in.
+Усе інше (`print_start`, `print_progress`, `pause_coming_up` —
+[попередження перед паузою слайсера](notifications.uk.md#pause-coming-up), —
+`printer_offline`, `maintenance_due`, AMS humidity/temperature, події черги
+тощо) opt-in.
 Чат майстерні може передплатити лише `print_failed`; адмінський чат —
 взагалі все.
 

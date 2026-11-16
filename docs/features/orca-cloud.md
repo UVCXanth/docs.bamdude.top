@@ -64,11 +64,13 @@ Once connected, Orca Cloud profiles feed the same surfaces as Bambu Cloud:
 
 | Surface | How Orca profiles appear |
 |---|---|
-| Slice modal | A fourth preset tier, `orca_cloud`, ranked **above** local / Bambu Cloud / standard |
+| Slice modal | A preset tier of its own, `orca_cloud` — the **Orca Cloud** group, listed after imported profiles and before Bambu Cloud and the standard presets |
 | AMS-slot family picker | Orca custom filaments are first-class [families](filament-families.md) — mirrored server-side into the family catalog alongside Bambu Cloud's, badge and all; the printer receives the family id, or a system family of the same filament type on printers without user-preset support |
 | Profiles → Orca Cloud tab | Grouped printer / process / filament grid with search + filters + a read-only detail modal |
 
 Orca's `sync_pull` returns each profile's **full content inline**, so — unlike Bambu Cloud, where filament type/colour need a separate per-preset fetch that hits a rate limit — Orca filaments carry their `filament_type` and colour for free. The slice modal's metadata-aware pre-pick uses that to rank Orca filaments accurately without extra round-trips.
+
+A profile saved with only the settings its author changed states no material of its own; it takes the material of its filament family — the profile's own filament id, else the profile it was saved from. A compatible-printer list or a material that Orca Cloud sends as one string of quoted names (`"A";"B"`) is read as the list it is, and a printer profile saved under a name of your own is matched as the printer it was saved from.
 
 !!! note "Slice tier priority"
     `local` > `orca_cloud` > `cloud` (Bambu) > `standard`. There is deliberately **no cross-tier dedup**: every tier surfaces its full list, so the same name may appear in several groups and you pick the source. Each cloud tier also has its **own** status banner in the slice modal — Bambu and Orca can be signed-out / expired / unreachable independently.

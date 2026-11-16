@@ -63,7 +63,7 @@ For headless setups, SSO accounts, or environments where the email/OTP round-tri
 
 1. Click **Use access token instead**
 2. Obtain a Bambu Cloud bearer via [`bambu-lab-cloud-api`](https://pypi.org/project/bambu-lab-cloud-api/), or from a browser logged into MakerWorld (DevTools → Application → Cookies → `token`). Bambu Studio no longer exposes the token in any UI, so the old "grab it from Studio" route no longer works. Treat the cookie value as a secret.
-3. Paste it into the **Access token** field, pick the region
+3. Paste it into the **Access token** field, pick the region. Whitespace around the pasted value is trimmed. A value that cannot be a token at all — empty, with a space or a line break inside, or with non-ASCII characters — is refused at once as *Invalid token*, before Bambu is asked
 4. BamDude verifies the token by calling `/v1/user-service/user/profile`. On success the token is stored against your user row
 
 !!! note "China-region accounts must use token login"
@@ -72,9 +72,22 @@ For headless setups, SSO accounts, or environments where the email/OTP round-tri
 !!! note "Cloud Access Token vs Printer Access Code"
     The Cloud Access Token is the bearer used for the Bambu API + MQTT — that's what this page wants. The Printer Access Code on the printer's screen (Network settings) is the per-printer LAN credential — different field, different page (the [Printers](printer-control.md) form).
 
+### When Bambu Cloud cannot be reached { #cloud-unreachable }
+
+An outage on Bambu's side is told apart from a wrong credential, in all three flows:
+
+| What happened | What you see |
+|---|---|
+| Bambu Cloud does not answer, or answers with a server error or a page where data belongs | *Bambu Cloud could not be reached: …* with the cause, or *Bambu Cloud could not be reached (it answered HTTP 503)* with the status it gave. Your password, code or token was not judged, and a sign-in that is already stored is kept. Try again later. |
+| Wrong password or verification code | Bambu's own refusal message. |
+| A pasted token Bambu refuses | *Invalid token*. |
+| The stored session has expired and cannot be renewed | The sign-in-expired notice — see [Token lifetime](#token-lifetime). |
+
+The same holds after sign-in: when Bambu Cloud cannot be reached, the preset list, the device list and the firmware check say so and leave the stored sign-in alone. Over the API these are a `502` carrying the message; `401` is answered only when Bambu refused the credential itself.
+
 ---
 
-## :material-clock-end: Token lifetime
+## :material-clock-end: Token lifetime { #token-lifetime }
 
 Bambu Cloud bearers are not permanent. BamDude also stores the
 **refresh token** from the login response, and when Bambu reports the stored
@@ -83,6 +96,14 @@ within minutes instead of demanding a re-login with an email code every few
 months. Only when the renewal itself is refused does the sign-in-expired flow
 below appear. Access tokens pasted by hand have no refresh token, so their
 expiry leads straight to that flow.
+
+The renewal happens wherever the sign-in is used — the cloud profile pages,
+[MakerWorld](makerworld.md) downloads, the Slice dialog's cloud presets and the
+Git backup's cloud-profile export — and the request that met the expiry is
+repeated and succeeds. Requests that meet it at the same moment share one
+renewal. If Bambu Cloud cannot be reached for the renewal, the request answers
+*Bambu Cloud could not be reached to renew the expired sign-in. Try again
+shortly.* and nothing stored changes.
 
 BamDude checks the stored token **against Bambu Lab** rather than assuming it
 still works, so **Connected** means Bambu accepted it — not merely that one is
@@ -94,7 +115,9 @@ don't each pay a round-trip.
 When the token lapses, **every** Bambu Cloud feature stops at once — cloud
 profiles, MakerWorld, slicer presets and printer firmware checks — because they
 all carry the same token. The first genuine rejection is recorded once and shared,
-so they all agree at the same moment rather than each rediscovering it.
+so they all agree at the same moment rather than each rediscovering it. The
+firmware-updates check reports the expired sign-in as such, instead of listing
+your printers with an unknown firmware version.
 
 The Profiles page shows the login form again **with an explicit "sign-in expired"
 notice**, so you know why it reappeared. Sign in again there and everything
@@ -124,7 +147,9 @@ Once connected, the slice modal and other consumers can read your Bambu Cloud da
 | Filament-id → name resolution | `POST /api/v1/cloud/filament-info` | AMS tray tooltips, K-profile filament labels |
 | Official filament names | `GET /api/v1/cloud/builtin-filaments` | Served from the built-in [family catalog](filament-families.md) |
 
-Custom (private) presets land first in the list, public (built-in) presets after. The slicer-presets unifier (`/slicer/...`) merges these with [Local Profiles](local-profiles.md) by name and surfaces a single deduplicated list to the slice modal.
+Custom (private) presets land first in the list, public (built-in) presets after. The Slice dialog lists them as two groups — **Bambu Cloud — my presets** and **Bambu Cloud** — beside [Local Profiles](local-profiles.md), Orca Cloud and the slicer's standard presets. Nothing is merged by name: a preset that exists under one name in several sources is listed once per source (see [Slicer API → Preset lists](slicer-api.md#preset-lists)).
+
+A cloud filament preset's **material** comes from the filament family the preset belongs to — by its setting id, else by the family the preset names, else from its own filament type — and never from its name. A preset for a printer the slicer's bundle does not cover therefore still has a material; one whose material nothing states counts as "unknown" rather than guessed, and stays eligible in the Slice dialog's pre-pick.
 
 !!! note "The tab shows your presets only"
     The Bambu Cloud tab lists the **private** half of the listing — your own
@@ -191,6 +216,12 @@ For setups without per-user Bambu Cloud (single-user / auth-disabled), the globa
 
 ??? question "Login returns `Invalid credentials` but the same password works in Bambu Studio"
     Region mismatch is the usual cause — picking **Global** when the account is registered on the China backend (or vice versa) returns generic auth failures, not a friendly "wrong region" hint. Toggle the region dropdown and retry.
+
+??? question "Sign-in answers *Bambu Cloud could not be reached*"
+    Bambu Cloud did not answer, or answered with a server error — BamDude's server could not get through to it. Nothing about your password, code or token was checked, and a stored sign-in is kept. Check that the BamDude host has internet access, then try again later. See [When Bambu Cloud cannot be reached](#cloud-unreachable).
+
+??? question "A pasted token is refused as *Invalid token*"
+    Either the value cannot be a token — it is empty, or has a space, a line break or a non-ASCII character inside (copy the cookie value alone) — or Bambu refused it.
 
 ??? question "TOTP code rejected"
     Clock drift. Open your phone's settings → Date & time → enable Network-provided time. TOTP windows are 30 s, anything over a minute of drift will reject every code. Re-enrol in your authenticator app if the drift is persistent.

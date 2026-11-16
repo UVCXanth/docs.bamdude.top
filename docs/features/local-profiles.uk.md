@@ -64,7 +64,7 @@ Bundle-імпорти **all-or-nothing per file**: corrupt JSON всередин
 OrcaSlicer presets часто `inherit` Bambu base-profile і override-ять кілька полів ("PLA Basic at 215 °C замість 220 °C, інакше як parent"). На імпорті BamDude:
 
 1. Детектить `inherits` field.
-2. Шукає parent-а у **OrcaSlicer GitHub mirror** (`raw.githubusercontent.com/SoftFever/OrcaSlicer/main/resources/profiles/BBL/...`).
+2. Шукає parent-а у **OrcaSlicer GitHub mirror** (`raw.githubusercontent.com/SoftFever/OrcaSlicer/main/resources/profiles/BBL/...`) — за **назвою**, через власний індекс пресетів вендора, тож parent, який лежить у теці бренду (`filament/P1P/`, `filament/SUNLU/`) чи має `/` у назві (`Bambu Support For PLA/PETG @BBL A1`), знаходиться так само, як будь-який інший.
 3. Рекурсивно резолвить ланцюг (max **10 рівнів** — далі трактує як malformed і стоп).
 4. Мерджить parent → child (child fields перемагають на конфлікті).
 5. Зберігає **повністю resolved** preset у локальній БД, плюс літеральний `inherits`-name на рядку для display-у.
@@ -94,7 +94,7 @@ OrcaSlicer presets часто `inherit` Bambu base-profile і override-ять к
 | `filament_cost`, `filament_density` | Per-spool економіка |
 | `compatible_printers` | JSON array — драйвить "for printer" фільтр |
 | `setting` | Повний resolved JSON блоб (post-inheritance merge) |
-| `inherits` | Літеральний parent-name для display |
+| `inherits` | Літеральний parent-name для display. Для профілю принтера, збереженого під власною назвою, це ще й те, звідки діалог нарізки знає, який це принтер: модель, сопло й сумісні профілі процесу / філаменту в нього — від пресета, з якого його збережено. |
 | `version`, `created_at`, `updated_at` | Bookkeeping |
 
 Повний resolved блоб — те, що споживають slicing-пайплайни. Усе, що нормально читається з OrcaSlicer preset JSON, там.
@@ -115,13 +115,14 @@ Filament local presets з'являються у AMS slot-config modal так с�
 
 ## :material-layers-triple: Tier priority
 
-Три source-и можуть відповісти "що таке preset X?". Коли slice modal просить merged-список:
+Чотири джерела наповнюють списки профілів діалогу нарізки, у такому порядку:
 
-1. **Local** (ця сторінка) — file-imported, DB-backed, `source='orcaslicer'` чи `'manual'`. **Перемагає на name-колізії.**
-2. **Cloud** — fetched per-user з Bambu Cloud (див. [Cloud Profiles](cloud-profiles.md)).
-3. **Bundled** — slicer-sidecar fallback. Bambu stock-каталог, як shipped всередині OrcaSlicer-image.
+1. **Local** (ця сторінка) — file-imported, DB-backed, `source='orcaslicer'` чи `'manual'`. У списку — група **Імпортовані**.
+2. **Orca Cloud** — fetched per-user з Orca Cloud (див. [Orca Cloud](orca-cloud.md)).
+3. **Bambu Cloud** — fetched per-user з Bambu Cloud (див. [Cloud Profiles](cloud-profiles.md)).
+4. **Стандартні** — пресети, що йдуть разом зі слайсером у sidecar'і.
 
-Unifier (`/api/v1/slicer/...`) дедуплікує по імені через tier-и, тримає highest-priority entry. Тож якщо ти заімпортував `Bambu PLA Basic @BBL X1C` локально і маєш cloud-версію — показується тільки local. Саме та поведінка, що ти хочеш, коли community-preset розходиться з upstream.
+За назвою нічого не зливається: кожне джерело показує все, що має. Якщо ти заімпортував `Bambu PLA Basic @BBL X1C` локально, а Bambu Cloud і комплект слайсера мають пресет із такою назвою, діалог показує три записи, кожен під своїм джерелом, і ти обираєш, яким нарізати. Порядок вирішує лише автоматичні вибори: там імпортований пресет іде попереду так само придатного з іншого джерела. Див. [Slicer API → Списки профілів](slicer-api.md#preset-lists).
 
 ---
 
@@ -209,4 +210,4 @@ Base-profile кеш живе окремо у таблиці `orca_base_profiles`
     Експорти з OrcaSlicer / Bambu Studio (`File → Export → Export Preset Bundle`), кидай `.bbscfg` у import-zone кожного install-а. DB row-format спеціально не stable interchange format — round-trip через slicer-export.
 
 ??? question "Можна Cloud + Local разом?"
-    Так — співіснують. Local перемагає на name-колізії. Якщо хочеш, щоб cloud-preset перебивав local-ний — переіменуй local (його DB `name` field) до наступного slice.
+    Так — співіснують. Пресет з однаковою назвою в обох стоїть у діалозі нарізки двічі — раз у групі **Імпортовані** і раз у своїй cloud-групі, — і ти обираєш, яким нарізати.

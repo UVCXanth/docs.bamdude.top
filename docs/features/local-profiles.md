@@ -64,7 +64,7 @@ Bundle imports are **all-or-nothing per file**: a corrupt JSON inside a ZIP does
 OrcaSlicer presets often `inherit` a Bambu base profile and only override a few fields ("PLA Basic at 215 °C instead of 220 °C, otherwise like the parent"). On import, BamDude:
 
 1. Detects the `inherits` field.
-2. Looks up the parent in the **OrcaSlicer GitHub mirror** (`raw.githubusercontent.com/SoftFever/OrcaSlicer/main/resources/profiles/BBL/...`).
+2. Looks up the parent in the **OrcaSlicer GitHub mirror** (`raw.githubusercontent.com/SoftFever/OrcaSlicer/main/resources/profiles/BBL/...`) — by its **name**, through the vendor's own index of presets, so a parent kept in a brand subfolder (`filament/P1P/`, `filament/SUNLU/`) or with a `/` in its name (`Bambu Support For PLA/PETG @BBL A1`) is found like any other.
 3. Recursively resolves the chain (max **10 levels** deep — anything beyond is treated as malformed and stops there).
 4. Merges parent → child (child fields win on conflict).
 5. Stores the **fully resolved** preset in the local DB, plus the literal `inherits` name on the row for display.
@@ -94,7 +94,7 @@ The cache makes repeat imports fast and keeps you out of GitHub's anonymous rate
 | `filament_cost`, `filament_density` | Per-spool economics |
 | `compatible_printers` | JSON array — drives the "for printer" filter |
 | `setting` | The full resolved JSON blob (post-inheritance merge) |
-| `inherits` | Literal parent name for display |
+| `inherits` | Literal parent name for display. For a printer preset saved under a name of your own it is also how the Slice dialog knows which printer the preset is: its model, nozzle and compatible process / filament profiles are those of the preset it was saved from. |
 | `version`, `created_at`, `updated_at` | Bookkeeping |
 
 The full resolved blob is what slicing pipelines consume. Anything you can normally read out of OrcaSlicer's preset JSON is in there.
@@ -115,13 +115,14 @@ See [AMS](ams.md) for how slot config flows from "preset selected" to "MQTT comm
 
 ## :material-layers-triple: Tier priority
 
-Three sources can answer "what's preset X?". When the slice modal asks for the merged list:
+Four sources feed the Slice dialog's preset lists, in this order:
 
-1. **Local** (this page) — file-imported, DB-backed, `source='orcaslicer'` or `'manual'`. **Wins on name collision.**
-2. **Cloud** — fetched per-user from Bambu Cloud (see [Cloud Profiles](cloud-profiles.md)).
-3. **Bundled** — slicer-sidecar fallback. Bambu's stock catalog as shipped inside the OrcaSlicer image.
+1. **Local** (this page) — file-imported, DB-backed, `source='orcaslicer'` or `'manual'`. Listed as **Imported**.
+2. **Orca Cloud** — fetched per-user from Orca Cloud (see [Orca Cloud](orca-cloud.md)).
+3. **Bambu Cloud** — fetched per-user from Bambu Cloud (see [Cloud Profiles](cloud-profiles.md)).
+4. **Standard** — the presets bundled with the slicer in the sidecar.
 
-The unifier (`/api/v1/slicer/...`) deduplicates by name across tiers, keeping the highest-priority entry. So if you import `Bambu PLA Basic @BBL X1C` locally and have the cloud-side version too, only the local one shows — exactly the behaviour you want when a community preset diverges from upstream.
+Nothing is merged by name: every source lists everything it has. If you import `Bambu PLA Basic @BBL X1C` locally while Bambu Cloud and the slicer's bundle carry a preset of that name, the dialog shows three entries, each under its own source, and you pick the one to slice with. The order decides only the automatic picks, where an imported preset comes ahead of an equally good one from another source. See [Slicer API → Preset lists](slicer-api.md#preset-lists).
 
 ---
 
@@ -209,4 +210,4 @@ The base-profile cache lives separately in the `orca_base_profiles` table — DB
     Export from OrcaSlicer / Bambu Studio (`File → Export → Export Preset Bundle`), drop the `.bbscfg` into the import zone on each install. The DB row format is intentionally not a stable interchange format — round-trip via the slicer's export.
 
 ??? question "Can I use both Cloud and Local at once?"
-    Yes — they coexist. Local wins on name collision. If you want a cloud preset to override a local one, rename the local one (its DB `name` field) before the next slice.
+    Yes — they coexist. A preset with the same name in both is listed twice in the Slice dialog, once under **Imported** and once under its cloud group, and you pick the one to slice with.

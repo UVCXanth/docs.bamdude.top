@@ -187,7 +187,7 @@ Choose a source for every used channel of the selected plate: AMS or a supported
 
 The slot picker of each filament lists every slot with a swatch of its colour (a multi-colour spool is drawn with all its colours), the slot label, what is in it — the assigned spool's name, otherwise material and colour name — the grams left and the colour's hex code, so two different reds that are both named "Red" can be told apart. The slot whose material and colour are exactly what the file asks for carries a tick. The chosen slot shows its swatch and hex code on the row. The list works from the keyboard — arrows, ++home++ / ++end++, ++enter++ to choose, ++esc++ closes the list and leaves the dialog open — and on a phone held upright it takes a line of its own under the filament, with entries tall enough to tap.
 
-On supported dual-nozzle printers, **[L] / [R]** badges show nozzle bindings. Support is not limited to H2D or X2D: it follows the model's capabilities and current configuration. Mixed AMS + external feeds or two separate external feeds are allowed only with the selected plate's correct bindings.
+On supported dual-nozzle printers, **[L] / [R]** badges show nozzle bindings. Support is not limited to H2D or X2D: it follows the model's capabilities and current configuration. For a multi-plate file the nozzle shown for a filament, and the trays offered for it, are those of the chosen plate; choosing another plate updates both. Mixed AMS + external feeds or two separate external feeds are allowed only with the selected plate's correct bindings.
 
 #### H2C nozzle rack
 

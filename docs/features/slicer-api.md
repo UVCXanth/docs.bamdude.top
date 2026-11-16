@@ -100,6 +100,28 @@ If your BamDude server can't run the sidecar containers itself (resource limits,
 
 You can also override the env-var defaults that BamDude reads at startup: `SLICER_API_URL` (default `http://localhost:3003`) and `BAMBU_STUDIO_API_URL` (default `http://localhost:3001`). The UI URL fields take precedence when set.
 
+### Updating the sidecars { #updating-the-sidecars }
+
+There are two reasons to rebuild the containers, and the second needs no version change:
+
+- **A newer slicer** — change `ORCA_VERSION` / `BAMBU_VERSION`.
+- **A newer sidecar** — the HTTP wrapper around the slicer is built together with the container, so it is as old as your last build, whatever BamDude it serves. BamDude asks each sidecar for its code version, and when the running one is older than BamDude needs, the Slice dialog says so under the slicer cards: *"This slicer container is older than this BamDude needs: …"*, with the commands below. Slicing keeps working meanwhile, as far as the older container can: some presets may be missing from the lists, and a preset the slicer cannot resolve is sliced on the slicer's built-in defaults instead of being [refused](#failure-modes).
+
+Either way, rebuild and restart:
+
+```bash
+cd slicer-api
+docker compose --profile all build --no-cache
+docker compose --profile all up -d
+```
+
+Substitute `orca` / `bambu` for `all` if you run only one. The `--profile` flag belongs on both commands: without it Compose skips both services, reports success, and the old container keeps serving.
+
+Two traps, both silent:
+
+- **The build context is the sidecar's GitHub repository** (`https://github.com/kainpl/orca-slicer-api.git#bamdude/profile-resolver`), not a folder on your disk. A rebuild fetches the sidecar's code from there; `--no-cache` is what makes Docker fetch it — and the slicer itself — again instead of reusing the layers of the previous build.
+- **The slicer version is stated twice** — as the default in `docker-compose.yml` and in `.env` — and `.env` wins. An `.env` copied from an older `.env.example` keeps building the older slicer however new the compose file is; change both.
+
 ---
 
 ## :material-cog: Settings → Profiles → Slicer API
@@ -138,9 +160,9 @@ From **File Manager**: action menu on an STL / 3MF / STEP / STP file → **Slice
 
 The Slice modal opens with three preset dropdowns:
 
-- **Printer profile** — from the unified preset listing. Each entry is sourced from one of four tiers listed in fixed precedence with **no cross-tier dedup** (`local` → `orca_cloud` → `cloud` → `standard`): `local` (your imported/local `.json` profiles), `orca_cloud` (per-user Orca Cloud presets), `cloud` (per-user Bambu Cloud presets), `standard` (bundled defaults baked into the sidecar). Because there is no dedup, a preset with the same name in two tiers is listed once per tier — it is not hidden just because another tier has one by that name. The modal labels the tier next to each option. Defaults to the printer the source 3MF was prepared with when that profile is available, otherwise the first listed.
-- **Process profile** — same four tiers, but **filtered to the selected printer**: profiles for other printers drop into a trailing **"Other printers"** group instead of disappearing, and profiles with no printer info stay in the main list (never hidden). Defaults to the process the 3MF was prepared with when compatible; otherwise to the compatible one nearest a 0.20 mm layer height (the slicer's own "Standard"), rather than the alphabetically first — which on Bambu's naming was always the finest and slowest. Changing the printer re-picks the process if the current one no longer fits.
-- **Filament profile(s)** — one dropdown per filament slot **the project declares**, not just the ones this plate paints with, filtered the same way (compatible profiles first, "Other printers" group trailing). The modal pre-picks the best match per slot using the source 3MF's filament metadata: a profile of the slot's own **base material** (PLA, PETG, ABS… — the type the profile states, not a particular brand or profile family; the PA-CF / PA12-CF / PAHT-CF group counts as one, as it does when printing), an exact type ahead of an equivalent one, colour breaking ties and printer-incompatible profiles demoted. A profile of another material is picked only when there is nothing else, and a profile **you** chose — by hand or from a saved pipeline — is never swapped out for its material, so slicing a PLA-labelled model in PETG stays your call. A single click on **Slice** usually does the right thing for multi-color jobs. Beside each dropdown sits a **colour** control — the colour that slot is printed in, written into the sliced file so its thumbnail and the print dialog show it. It starts at the colour the source plate was designed with, or the slicer's default green for a source with none (an STL); set it to the spool you will load. Neither slicer keeps a colour on a filament profile, so without it every sliced file came back Bambu green. It is a record, not a requirement: the print dialog still maps the slot to a spool of any colour.
+- **Printer profile** — from the unified preset listing. Each entry is sourced from one of four tiers listed in fixed precedence with **no cross-tier dedup** (`local` → `orca_cloud` → `cloud` → `standard`): `local` (your imported/local `.json` profiles), `orca_cloud` (per-user Orca Cloud presets), `cloud` (per-user Bambu Cloud presets), `standard` (bundled defaults baked into the sidecar). Because there is no dedup, a preset with the same name in two tiers is listed once per tier — it is not hidden just because another tier has one by that name. The dropdown groups its entries by source — see [Preset lists](#preset-lists). Defaults to the printer the source 3MF was prepared with when that profile is available, otherwise the first listed.
+- **Process profile** — same four tiers, but **filtered to the selected printer**: profiles for other printers drop into a trailing **"Other printers"** group instead of disappearing, and profiles with no printer info stay in the main list (never hidden). Defaults to the process the 3MF was prepared with when compatible; otherwise to the compatible one nearest a 0.20 mm layer height (the slicer's own "Standard"), rather than the alphabetically first — which on Bambu's naming was always the finest and slowest. Changing the printer re-picks an automatically picked process that no longer fits; a process you picked yourself [stays](#explicit-choice).
+- **Filament profile(s)** — one dropdown per filament slot **the project declares**, not just the ones this plate paints with, filtered the same way (compatible profiles first, "Other printers" group trailing). A slot starts on the filament profile the 3MF project itself names for it, when that profile is in the lists, fits the selected printer and is of the plate's material; when several sources hold a profile of that name, the one from the same source as the chosen printer profile is taken. Otherwise the modal pre-picks the best match per slot using the source 3MF's filament metadata: a profile of the slot's own **base material** (PLA, PETG, ABS… — the type the profile states, not a particular brand or profile family; the PA-CF / PA12-CF / PAHT-CF group counts as one, as it does when printing), an exact type ahead of an equivalent one, colour breaking ties and printer-incompatible profiles demoted. A profile of another material is picked only when there is nothing else — and then one the selected printer can use comes ahead of one made for another printer — and a profile **you** chose — by hand or from a saved pipeline — is never swapped out for its material, so slicing a PLA-labelled model in PETG stays your call. A single click on **Slice** usually does the right thing for multi-color jobs. Beside each dropdown sits a **colour** control — the colour that slot is printed in, written into the sliced file so its thumbnail and the print dialog show it. It starts at the colour the source plate was designed with, or the slicer's default green for a source with none (an STL); set it to the spool you will load. Neither slicer keeps a colour on a filament profile, so without it every sliced file came back Bambu green. It is a record, not a requirement: the print dialog still maps the slot to a spool of any colour.
 
     !!! warning "Why every declared slot is listed, even the unused ones"
         The slicer binds this list **by position**. Take a model that declares four
@@ -163,14 +185,88 @@ Compatibility is decided by the profile's own `compatible_printers` list when pr
 
 A **slicer picker** sits at the top of the Slice modal — two card-buttons (mirroring the "Filament Tracking" pattern in Settings) with their own live health badges. Auto-locks to the only-healthy sidecar when one is down; you pick freely when both are reachable; offline cards are disabled. First-time default is the global *Preferred slicer* setting; subsequent opens of the same source file default to your last pick (per-file localStorage).
 
-A **bed-plate override** picker (5 options: Cool / Engineering / High Temp / Textured PEI / SuperTack) wires through to `--curr-bed-type` on the CLI. Default `Textured PEI Plate` matches the factory plate on the modern Bambu lineup; A1 / A1-mini owners flip to SuperTack once and the choice persists in localStorage. Sliced 3MFs from Bambu Studio still honour their embedded per-plate `bed_type` (BamDude forwards the original bytes) — the override only kicks in for sources without one.
-
-A **preset-source control** above the preset dropdowns is a 3-state segmented owner filter (All / My presets / Built-in) applied across all four tiers. It classifies cloud presets as custom-vs-builtin via the same `setting_id` regex the Profiles page uses, `^(P[FPM]US|PF\d|PP\d)`; local imports are always custom, standard presets are always built-in. The selected filter is persisted in localStorage under `bamdude:slice-modal:filter-owner`. Switching the filter clears any current dropdown selection that no longer matches so a hidden (filtered-out) preset can't silently submit at slice time.
-
 For multi-plate 3MFs the modal embeds an **inline plate selector** at the top of its body, mirroring the Print modal's plate picker — a vertical paginator + details card. Plate 1 auto-selects on load so the filament-requirements + presets queries flow without blocking on user interaction; clicking a different plate re-keys those queries. A **Slice all plates** checkbox sits above the picker: tick it to slice every plate into one multi-plate output (sends `plate=0`) instead of a single picked plate.
 
 **Re-slicing for a different printer** — you can slice a 3MF that was built for another printer model. Pick any printer profile and the slicer re-slices for that target (bed, kinematics, nozzle count and start-gcode all come from the chosen profile). When the target crosses a nozzle class (single-nozzle ↔ dual-nozzle H2D/H2C/X2D), BamDude forwards the slicer's `--arrange` so BambuStudio repositions objects for the target bed and reconciles the embedded project settings; a cross-class "slice all plates" run slices each plate independently and merges them. If the slicer still can't produce a valid result, its reason is shown in a dismissible dialog rather than a vanishing toast.
 
+
+### Preset lists: groups, order and search { #preset-lists }
+
+Each preset dropdown is grouped by **source**, your own first:
+
+1. **Imported** — the profiles imported into BamDude ([Local Profiles](local-profiles.md)).
+2. **Orca Cloud** — your [Orca Cloud](orca-cloud.md) profiles.
+3. **Bambu Cloud — my presets** — the presets you saved in your [Bambu Cloud](cloud-profiles.md) account.
+4. **Bambu Cloud** — Bambu's stock presets, as your account lists them.
+5. **Standard** — the presets bundled with the slicer in the sidecar.
+
+A group with nothing in it is not shown. In a process or filament field, profiles made for another printer than the selected one follow in the trailing **Other printers** group, where each entry names its source after its name.
+
+A name is not an identity. A stock preset that Bambu Cloud and the slicer's bundle both carry under one name is **two entries**, one under **Bambu Cloud** and one under **Standard**: they are different content — the Standard one is the running sidecar's — and neither stands in for the other.
+
+Inside a group the order is Bambu presets, then Generic, then every other brand; in the filament lists the support materials (support, PVA, BVOH, HIPS) come after all the rest. Within that, names are sorted without regard to case and with numbers by value, so `0.08mm` comes before `0.20mm` and `PA6` before `PA12`. A preset cloned in the slicer under its default `# …` name is listed where the preset it copies would be.
+
+The magnifier button beside a list opens a search box (**Search presets…**). The words you type narrow that list: every word has to occur in the entry, in any order and any case. The chosen preset always stays listed. **Enter** takes the first match, **↓** moves into the narrowed list, and **Esc** closes the search without closing the dialog. A query nothing matches says **No matching presets.**
+
+### A profile you pick stays picked { #explicit-choice }
+
+The dialog makes automatic picks, and it replaces only its own. A process or filament profile **you** choose — from the list, or by applying [saved settings](slicer-pipelines.md) — is an explicit choice, and no automatic pass replaces it: not **Refresh**, not another plate of the project, not **Slice all plates**, not a change of printer, and not the material check that re-picks an automatic filament pick.
+
+- **A chosen profile made for another printer stays.** It sits in the **Other printers** group, and the field says so underneath: *"This profile is listed for another printer than the selected one."* Automatic picks follow the printer; yours wait for you.
+- **A chosen profile that is no longer in the lists** — deleted, or gone after a refresh — is replaced by an automatic pick, and a banner names the fields to look at: *"A profile you chose is no longer in the list, so another one was selected. Check: …"*.
+- **Applying saved settings** is the one action besides your own pick that replaces a choice, and it says what it did: *"Applied "name". Changed: Printer profile, Process profile"* — or *"Applied "name". Nothing changed — these were already the selection."*
+
+### Only online printers, only loaded filaments { #farm-filters }
+
+Two switches above the preset fields narrow the lists to what the farm can print right now. Both are off by default and remembered per browser.
+
+| Switch | Narrows | To |
+|---|---|---|
+| **Only printers that are online** | **Printer profile** | Profiles of the printer models that are online — and of a nozzle size fitted on one of them, when the profile states a size. |
+| **Only filaments that are loaded** | Every filament field | Profiles of the filaments loaded on the online printers. Once a printer profile is chosen, only the online printers of that model count. |
+
+- **Online** means connected, active and not archived.
+- **Loaded** means the spool assigned to a slot — its own filament profile, not what the slot shows the printer. A slot advertised as a Generic profile for [AMS Backup](ams.md) counts as the filament that is really in it. A spool without a filament profile of its own is matched by material: every profile of that material counts. External spool holders count; an empty slot does not.
+- **The lists follow the farm while the dialog is open**: a printer connecting or disconnecting, a spool assigned or unassigned.
+- **A filter narrows what a list offers and nothing else.** The profile you chose stays chosen and stays listed even when the filter would hide it, and the automatic picks do not read the filters.
+
+When a filter leaves a list empty, the dialog says why, with a **Show all** link that switches that filter off:
+
+| List | Message |
+|---|---|
+| Printer profiles | *No printer is online, so no printer profile matches.* |
+| Printer profiles | *No printer profile matches a printer that is online.* |
+| Filament profiles | *Nothing is loaded on the printers that are online.* — or, with a printer profile chosen, *Nothing is loaded on the online printers of the chosen model.* |
+| Filament profiles | *No printer of the chosen model is online, so no filament counts as loaded.* |
+| Filament profiles | *No filament profile matches a loaded filament.* |
+
+The switches need the right to view printers (`printers:read`) and are not shown without it. When the printers cannot be read, nothing is narrowed and the dialog says so — *"The printers could not be read, so every profile is shown."* — with **Retry**. Both switches are answered by one read, `GET /api/v1/slicer/loaded-filaments`; an [API key](api-keys.md) limited to some printers sees only those.
+
+### Bed plate { #bed-plate }
+
+The **Bed plate** picker sets the plate the slice is made for (`--curr-bed-type` on the CLI):
+
+| Plate | Offered with |
+|---|---|
+| **Cool Plate** | both slicers |
+| **Engineering Plate** | both slicers |
+| **Smooth PEI / High Temp Plate** | both slicers |
+| **Textured PEI Plate** | both slicers |
+| **Cool Plate SuperTack** | both slicers |
+| **Textured Cool Plate** | OrcaSlicer only |
+
+The default, **Textured PEI Plate**, matches the factory plate on the modern Bambu lineup; A1 / A1-mini owners flip to SuperTack once, and the plate you choose is remembered in the browser. Sliced 3MFs from Bambu Studio still honour their embedded per-plate `bed_type` (BamDude forwards the original bytes) — the override only kicks in for sources without one.
+
+**Textured Cool Plate** exists in OrcaSlicer only, so it is listed while OrcaSlicer is the slicer of this job. When the slicer is Bambu Studio and that plate is the current one, the dialog changes it to the default and says so under the field — *"Textured Cool Plate is available only with OrcaSlicer. The bed plate was changed to Textured PEI Plate."* — and switching back to OrcaSlicer puts it back. A slice request that names it for Bambu Studio is refused (422): *"Textured Cool Plate is available only with OrcaSlicer. Pick another bed plate, or slice with OrcaSlicer."*
+
+### Presets the slicer offers { #standard-presets }
+
+The **Standard** group is the preset set of the slicer inside the sidecar:
+
+- **Presets a brand keeps in a folder of its own** (P1P, Polymaker, SUNLU and others) are listed with the rest.
+- **A preset with `/` in its name** (`Bambu Support For PLA/PETG …`) is listed under that name and sliced with its own settings.
+- **OrcaSlicer's filament library** — the presets named `… @System` — is offered with OrcaSlicer; Bambu Studio has no such library. A library preset that names its printers (`Polymaker PolyLite PLA @BBL A1`) is offered for those printers. A generic one (`Generic PLA @System`) is offered for a printer only when that printer has **no preset of its own for the same filament** — "the same filament" being the name up to its `@` — so a printer with a `Generic PLA @BBL X1C` is not offered `Generic PLA @System` beside it.
+- **A printer preset saved under a name of your own** (`Bambu Lab H2D 0.4 nozzle - Skew`) is the printer it was saved from: its model, nozzle and compatible process and filament profiles are the parent's, and it slices as that printer with your changes. A printer preset cloned in the slicer under its default `# …` name is matched as the preset it copies.
 
 ### Slice as designed (keep the file's embedded settings)
 
@@ -264,7 +360,7 @@ this plate"** and greys out their dropdowns — but the slicer still wants a
 profile for every slot, and it validates all of them.
 
 So before slicing a single plate, BamDude replaces every unused slot's profile
-with the one from the plate's **lowest used slot**. That keeps the slot count
+with the one from the plate's **lowest used slot** — the profile only: the slot keeps its own colour in the sliced file. That keeps the slot count
 (and the file's per-slot references) intact while making the loaded set both
 materially homogeneous and scoped to the target printer, so neither validator
 fires on a slot the G-code never touches:
@@ -278,12 +374,16 @@ fires on a slot the G-code never touches:
 Slicing **all plates** skips this: across the whole project every defined slot is
 used by some plate, so each one's profile is honoured as picked.
 
+### Painted multi-colour models { #painted-models }
+
+A model painted with several filaments in the slicer keeps its colours when sliced here. Which slots a plate prints with is read from the objects' filament assignments **and** from the paint data on their surfaces, and every painted area counts, however small — a colour used on one small detail makes its slot a used one, sliced with the profile picked for it. A slot the plate really does not use keeps its own colour in the sliced file, whatever profile stands in for it.
+
 ### Reachability indicators
 
 Sidecar health surfaces in three places, sharing one React Query cache + the `GET /api/v1/slicer/health/{slicer}` endpoint (30 s in-process cache):
 
 - **Settings → Profiles → Slicer API** — small inline status next to each URL field (green check + version, or red X with error).
-- **Slice modal** — the picker cards each carry a live health badge (see above).
+- **Slice modal** — the picker cards each carry a live health badge (see above), and a note under them when the picked slicer's container is older than BamDude needs — see [Updating the sidecars](#updating-the-sidecars).
 - **System page → Slicer Sidecars** section — version + reachability + URL for each sidecar (auto-refresh 30 s alongside the rest of system info).
 
 A persistent toast in the bottom-right tracks the job: live progress percent + elapsed time, replaced by a transient success / error toast on completion. The sliced output lands in the same library folder with `.gcode.3mf` extension and `source_type='sliced'` provenance — the original file is untouched.
@@ -297,16 +397,18 @@ A persistent toast in the bottom-right tracks the job: live progress percent + e
 | `library:upload` | Trigger a slice from the File Manager (the sliced output is a fresh library upload). |
 | `library:read` | Poll the job-tracker toast (`/api/v1/slice-jobs/{id}`) and the filament-discovery preview slice progress (`/api/v1/slicer/preview-progress/{id}`). |
 | `cloud:auth` | Required to fetch the `cloud` preset tier — without it, the modal shows only `local` + `standard` tiers. |
+| `printers:read` | The **Only printers that are online** / **Only filaments that are loaded** switches of the Slice modal — without it they are not shown. |
 
 The Settings → Profiles → Slicer API toggle and URL fields are gated by `settings:update`.
 
 ---
 
-## :material-alert-circle-outline: Failure modes
+## :material-alert-circle-outline: Failure modes { #failure-modes }
 
 - **Sidecar offline** → 502 surfaced as toast, job marked failed; original file untouched. "Could not connect" and "gave up waiting" are reported as **different** things, and the timeout message names the limit that was reached and where to change it.
 - **Slice produced nothing** → a reply that is "OK" with a few bytes — a misconfigured slicer service, a reverse proxy returning its own error page, a truncated response, the slicer crashing without writing output — is **rejected before the file is stored**, rather than being saved, queued, and sent to a printer that then does nothing. A slice refused as too large is named for what it is: a size limit on the proxy in front of the slicer, not a fault of the slicer.
 - **Profile not found** → 400 names the missing profile so you can add it via [K-Profiles](kprofiles.md) or pick a different tier.
+- **A preset the slicer cannot resolve** → a preset is a chain: it inherits from a parent, and the slicer has to find every link. When one is missing the slice is refused and nothing is sliced — never sliced on the slicer's built-in defaults — and the message names the preset and the missing parent: *"The preset 'X' cannot be sliced: its parent preset 'Y' is not among the slicer's profiles, so nothing was sliced. Pick another preset, or rebuild the slicer containers if the parent belongs to a newer slicer version."* For a **Standard** pick that the running slicer does not have: *"The preset 'X' is not among the slicer's profiles, so nothing was sliced. …"* What to do: pick another preset — a stock one of the same printer or filament; for an imported preset whose parent was not fetched at import, re-import it once the parent can be fetched ([Local Profiles](local-profiles.md)); when the parent belongs to a newer slicer, raise the slicer version and [rebuild the containers](#updating-the-sidecars). This refusal does not fall back to the file's embedded settings (below), and it needs a current sidecar.
 - **Sidecar rejects the file** (corrupt 3MF, unsupported plate format, malformed preset, etc.) → toast surfaces the sidecar's verbatim CLI stdout/stderr so you don't have to dig in container logs.
 - **Embedded-settings fallback** — for 3MF sources, a 5xx from the sidecar with `--load-settings` triggers ONE retry without profiles. The slice then uses the source's embedded settings (the ones the original slicer baked into `Metadata/slice_info.config`); the resulting row carries `used_embedded_settings: true` in its metadata. STL has no embedded settings, so 5xx is terminal there.
 - **Cloud presets unreachable** (token expired / network down) → the modal renders the `cloud` tier with a status banner and falls back to `local` + `standard` only.

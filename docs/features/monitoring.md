@@ -65,6 +65,34 @@ When a print is active:
 - **Current layer** -- Layer X of Y
 - **Time remaining** -- Estimated time to completion
 - **Filament used** -- Grams consumed so far
+- **Next pause** -- Where the next pause added in the slicer is, when there is one ahead — see [below](#next-pause)
+
+### Next slicer pause { #next-pause }
+
+A print with pauses added in the slicer shows where the next one is, as a line with a pause icon on the printer card, in every card size:
+
+| The line reads | When |
+|---|---|
+| **Pause in ~12 min (layer 48)** | The printer runs at **Standard** speed, the file carries the slicer's time markers and the printer reports its remaining time. |
+| **Pause in less than a minute (layer 48)** | The same, during the last minute — and when the printer runs behind the slicer's estimate. |
+| **Pause at layer 48** | Otherwise: another speed mode, or a file without time markers. Only the layer is known. |
+
+The minutes are the printer's own remaining time minus the time the slicer says is left at the pause, so they are an **estimate** — the tooltip says so. The slicer's times are for Standard speed; in any other speed mode the printer rescales its remaining time, and the line falls back to the layer alone rather than show a number nobody can vouch for.
+
+**What counts as a pause.** A pause added at a layer in Bambu Studio or OrcaSlicer, read from the print's own file for the plate that is printing. Not counted: a filament change, a pause in the start sequence before the first layer, and G-code that BamDude adds to the copy sent to the printer ([G-code injection](gcode-injection.md)) — the pauses are read from the file as it was sliced. Two pauses on one layer are one. When a pause has been reached, the line moves on to the next one; while the printer waits on a pause's layer, that pause is already behind it.
+
+**When nothing is shown:**
+
+- the print has no pause ahead of it;
+- BamDude has no file for the print yet — a print started from the printer's screen or a slicer shows the line once its 3MF has been fetched, and never when no 3MF could be fetched;
+- the plate is printed **object by object** — its layer numbers start over for every object and cannot be compared with the printer's layer counter;
+- the print is paused, or the printer is disconnected;
+- the total number of layers of the print is not known yet;
+- after BamDude restarts, until it has recognised the running print as the one it knows.
+
+The API carries the same answer as the `next_pause` field of the printer status — `{"layer": 48, "minutes": 12}`, `minutes` being `null` when only the layer is known, or `null` as a whole when there is nothing to show.
+
+To be told about a pause before it happens, subscribe to the [Pause coming up](notifications.md#pause-coming-up) notification.
 
 ### Connection Status
 
@@ -437,6 +465,7 @@ Wire any of these state changes to your notification channels:
 | **Print complete** | Job finishes (printed-percentage = 100) |
 | **Print failed** | Job ends with a non-success status |
 | **First layer complete** | First layer finishes (early-fail catch) |
+| **Pause coming up** | Shortly before a [pause added in the slicer](#next-pause) |
 
 Configure under **Settings → Notifications** — see [Notifications](notifications.md).
 

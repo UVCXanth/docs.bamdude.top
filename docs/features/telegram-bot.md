@@ -241,15 +241,16 @@ preferences leak between chats — set them once per chat.
 
 ### Event filter
 
-Pick which of the 23 event types (`backend/app/models/telegram_chat.py::ALL_NOTIFY_EVENTS`) this chat should receive. This is the **sole** authority for telegram per-event filtering — the bot-level provider row does not gate events. The defaults mirror what most operators care about:
+Pick which of the 41 event types (`backend/app/models/telegram_chat.py::ALL_NOTIFY_EVENTS`) this chat should receive. This is the **sole** authority for telegram per-event filtering — the bot-level provider row does not gate events. The defaults mirror what most operators care about:
 
 | Default events ON |
 |---|
-| `print_complete`, `print_failed`, `print_stopped`, `plate_not_empty`, `queue_job_waiting`, `queue_job_skipped`, `queue_job_failed` |
+| `print_complete`, `print_failed`, `print_stopped`, `print_paused`, `plate_not_empty`, `filament_deficit`, `queue_job_waiting`, `queue_job_skipped`, `queue_job_failed`, `printer_queue_completed`, `ams_drying_suspended`, `scheduled_drying_failed` |
 
-Everything else (`print_start`, `print_progress`, `printer_offline`,
-`maintenance_due`, AMS humidity/temperature, queue lifecycle, etc.) is
-opt-in. A workshop chat can subscribe only to `print_failed`; an admin
+Everything else (`print_start`, `print_progress`, `pause_coming_up` — the
+[heads-up before a slicer pause](notifications.md#pause-coming-up) —
+`printer_offline`, `maintenance_due`, AMS humidity/temperature, queue
+lifecycle, etc.) is opt-in. A workshop chat can subscribe only to `print_failed`; an admin
 chat can subscribe to everything.
 
 `should_notify(event_type)` runs on every notification: the chat must be

@@ -62,6 +62,8 @@ One assembly runs at a time; the next ones wait in a queue.
 
 The summary lists every printer with a **picture of each plate**, how many of each part landed where, and a link to each saved file. The files appear in the folder of the first selected model.
 
+Beside each saved file sits a **Slice** button. It opens the [Slice dialog](slicer-api.md) over the summary — the summary stays, so the other files can be sliced after the first — and the dialog starts on the presets the project was assembled with: that printer, that process and that filament, the very ones you picked even when another source holds a preset of the same name. The button is there when server-side slicing is enabled and you may upload to the library (`library:upload`) — what **Slice** in the File Manager needs.
+
 - A part that fits no plate of a printer — too large for its area, or taller than it prints — fails **that printer only**, and is named with the reason. The other printers still get their projects.
 - A printer row whose preset could not be read fails alone, too.
 - When you closed the dialog and something did not work out for one of the printers, the tracker asks you to acknowledge it instead of showing a green "done".

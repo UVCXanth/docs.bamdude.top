@@ -299,6 +299,7 @@ Each provider subscribes independently. Toggling an event off on one provider do
 |-------|------------|
 | `print_start` | Print starts on a printer |
 | `first_layer_complete` | Layer 1 finishes (catch first-layer fails fast) |
+| `pause_coming_up` | **Pause coming up** — a heads-up shortly before a pause added in the slicer. Off by default; see [below](#pause-coming-up). |
 | `print_progress` | At 25% / 50% / 75% progress. A **minimum duration** floor can mute these for prints estimated shorter than N minutes — and the value belongs to each recipient: every Telegram chat carries its own (beside the Progress Milestones checkbox in the chat's settings) and every other provider carries its own (on its card, beside the same toggle). Empty or `0` = always send; there is no shared global value. The duration is estimated from the printer's own remaining-time report at each milestone, and an unknown estimate sends rather than guesses away. |
 | `print_paused` | Printer transitioned RUNNING→PAUSE — body carries a normalised `{reason}` (door open / filament runout / presence-check / file-pause-command / AI defect / plate-objects / paused by user / HMS-other) plus the underlying `{hms_code}` for forensics. Default ON for new providers + included in the default Telegram-chat event set. |
 | `print_resumed` | Printer transitioned PAUSE→RUNNING — body carries `{paused_for}` (mm:ss) computed from the matching pause edge. Default ON for new providers; opt-in for Telegram chats. |
@@ -359,6 +360,25 @@ Both are off by default on providers and Telegram chats. The message names the f
 | `user_created`, `password_reset` | Account-management emails (HTML + plain). |
 | `user_print_start` / `user_print_complete` / `user_print_failed` / `user_print_stopped` | Per-user email notifications when the user owns the print. |
 | `test` | Validation send from the provider editor. |
+
+### Pause coming up { #pause-coming-up }
+
+**Pause coming up** (`pause_coming_up`) warns that the running print is about to reach a pause added in the slicer — time to walk to the printer with the magnets, nuts or the next filament. It is about the same pauses the printer card shows as the [next slicer pause](monitoring.md#next-pause), and it only informs: nothing is sent to the printer.
+
+- **Off by default everywhere** — on every provider, in every Telegram chat, and in the inbox subscriptions (it is an *info* event). Switch it on where you want it.
+- **Once per pause per print.** A file with three pauses gives three messages, one before each. Printing the same file again is another print and is warned about again.
+- **When it is sent** is the **Pause heads-up lead time** under **Settings → Printing**: 0–120 minutes, 5 by default. With a time estimate — Standard speed and a file with time markers — the event is sent once the estimate is at or below the lead time. Without one it is sent when the print reaches the layer before the pause. **0 switches the event off.**
+- **After a restart of BamDude** a print that is found again already inside the lead time skips that one warning — it may have gone out before the restart, and no warning is ever sent twice.
+
+The default message:
+
+```
+Pause Coming Up
+Bambu X1C: Benchy
+Pause at layer 42/250, in about 5 min
+```
+
+Without a time estimate the last part reads *on the next layer*.
 
 ---
 
@@ -422,7 +442,7 @@ The Templates tab groups the default templates by purpose so a glance tells you 
 
 | Group | Count | What it's for |
 |---|---|---|
-| **Print events** | 9 | `print_start/complete/failed/stopped/progress`, `plate_not_empty`, `bed_cooled`, `first_layer_complete`, `print_missing_spool_assignment` |
+| **Print events** | 12 | `print_start/complete/failed/stopped/paused/resumed/progress`, `plate_not_empty`, `bed_cooled`, `first_layer_complete`, `pause_coming_up`, `print_missing_spool_assignment` |
 | **Printer status** | 4 | `printer_offline`, `printer_error`, `filament_low`, `maintenance_due` |
 | **AMS environmental** | 2 | `ams_humidity_high`, `ams_temperature_high` (also reused at runtime for the AMS-HT events) |
 | **Sensor alerts** | 5 | `sensor_above_max`, `sensor_below_min`, `sensor_back_in_range`, `sensor_silent`, `sensor_speaking_again` — see [Environment Sensors](sensors.md) |
@@ -507,6 +527,17 @@ Templates substitute `{variable}` placeholders. The schema is locked per event, 
 | `{humidity}` | Humidity percentage (humidity events) |
 | `{missing_slots}` | Comma-separated slot labels (`A1, A3`) for `print_missing_spool_assignment` |
 | `{missing_slot_details}` | Per-slot breakdown with expected profile (`- A1: PLA Basic`) |
+
+**Pause heads-up** (`pause_coming_up`):
+
+| Variable | Meaning |
+|---|---|
+| `{printer}` | Printer display name |
+| `{filename}` | The file currently printing |
+| `{layer}` | The layer the pause is on |
+| `{total_layers}` | Total layers of the print |
+| `{time_to_pause}` | A ready phrase: `in about 5 min`, or `on the next layer` when there is no time estimate |
+| `{minutes}` | The estimate as a bare number; empty when there is no time estimate |
 
 **Inventory events** (`stock_reorder_alert`, `stock_break_alert`):
 
