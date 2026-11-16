@@ -17,7 +17,7 @@ The on-demand and scheduled local backups produce the same ZIP layout. Top-level
 |-------|----------|
 | `bamdude.db` | Full database in portable SQLite format, including migration history. Works for restore onto SQLite or PostgreSQL. |
 | `archive/` | Print files and thumbnails, one folder per run, plus the 3MF download staging. |
-| `library/` | File Manager storage: files, thumbnails, MakerWorld covers. |
+| `library/` | File Manager storage: files, thumbnails, the [photos attached to files](file-manager.md#file-photos), MakerWorld covers. |
 | `virtual_printer/` | Virtual-printer working files. |
 | `queue-sources/` | Verified immutable copies owned by ready queued jobs. The ZIP includes exactly the files named by its database snapshot; unfinished `staging/` files are excluded. |
 | `plate_calibration/` | Plate-detection reference frames. |
@@ -212,6 +212,8 @@ Toggle each independently. Defaults are tuned for "back up the things most opera
 | **Archives (3MF + thumbnails)** | Bulk 3MF + thumbnail file content — bumps repo size by ~50–500 MB per 100 prints. | :material-close: Off |
 
 Only changed files generate commits — a no-op run is recorded as `skipped`.
+
+Library files and the photos attached to them are in none of these categories: a Git backup does not carry them. They travel in the ZIP backup's `library/`.
 
 ### :material-folder-tree: Repository structure
 

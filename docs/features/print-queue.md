@@ -140,7 +140,7 @@ Each file gets a **fresh** modal. Plate selection, filament mapping and per-prin
 |---|---|
 | not a `.3mf` at all | nothing else can be sent to a Bambu printer over the network |
 | a raw `.gcode` | Bambu firmware in LAN mode reads only the `.gcode.3mf` container; a raw `.gcode` fails at the printer half a minute after you press Print |
-| a `.3mf` with no sliced G-code inside | decided by **looking inside the file**, not by its name — a `.3mf` may hold a finished print or a bare model |
+| a `.3mf` with no sliced G-code inside | decided by **looking inside the file**, not by its name — a `.3mf` may hold a finished print or a bare model. The same rule guards every print door, the dispatcher included: a file known to hold no sliced G-code is not sent to a printer whatever it is called — a project saved as `Part.gcode.3mf` is refused with "slice it first" |
 | no recorded printer model | nothing about it can be verified: not the auto-queue target, not the match against this printer |
 | sliced for another model | the plate would not fit or the G-code would not run |
 

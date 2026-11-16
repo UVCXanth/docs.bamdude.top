@@ -169,7 +169,7 @@ The 43 route modules under `backend/app/api/routes/` are registered under the `/
 | `/printers/*`, `/printer-queues/*`, `/cloud/*`, `/discovery/*` | Printer + AMS + Bambu Cloud | status, control, AMS RFID, snapshot, stream-token, network discovery |
 | `/archives/*` | Print history | list, get, reprint, delete, **`retry-download`**, **`cleanup/preview`**, **`cleanup/run`**, **`cleanup/status`** |
 | `/queue/*`, `/background-dispatch/*` | Queue management + dispatch | add, reorder, cancel, set-status, dispatch state |
-| `/library/*`, `/library-notes/*` | File manager | upload, list, delete, tags — also the inbox for virtual-printer uploads |
+| `/library/*` | File manager | upload, list, delete, tags, notes (`files/{id}/notes`, `notes/{id}`), photos (`files/{id}/photos`), a file's own link (`files/{id}/external-url`), folder rename and move (`PUT folders/{id}`), external folders and their scans (`folders/external`, `folders/{id}/scan`, `scan-jobs/{id}`) — also the inbox for virtual-printer uploads. Per-route rights: [File Manager → API endpoints](../features/file-manager.md#api-endpoints) |
 | `/projects/*` | Project grouping | CRUD, print plan, archives by project |
 | `/macros/*` | G-code + MQTT-action macros | CRUD, execute |
 | `/notifications/*`, `/notification-templates/*`, `/user-notifications/*`, `/telegram/*` | Outbound channels | provider CRUD, template overrides, test send, Telegram bot config |
@@ -219,7 +219,7 @@ The **media token** is minted by any signed-in user with `POST /auth/media-token
 | Endpoint | Permission |
 |----------|------------|
 | `GET /archives/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/plate-preview` · `/project-image/{path}` · `/qrcode` · `/timelapse` | `archives:read_all` / `archives:read_own` |
-| `GET /library/files/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/card-file/{path}` · `GET /makerworld/imports/{id}/cover` · `/cover-variant` | `library:read_all` / `library:read_own` |
+| `GET /library/files/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/card-file/{path}` · `/image` · `/photos/{photo_id}/image` · `/photos/{photo_id}/thumbnail` · `GET /makerworld/imports/{id}/cover` · `/cover-variant` | `library:read_all` / `library:read_own` |
 | `GET /products/{id}/attachment-image/{file}` · `/cover-image` · `GET /projects/{id}/cover-image` | `products:read` for a product's pictures, `orders:read` for an order's cover |
 | `GET /printers/{id}/camera-cover` | `printers:read` — the current job's cover, served from the local archive (never triggers an FTP fetch) |
 | `GET /makerworld/thumbnail?url=...` | `makerworld:view` |

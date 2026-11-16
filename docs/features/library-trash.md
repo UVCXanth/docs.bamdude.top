@@ -22,11 +22,13 @@ Both bins have the same shape: soft-delete on user-initiated delete, configurabl
 When you delete a library file or an archive (manually, or via auto-purge):
 
 1. The row gets `deleted_at = now()` — it disappears from the main list and from dedup queries.
-2. Bytes + thumbnails stay on disk untouched.
+2. Bytes + thumbnails stay on disk untouched. A library file also keeps its notes and its [photos](file-manager.md#file-photos); while the file is in the trash they cannot be read or changed, and a restore brings them back with it.
 3. The trash page (admin section in Settings, plus dedicated `/files/trash` and `/archives/trash` routes) lists every soft-deleted row with a countdown to hard-delete.
 4. **Restore** flips `deleted_at` back to `NULL` — the row reappears as if nothing happened.
 5. **Hard-delete now** removes the row + bytes immediately (admin only).
 6. After the configured retention window, a background sweeper hard-deletes anything that's been in the trash longer than the threshold.
+
+A hard delete of a library file — by hand, by **Empty trash** or by the sweeper — removes its notes and photos with it.
 
 **Deleting a folder** sends the files BamDude stores in it, subfolders included, to the trash; the folder itself has no trash and is gone. External files are the exception, as everywhere: their library entry is removed without the trash, and the original on the disk stays. Files already in the trash — binned before, or in the same multi-select delete — stay there with their original delete time, so their retention does not restart. Restored files land at the library root, since their folder no longer exists.
 

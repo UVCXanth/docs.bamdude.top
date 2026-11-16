@@ -230,7 +230,7 @@ See [K-Profiles](kprofiles.md) for the calibration workflow that produces these 
 
 ## :material-checkbox-multiple-marked: Mass actions
 
-Every row on the Filament page has a checkbox. Tick one, and a toolbar appears above the list with **Edit · Print label for this spool · Reset counter · Archive** (or **Restore**, on the Archived tab) **· Delete**.
+Every row on the Filament page has a checkbox. Tick one, and a toolbar appears above the list with **Edit · Print labels for the selected spools** (**Print label for the selected spool** when one is ticked) **· Reset counter · Archive** (or **Restore**, on the Archived tab) **· Delete**.
 
 Four ways to select:
 
@@ -526,7 +526,9 @@ Transparent filament is a first-class colour. The spool colour editor has a dedi
 
 ## :material-printer: Printable PDF labels
 
-Find a specific spool in a closet of 50 partials by sticking a label on each one. The Inventory header has a **Print labels…** action that opens a multi-select picker pre-loaded with the currently filtered spools; every inventory card and table row also has a per-spool printer icon for one-shot label printing.
+Find a specific spool in a closet of 50 partials by sticking a label on each one. The Inventory header has a **Print labels…** action that opens a multi-select picker pre-loaded with the currently filtered spools; every inventory card and table row also has a per-spool printer icon for one-shot label printing, and the selection toolbar's **Print labels for the selected spools** opens the same dialog on the ticked spools.
+
+Once a design is chosen, the dialog shows a **Preview** — the label of the first selected spool, drawn from its real data — before anything is printed. **Print** opens the PDF in a new tab; **Save as PNG** next to it downloads the same labels as pictures at 203, 300 or 600 dpi, one PNG for one spool or a ZIP for several. The designs and sheets themselves are drawn under **Settings → Filament → Marking**. Details, limits and the desk label printer route: [Spool labels](labels.md), [Saving labels as pictures](labels.md#saving-labels-as-pictures).
 
 Six pre-built templates:
 

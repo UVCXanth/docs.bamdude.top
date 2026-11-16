@@ -363,6 +363,8 @@ The viewer URL carries the archive reference, so refreshing the page keeps you i
 
 **Reprint** opens the ordinary Print dialog with the archive's source file and plate. It compares the used channels with the destination printer's current sources — AMS or supported external feeds.
 
+An archive whose file is known to hold no sliced G-code is not reprinted, whatever the file is called: a project archived under a `.gcode.3mf` name is refused with "slice it first". An archive file that cannot be read is sent as it is.
+
 ### What the modal shows
 
 The selected plate's required materials and colors, available slots, and nozzle bindings. Several plates have separate requirements and mappings: unused colors from other plates do not become requirements for this print.

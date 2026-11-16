@@ -169,7 +169,7 @@ BamDude обмежує частоту запитів на endpoint-ах авте
 | `/printers/*`, `/printer-queues/*`, `/cloud/*`, `/discovery/*` | Принтер + AMS + Bambu Cloud | статус, керування, RFID AMS, snapshot, stream-токен, мережеве виявлення |
 | `/archives/*` | Історія друку | список, отримання, передрук, видалення, **`retry-download`**, **`cleanup/preview`**, **`cleanup/run`**, **`cleanup/status`** |
 | `/queue/*`, `/background-dispatch/*` | Керування чергою + dispatch | додавання, перевпорядкування, скасування, set-status, стан dispatch-у |
-| `/library/*`, `/library-notes/*` | Файловий менеджер | завантаження, список, видалення, теги — і водночас інбокс для аплоадів з віртуального принтера |
+| `/library/*` | Файловий менеджер | завантаження, список, видалення, теги, нотатки (`files/{id}/notes`, `notes/{id}`), фото (`files/{id}/photos`), власне посилання файла (`files/{id}/external-url`), перейменування й переміщення папок (`PUT folders/{id}`), зовнішні папки та їхні скани (`folders/external`, `folders/{id}/scan`, `scan-jobs/{id}`) — і водночас інбокс для аплоадів з віртуального принтера. Права кожного маршруту: [Файловий менеджер → API-ендпоінти](../features/file-manager.uk.md#api-endpoints) |
 | `/projects/*` | Групування за проєктами | CRUD, план друку, архіви проєкту |
 | `/macros/*` | G-code- та MQTT-action-макроси | CRUD, виконання |
 | `/notifications/*`, `/notification-templates/*`, `/user-notifications/*`, `/telegram/*` | Вихідні канали | CRUD провайдерів, перевизначення шаблонів, тестове надсилання, конфіг Telegram-бота |
@@ -219,7 +219,7 @@ Endpoint-и за stream-токен-шлюзом (щоб його отримат�
 | Endpoint | Дозвіл |
 |----------|--------|
 | `GET /archives/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/plate-preview` · `/project-image/{path}` · `/qrcode` · `/timelapse` | `archives:read_all` / `archives:read_own` |
-| `GET /library/files/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/card-file/{path}` · `GET /makerworld/imports/{id}/cover` · `/cover-variant` | `library:read_all` / `library:read_own` |
+| `GET /library/files/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/card-file/{path}` · `/image` · `/photos/{photo_id}/image` · `/photos/{photo_id}/thumbnail` · `GET /makerworld/imports/{id}/cover` · `/cover-variant` | `library:read_all` / `library:read_own` |
 | `GET /products/{id}/attachment-image/{file}` · `/cover-image` · `GET /projects/{id}/cover-image` | `products:read` для зображень виробу, `orders:read` для обкладинки замовлення |
 | `GET /printers/{id}/camera-cover` | `printers:read` — обкладинка поточного завдання з локального архіву (ніколи не ініціює FTP-вибірку) |
 | `GET /makerworld/thumbnail?url=...` | `makerworld:view` |

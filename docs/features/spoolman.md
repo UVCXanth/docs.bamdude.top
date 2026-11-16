@@ -264,7 +264,7 @@ When you run BamDude against Spoolman, the **Filament page** (`/inventory`) and 
 
 ### :material-table: The Filament page in Spoolman mode
 
-With Spoolman switched on, the **Filament** page is BamDude's own page fed by Spoolman's data — the table and the cards, the spool form, labels and bulk actions all work on Spoolman's spools. When a Spoolman address is set, an **Open Spoolman** button in the page header opens Spoolman's own interface in a new tab.
+With Spoolman switched on, the **Filament** page is BamDude's own page fed by Spoolman's data — the table and the cards, the spool form, labels and bulk actions all work on Spoolman's spools. A Spoolman spool's [label](labels.md) carries the same fields as a local one. When a Spoolman address is set, an **Open Spoolman** button in the page header opens Spoolman's own interface in a new tab.
 
 A few things differ from the built-in inventory:
 
