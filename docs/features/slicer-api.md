@@ -228,7 +228,7 @@ Two switches above the preset fields narrow the lists to what the farm can print
 - **Online** means connected, active and not archived.
 - **Loaded** means the spool assigned to a slot — its own filament profile, not what the slot shows the printer. A slot advertised as a Generic profile for [AMS Backup](ams.md) counts as the filament that is really in it. A spool without a filament profile of its own is matched by material: every profile of that material counts. External spool holders count; an empty slot does not.
 - **The lists follow the farm while the dialog is open**: a printer connecting or disconnecting, a spool assigned or unassigned.
-- **A filter narrows what a list offers and nothing else.** The profile you chose stays chosen and stays listed even when the filter would hide it, and the automatic picks do not read the filters.
+- **A filter narrows what a list offers and nothing else.** The profile you chose stays chosen and stays listed even when the filter would hide it, and a filter never changes a profile you picked by hand. One automatic pick does follow a filter: with **Only filaments that are loaded** on, a filament field the dialog fills by itself takes a loaded profile when one suits the plate's material and the printer, and the usual pick otherwise.
 
 When a filter leaves a list empty, the dialog says why, with a **Show all** link that switches that filter off:
 
