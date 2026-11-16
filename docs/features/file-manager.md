@@ -780,8 +780,8 @@ If a file cannot be read or parsed, BamDude keeps its last good metadata and tri
 
 Starting a scan needs `library:upload`. Its progress and result can be read by anyone who can read the library (`library:read_all` or `library:read_own`).
 
-!!! warning "Renaming a file on the share makes it a new file"
-    A scan knows an external file by its path. Rename or move it on the share, and the next scan sees one file gone and another one arrived: the old library entry is dropped **together with its notes and photos**, and the renamed file comes in as a new entry without them. Add the notes and photos again after the scan, or keep the file's name on the share.
+!!! note "Renaming or moving a file on the share"
+    A scan follows a file that was renamed or moved inside the external folder, or whose directory was renamed: when exactly one file is missing and one new path holds the same bytes, it stays the same library entry, with its notes, photos, tags, product links and queued jobs. Its plate-swap declaration is taken again from the new file name, so a declaration made by hand has to be repeated. A copy placed beside the original, or several new files with the same content, cannot be told apart and come in as new entries.
 
 Subfolders of an external folder mirror the directories of the share: they cannot be moved or renamed in BamDude — rename the directory itself and scan the folder again.
 
