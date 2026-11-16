@@ -387,6 +387,19 @@ If the folder was listed completely before, a listing that did not answer or is 
 
 The **Save to Library** path also auto-promotes bare `.3mf` filenames to `.gcode.3mf` when the bytes are sliced (probes the zip for `Metadata/plate_*.gcode`), so the Library's tag/parser pipeline classifies it correctly.
 
+### Files a print is using
+
+A printer reads the running job from its own storage, so deleting that file ends the print. BamDude refuses to delete:
+
+- the file of the print in progress — running, paused or still being prepared — and the working copies the printer keeps of it in `cache`, on the card and in built-in storage alike;
+- the file of a print that BamDude is about to start.
+
+Other files are deleted as usual while a print runs. When several files are selected, each one is answered on its own: the files that stay are named with the reason and remain selected, and the rest are deleted.
+
+**Clear SD card** works only on a printer that is connected and idle with no print about to start. If a print starts while the card is being cleared, the clear stops and reports how many files it had removed.
+
+Nothing is deleted from a printer whose current state BamDude does not know — one that is disconnected or has stopped reporting. Wait for it to reconnect and try again.
+
 ### Sort + filter
 
 | Control | Options |
@@ -406,6 +419,8 @@ Set per printer, in its settings: **Clean up after print**. A newly added printe
 |---|---|---|
 | **Clean up on** | The file BamDude sent is deleted, and so is the copy the printer made in `cache` | The copy the printer keeps is deleted |
 | **Clean up off** | The file is moved out of the card's root into `cache`, and the saved print-parameters file is rewritten to match | The file is left exactly where the printer put it |
+
+This clean-up never removes a file that a newer print is using, even when that print was started from the slicer or the printer's screen under the same name. It has two minutes; when they run out, the step in progress finishes and the rest is left on the printer.
 
 The move on the card is not tidiness — it is protection. A printer will re-start whatever is sitting in the **root** of its card after a power cut, so a finished job left there can print itself again unattended. Nothing auto-starts from built-in storage, so there is nothing to move it away from.
 
