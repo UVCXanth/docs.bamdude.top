@@ -360,6 +360,23 @@ Click the **folder icon** (:material-folder:) on any printer card → modal open
 
 The **Timelapses** button appears only on printers that actually keep recordings internally. That is a separate capability from keeping models: a machine can do one and not the other.
 
+### When a folder can't be listed
+
+An empty panel is not the only answer: the modal tells a folder that is empty from one the printer did not list completely.
+
+| The panel says | What happened |
+|---|---|
+| **No files in this directory** | The printer listed the folder completely, and it is empty. |
+| **This folder is not on the printer.** | The printer refused the folder, and the folder above it — listed completely — does not contain it. |
+| **The printer refused to list this folder.** … | The printer refused the folder, and BamDude could not tell whether it exists. |
+| **The printer's file service did not answer, so this folder could not be listed.** … | No connection, a transfer that failed, or an answer with a line BamDude could not read. |
+| **The printer is taking longer than usual to list this folder.** … | The listing is still running. The refresh button (:material-refresh:) joins it instead of starting another one. |
+
+If the folder was listed completely before, a listing that did not answer or is still running keeps that last complete listing on screen, under a note that says so: **Showing the last complete listing of this folder.**
+
+!!! note "One transfer at a time"
+    A printer's file service handles one session at a time, and BamDude sends it one at a time: a long download — a large timelapse, a 3MF being recovered — makes a listing wait until it has finished. The SD card and built-in storage each have a channel of their own.
+
 ### Selection + bulk operations
 
 | Action | Single | Multiple |
