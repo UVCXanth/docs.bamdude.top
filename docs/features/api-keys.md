@@ -65,10 +65,10 @@ prefix              random body
 The create response carries the full `key` field — **copy it before closing the dialog**. Subsequent reads of the row will only show the `bd_…` prefix.
 
 !!! info "Cloud / Legacy badges"
-    UI-created keys are stamped with the creating user's id, so a key shown with the **Cloud** badge can spend that user's Bambu Cloud token. Pre-0.4.3 keys imported from older installs are ownerless and surface a **Legacy** badge — they cannot be promoted to `Use Bambu Cloud` (the toggle is rejected at save time without an owner). Re-create such keys under your user account to enable cloud spend.
+    UI-created keys are stamped with the creating user's id, so a key shown with the **Cloud** badge can spend that user's Bambu Cloud token. Keys carried over from an old installation without an owner surface a **Legacy** badge — they cannot be promoted to `Use Bambu Cloud` (the toggle is rejected at save time without an owner). Re-create such keys under your user account to enable cloud spend.
 
 !!! tip "Principle of least privilege"
-    Don't blanket-tick every scope. A Home Assistant dashboard usually needs only `can_read_status`. A queue-poster from your slicer needs `can_queue` + `can_read_status` and *not* `can_control_printer`. A file-uploader integration can now get `can_manage_library` without `can_queue`. Separate keys per consumer make rotation painless and the audit trail readable.
+    Don't blanket-tick every scope. A Home Assistant dashboard usually needs only `can_read_status`. A queue-poster from your slicer needs `can_queue` + `can_read_status` and *not* `can_control_printer`. A file-uploader integration can get `can_manage_library` without `can_queue`. Separate keys per consumer make rotation painless and the audit trail readable.
 
 ---
 
@@ -108,12 +108,12 @@ Two layers gate every API-keyed call:
 3. **`printer_ids` scope** narrows printer-bound calls. A key with `printer_ids = [3, 7]` returns 403 on `/printers/5/status` even if `can_read_status` is on.
 
 !!! warning "Strict scope confinement"
-    A key now reaches **only** the endpoints its granted scopes cover. Anything outside them — settings writes, user / group / API-key administration, resource deletion that no manage-scope covers (printer deletion, archive **purge**), and network discovery scans — is refused with `403`, even for an otherwise-valid, enabled key. Previously any valid key could reach almost every endpoint (start/stop prints, reorder the queue, reprint archives, delete another user's library files, read every resource) *regardless* of which scope checkboxes were ticked on it — upstream advisory **GHSA-r2qv-8222-hqg3** (CVSS 9.9 critical). The mapping is an allowlist: a permission with no scope entry is denied by default, so a newly-added admin endpoint is never silently reachable by a key.
+    A key reaches **only** the endpoints its granted scopes cover. Anything outside them — settings writes, user / group / API-key administration, resource deletion that no manage-scope covers (printer deletion, archive **purge**), and network discovery scans — is refused with `403`, even for an otherwise-valid, enabled key. The mapping is an allowlist: a permission with no scope entry is denied by default, so a newly-added admin endpoint is never silently reachable by a key.
 
 !!! info "Upgrade inheritance"
     The two library / inventory scopes — `can_manage_library` and `can_manage_inventory` — are backfilled from each key's existing **Manage Queue** (`can_queue`) setting on upgrade. A queue-enabled key keeps its prior upload + inventory-write workflow, while a hardened read-only key (`can_queue = false`) gains nothing. Adjust either scope afterwards with `PATCH /api-keys/{id}`.
 
-    The three newer scopes — `can_manage_projects`, `can_manage_archives`, and `can_manage_maintenance` — were previously **denied for every API key**, so existing keys keep them **off** on upgrade (no silent scope widening). Grant them per key under **Settings → API Keys** (or `PATCH /api-keys/{id}`) when you want a key to drive projects, archive curation, or maintenance logging.
+    The scopes `can_manage_projects`, `can_manage_archives`, and `can_manage_maintenance` are never granted implicitly — a key has them only when they are ticked on it (no silent scope widening). Grant them per key under **Settings → API Keys** (or `PATCH /api-keys/{id}`) when you want a key to drive projects, archive curation, or maintenance logging.
 
 The permissions that gate the **management** of the keys themselves (who can list / create / revoke) are normal user-group permissions:
 
@@ -258,7 +258,7 @@ After any of those, in-flight requests already past the validator finish (the va
     Some queue mutations also touch the library; a payload that uploads a file needs the separate **Manage Library** (`can_manage_library`) scope — it isn't covered by `can_queue`.
 
 ??? question "403 Forbidden writing library / inventory with a queue-enabled key"
-    Since strict-scope confinement, library writes need `can_manage_library` and inventory writes need `can_manage_inventory` — they're no longer implied by `can_queue`. On upgrade these were backfilled from `can_queue`, but a key edited to read-only, or created after the split, needs them ticked explicitly. `PATCH /api-keys/{id}` with the scope, then retry.
+    Library writes need `can_manage_library` and inventory writes need `can_manage_inventory` — `can_queue` does not imply them, so they have to be ticked on the key explicitly. `PATCH /api-keys/{id}` with the scope, then retry.
 
 ??? question "Key works for status but not for `/control/start`"
     `can_control_printer` is off. Toggle it on with `PATCH`, then retry — no need to recreate the key.

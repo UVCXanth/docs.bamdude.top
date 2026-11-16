@@ -119,9 +119,7 @@ You can also override the env-var defaults that BamDude reads at startup: `SLICE
     it needs, and only real silence ends the wait.
 
     On an older sidecar that cannot report progress there is nothing to judge
-    liveness by, so the same number bounds **total** slicing time instead — the old
-    behaviour, but with a number you can raise rather than five minutes fixed in
-    the code.
+    liveness by, so the same number bounds **total** slicing time instead.
 
     A sidecar that won't accept a connection at all is still reported as
     unreachable, immediately.
@@ -140,16 +138,16 @@ From **File Manager**: action menu on an STL / 3MF / STEP / STP file → **Slice
 
 The Slice modal opens with three preset dropdowns:
 
-- **Printer profile** — from the unified preset listing. Each entry is sourced from one of four tiers listed in fixed precedence with **no cross-tier dedup** (`local` → `orca_cloud` → `cloud` → `standard`): `local` (your imported/local `.json` profiles), `orca_cloud` (per-user Orca Cloud presets), `cloud` (per-user Bambu Cloud presets), `standard` (bundled defaults baked into the sidecar). Because there is no dedup, a preset with the same name in two tiers is listed once per tier — it is no longer hidden just because another tier has one by that name. The modal labels the tier next to each option. Defaults to the printer the source 3MF was prepared with when that profile is available, otherwise the first listed.
+- **Printer profile** — from the unified preset listing. Each entry is sourced from one of four tiers listed in fixed precedence with **no cross-tier dedup** (`local` → `orca_cloud` → `cloud` → `standard`): `local` (your imported/local `.json` profiles), `orca_cloud` (per-user Orca Cloud presets), `cloud` (per-user Bambu Cloud presets), `standard` (bundled defaults baked into the sidecar). Because there is no dedup, a preset with the same name in two tiers is listed once per tier — it is not hidden just because another tier has one by that name. The modal labels the tier next to each option. Defaults to the printer the source 3MF was prepared with when that profile is available, otherwise the first listed.
 - **Process profile** — same four tiers, but **filtered to the selected printer**: profiles for other printers drop into a trailing **"Other printers"** group instead of disappearing, and profiles with no printer info stay in the main list (never hidden). Defaults to the process the 3MF was prepared with when compatible; otherwise to the compatible one nearest a 0.20 mm layer height (the slicer's own "Standard"), rather than the alphabetically first — which on Bambu's naming was always the finest and slowest. Changing the printer re-picks the process if the current one no longer fits.
 - **Filament profile(s)** — one dropdown per filament slot **the project declares**, not just the ones this plate paints with, filtered the same way (compatible profiles first, "Other printers" group trailing). The modal pre-picks the best match per slot using the source 3MF's filament metadata: a profile of the slot's own **base material** (PLA, PETG, ABS… — the type the profile states, not a particular brand or profile family; the PA-CF / PA12-CF / PAHT-CF group counts as one, as it does when printing), an exact type ahead of an equivalent one, colour breaking ties and printer-incompatible profiles demoted. A profile of another material is picked only when there is nothing else, and a profile **you** chose — by hand or from a saved pipeline — is never swapped out for its material, so slicing a PLA-labelled model in PETG stays your call. A single click on **Slice** usually does the right thing for multi-color jobs. Beside each dropdown sits a **colour** control — the colour that slot is printed in, written into the sliced file so its thumbnail and the print dialog show it. It starts at the colour the source plate was designed with, or the slicer's default green for a source with none (an STL); set it to the spool you will load. Neither slicer keeps a colour on a filament profile, so without it every sliced file came back Bambu green. It is a record, not a requirement: the print dialog still maps the slot to a spool of any colour.
 
     !!! warning "Why every declared slot is listed, even the unused ones"
-        The slicer binds this list **by position**. A model that declares four
-        filaments but paints with slot 4 alone — a common MakerWorld shape — used
-        to show a single dropdown, and your pick landed in **slot 1**; slot 4, the
-        one the model actually prints with, was sliced with whatever the author
-        had left in it, and the print came out in the wrong material with nothing
+        The slicer binds this list **by position**. Take a model that declares four
+        filaments but paints with slot 4 alone — a common MakerWorld shape. With
+        a single dropdown, your pick would land in **slot 1**; slot 4, the
+        one the model actually prints with, would be sliced with whatever the author
+        had left in it, and the print would come out in the wrong material with nothing
         on screen to suggest anything was off.
 
         Slots this plate doesn't use are shown greyed out (see below), so choosing
@@ -225,7 +223,7 @@ setting. Only what you tick is applied.
 
 Layer height and first-layer height *are* the process preset you picked — "0.08mm High Quality" is its
 layer height — so the file's value is offered, with the preset's own beside it, but never ticked for you:
-a file's 0.2 used to slice quietly over an explicitly picked 0.08 preset.
+a file's 0.2 never slices quietly over an explicitly picked 0.08 preset.
 
 Machine-tuned values were chosen for the *author's* printer. On yours they can be
 merely wrong, or outside the range your profile accepts — which fails the slice
@@ -234,15 +232,15 @@ outright — so they are listed with a badge and left off for you to decide.
 **Supports follow the ticks.** A file with supports switched on turns them on
 for your slice too — they are design intent, ticked by default. Untick them and
 the slice keeps your preset's own support settings; an unticked support setting
-is no longer carried in behind your back. A file that records no deviations at
-all (an OrcaSlicer export, say) has nothing to tick, and its supports are still
-carried as before.
+is not carried in behind your back. A file that records no deviations at
+all (an OrcaSlicer export, say) has nothing to tick, and its supports are
+carried as they are.
 
 The same ticks appear beside each option in the **Process settings** panel, and
 a tick in either place is the same tick. That panel greys out an option only
 when the slice itself would switch it off — judged by your preset's values, the
 file's values you ticked and anything you typed, not by the slicer's built-in
-defaults, which used to grey the whole Support page for a preset with supports
+defaults, which would grey the whole Support page for a preset with supports
 on. A greyed option's "from file" tick can still be cleared.
 
 !!! info "Nothing here is guessed"

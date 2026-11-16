@@ -59,12 +59,6 @@ A macro's `action_type` decides what happens when its event fires.
     - Drop to Silent speed part-way through an overnight print
     - External automations that don't need the G-code pipeline
 
-    !!! info "Chamber light macros made before 0.5.3"
-        The light used to be two separate commands, `chamber_light_on` and
-        `chamber_light_off`. They are now one command with an On/Off value,
-        and existing macros are converted the first time the new version
-        starts — they keep doing exactly what they did.
-
     !!! warning "Print speed only applies while printing"
         The printer accepts a speed change during a print. Bambu Studio
         refuses one when the machine is idle, and so does BamDude's own
@@ -75,9 +69,9 @@ A macro's `action_type` decides what happens when its event fires.
     to the frontend via `/macros/meta`. New named commands are added
     there as use cases come up.
 
-!!! info "Compatibility"
-    Pre-0.4.0 G-code macros keep working unchanged. New macros default
-    to G-code unless you explicitly pick **MQTT-action** in the editor.
+!!! info "Default action type"
+    New macros default to G-code unless you explicitly pick
+    **MQTT-action** in the editor.
 
 ---
 
@@ -145,8 +139,8 @@ that job.
 !!! warning "A print started outside BamDude runs no macros"
     There is no dialog on a print launched from the printer's screen, sent
     straight from a slicer, started from Telegram, or received by the virtual
-    printer — so nothing was ticked, and nothing runs. The same is true of jobs
-    that were already sitting in a queue before this version. If you depend on
+    printer — so nothing was ticked, and nothing runs. The same is true of a queued
+    job that stored no macro selection. If you depend on
     a macro for those prints, queue them through BamDude and tick it.
 
 ## :material-filter: Filter Fields
@@ -194,11 +188,11 @@ For G-code macros, the dispatcher additionally waits for the `on_macro_complete`
 
 ---
 
-## :material-history: Replacing the Old `auto_light_off` Flag
+## :material-history: Automatic Chamber Light
 
-Pre-0.4.0 BamDude had an `auto_light_off` boolean on each printer. It was dropped in migration `m021` because macros do the same job better — with delay control, on/off symmetry, per-model targeting, and per-swap-profile filters.
+There is no per-printer "auto light off" switch: macros do that job — with delay control, on/off symmetry, per-model targeting, and per-swap-profile filters.
 
-To restore the old behaviour:
+To switch the light with the print:
 
 === "Lights off when a print finishes"
 

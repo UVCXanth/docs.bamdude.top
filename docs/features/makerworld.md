@@ -47,7 +47,7 @@ If no token is stored, the MakerWorld page shows a **Bambu Cloud sign-in require
 If a token is stored but Bambu has stopped accepting it, the banner says **Bambu Cloud sign-in expired** instead, and the buttons stay disabled until you sign in again. A download refused for that reason answers *Your Bambu Cloud sign-in has expired. Open the Profiles page and sign in to Bambu Cloud again.* A single stray `401` does not sign you out: only Bambu's own expiry answer marks the token as dead.
 
 !!! note "API-key callers use the key owner's token"
-    Requests authenticated with an **API key** (`X-API-Key` / `Bearer bd_…`) that carries the cloud-access scope now resolve the **key owner's** stored Bambu Cloud token, so `has_cloud_token` / `can_download` reflect that user instead of always reporting `false`. Extension and Home Assistant imports that previously failed with "requires Bambu Cloud login" now succeed, as long as the key's owner has signed into Bambu Cloud.
+    Requests authenticated with an **API key** (`X-API-Key` / `Bearer bd_…`) that carries the cloud-access scope resolve the **key owner's** stored Bambu Cloud token, so `has_cloud_token` / `can_download` reflect that user. Extension and Home Assistant imports succeed as long as the key's owner has signed into Bambu Cloud.
 
 ---
 
@@ -116,7 +116,7 @@ The **History** tab is a server-paginated 4-column grid (responsive down to 1 co
 | **Page size** | `12 / 24 / 48 / 96 / All`. Matches the Archives convention; `All` drops `LIMIT`/`OFFSET` on the SQL side. Persisted in `localStorage`. |
 | **Refresh** | The grid auto-refetches after `import` / `delete` / `redownload` mutations via TanStack Query invalidation. |
 
-The legacy `recent-imports` endpoint is still exposed for backwards-compat but the page itself now drives off `/api/v1/makerworld/imports`.
+The legacy `recent-imports` endpoint is still exposed for backwards-compat but the page itself drives off `/api/v1/makerworld/imports`.
 
 ---
 
@@ -177,7 +177,7 @@ For thumbnails on the **Import** tab (the resolve preview shows MakerWorld's hos
 ## :material-alert-circle-outline: Limitations
 
 !!! note "Presigned S3 downloads trust the same certificates as everything else"
-    MakerWorld often hands the 3MF out as an Amazon S3 link. BamDude verifies that download against the same certificate bundle as every other connection, not the operating system's store — on Windows the system store fills lazily, and an import used to fail with `unable to get local issuer certificate` on a machine that had not met that Amazon root yet. Behind a TLS-inspecting proxy, point `SSL_CERT_FILE` (or `SSL_CERT_DIR`) at its CA: every connection, this one included, honours it.
+    MakerWorld often hands the 3MF out as an Amazon S3 link. BamDude verifies that download against the same certificate bundle as every other connection, not the operating system's store — on Windows the system store fills lazily, and an import would fail with `unable to get local issuer certificate` on a machine that has not met that Amazon root yet. Behind a TLS-inspecting proxy, point `SSL_CERT_FILE` (or `SSL_CERT_DIR`) at its CA: every connection, this one included, honours it.
 
 !!! warning "MakerWorld 418 — application-level CAPTCHA"
     MakerWorld occasionally challenges your IP with a CAPTCHA (`HTTP 418` with `{"captchaId":...}`). This is **application-level**, not Cloudflare-edge — there's no server-side solve, since CAPTCHAs are intentionally unsolvable without a real browser. BamDude does one short-backoff retry, then surfaces the upstream message verbatim. Wait 1–4 hours of quiet traffic, or use **Open on MakerWorld** to import manually via your browser.

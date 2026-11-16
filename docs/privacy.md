@@ -9,7 +9,7 @@ BamDude is self-hosted: your prints, files, printer credentials and inventory ne
 
 ## :material-chart-box: Anonymized usage telemetry
 
-Shipped in BamDude **0.4.5**. On by default (opt-out), with a notice on the first-run setup screen and a toggle in **Settings → General**.
+On by default (opt-out), with a notice on the first-run setup screen and a toggle in **Settings → General**.
 
 Once a day BamDude sends a small anonymized snapshot to `https://bamdude.top/api/telemetry`, keyed by a random `install_id` generated once at first boot and stored in `DATA_DIR/.install_id` (mode `0600`). The id is **not** linked to any account, email, IP or hardware identifier — it only lets the collector fold a given install's daily snapshots into one row.
 

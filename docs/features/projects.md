@@ -121,11 +121,11 @@ To file many prints at once, select them on the [Archives](archiving.md) page an
 
 ## :material-package-variant: Products
 
-A product is a **catalog entity** reused across orders. The product *is* the template — separate project templates no longer exist.
+A product is a **catalog entity** reused across orders. The product *is* the template — there are no separate project templates.
 
 A product can have a SKU, version and category. It stays a **draft** until marked **ready to print**, which requires a part and a printable plate; if those disappear later, it is shown as incomplete. Variant groups let one product describe choices such as straight or angled parts. Each order line stores its chosen options and part counts, so changing the product's default later does not rewrite an existing order. A line may also request selected parts without ordering a whole kit.
 
-The catalog carries an **In catalog** flag. A product outside it is not offered when adding an order line, unless the line already points at it; a catalog grows forever, and without the flag the product picker would become the pain the project picker used to be.
+The catalog carries an **In catalog** flag. A product outside it is not offered when adding an order line, unless the line already points at it; a catalog grows forever, and without the flag the product picker would become a pain.
 
 | Action | What it does |
 |---|---|
@@ -285,7 +285,7 @@ Each row therefore carries a **File** switch listing the other candidate plates 
 
 - **To printer…** on such a row asks which machine first, then opens the usual print dialog already holding the file that machine was sliced for, with the printer pinned. A printer in maintenance mode is not offered; an archived one never appears.
 - **Split across files** lets you divide one row's count manually. The auto-queue routes each item by the model its file names. The numbers must add up to the row's count, or that row and the whole plan refuse to be sent rather than quietly sending the wrong number.
-- A file a row already offers this way is no longer listed under **Add a plate…**, where it would put the same work on screen twice.
+- A file a row already offers this way is not listed under **Add a plate…**, where it would put the same work on screen twice.
 
 For orders without printer restrictions, **Rebalance across printer models** (Settings → Printing → Auto-Queue Routing) makes the split a starting point: still-pending copies can later move to a free printer of another model that can print them — see [Rebalancing across printer models](auto-queue.md#rebalancing-across-printer-models).
 

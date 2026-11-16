@@ -162,7 +162,7 @@ If you really want a hostname (not IP) on the LAN too, use a *different* one —
 
 ## :material-folder-network: Path-prefixed deployments (subpath)
 
-If you serve BamDude under a subpath — `https://example.com/bamdude/` (Traefik with a `PathPrefix(/bamdude)` rule, nginx `location /bamdude/`, Cloudflare Tunnel with path-routed services) — the SPA bundle since 0.4.3 emits **relative asset URLs** (`./assets/...`, `./manifest.json`, `./img/...`, `./sw-register.js`), so the browser resolves every script / stylesheet / icon against whatever path the document loaded from. No `BASE_URL` env var to tweak.
+If you serve BamDude under a subpath — `https://example.com/bamdude/` (Traefik with a `PathPrefix(/bamdude)` rule, nginx `location /bamdude/`, Cloudflare Tunnel with path-routed services) — the SPA bundle emits **relative asset URLs** (`./assets/...`, `./manifest.json`, `./img/...`, `./sw-register.js`), so the browser resolves every script / stylesheet / icon against whatever path the document loaded from. No `BASE_URL` env var to tweak.
 
 What this means in practice:
 

@@ -31,7 +31,7 @@ The **Part thumbnail worker** renders the [part pictures](projects.md#part-pictu
 
 The **STEP preview component** line, in the same preview section, shows the component that makes [STEP thumbnails](file-manager.md#step-thumbnails): the administrator's choice — **Enabled by the administrator: updates keep it current**, **Disabled by the administrator: updates leave it alone** or **Not chosen yet** — and the component's state — **Installed**, **Not installed**, **Not available for this machine**, **State unknown** or **Not usable (reason)**. *Installed* is not *works*: only `install/step-preview.sh status`, run on the server, checks that it really renders. On a native install the line also shows the two commands — **To install or repair it, run on the server:** `install/step-preview.sh enable`, and **To check that it renders:** `install/step-preview.sh status`; Docker and the Windows installer carry the component and show its state only. See [Installation → STEP previews](../getting-started/installation.md#step-previews) and [Troubleshooting → STEP thumbnails](../reference/troubleshooting.md#step-thumbnails).
 
-Database health is shown independently of these workers. A failed SQL check no longer aborts the other checks: missing `pg_stat_statements` leaves a statistics warning while version, size and other readable fields remain available. See [PostgreSQL setup](postgresql.md) for enabling it; updating only BamDude does not configure an external PostgreSQL server.
+Database health is shown independently of these workers. A failed SQL check does not abort the other checks: missing `pg_stat_statements` leaves a statistics warning while version, size and other readable fields remain available. See [PostgreSQL setup](postgresql.md) for enabling it; updating only BamDude does not configure an external PostgreSQL server.
 
 ## :material-tag-outline: Version info
 
@@ -146,9 +146,9 @@ The number means something only inside its own bundle — printer 2 of today's b
 
 ### The BamDude process itself
 
-The bundle used to describe the machine, the database, the printers and the settings — everything except the process actually running. So a report of *"memory climbs for days until it gets killed"* arrived with nothing to act on: the numbers that identify the cause only exist **while it is happening**, and by the time anyone asks, the container has been restarted.
+Beside the machine, the database, the printers and the settings, the bundle describes the process actually running. A report of *"memory climbs for days until it gets killed"* is otherwise nothing to act on: the numbers that identify the cause only exist **while it is happening**, and by the time anyone asks, the container has been restarted.
 
-Bundles now carry:
+Bundles carry:
 
 | Field | Why it matters |
 |---|---|
@@ -213,11 +213,11 @@ The check response carries `is_prerelease`, `is_docker`, and `latest_version` so
 
 ### In-app apply (native installs)
 
-`POST /api/v1/updates/apply` does the actual git checkout + dependency install. Behaviour as of **0.4.4**:
+`POST /api/v1/updates/apply` does the actual git checkout + dependency install. Behaviour:
 
 - Accepts an optional `tag_name` body field — the frontend passes back what it just got from `/check` so apply hits the exact release the user saw.
 - Resolves to a `vX.Y.Z[bN]` git ref via `_resolve_git_ref()` (handles both `v`-prefixed and bare forms).
-- Runs `git fetch origin --tags --prune --force` followed by `git reset --hard refs/tags/<ref>`. This works for **any tag regardless of branch** — pre-fix it hardcoded `git reset --hard origin/main` which silently no-op'd beta installs (because beta tags live on `dev`, not `main`).
+- Runs `git fetch origin --tags --prune --force` followed by `git reset --hard refs/tags/<ref>`. This works for **any tag regardless of branch** — beta tags live on `dev`, not `main`.
 - Installs Python deps (`pip install -r requirements.txt`) and rebuilds the frontend bundle (`npm install && npm run build`) when npm is available.
 
 The endpoint requires `settings:update`. Trigger from **Settings → System → Install Update** when an update is shown as available.

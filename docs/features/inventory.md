@@ -16,7 +16,7 @@ The Inventory page opens with five summary cards above the spool list, each clic
 | Card | What it shows |
 |---|---|
 | **Total Inventory** | Count of spools + total weight in kg across the whole inventory. |
-| **Consumed (this month)** | Grams deducted from spools in the current calendar month. Pairs with [Stats](stats.md) for longer-range views. |
+| **Total Consumed** | Grams consumed across all spools since tracking started — or, for a spool whose counter was reset, since that [reset](#reset-counter). Pairs with [Stats](stats.md) for per-period views. |
 | **By Material** | Donut chart broken down by filament type (PLA, PETG, ABS, …). Click a wedge to filter the spool list to that material. |
 | **In Printer** | How many spools are currently loaded across all AMS units on all printers (sum of slot assignments). |
 | **Low Stock** | Count of spools below either the global `low_stock_threshold` or their per-spool override (whichever is stricter). Click to filter to just the low-stock list — pairs with the `filament_low` notification. |
@@ -33,14 +33,14 @@ The toolbar above the list combines a free-form search box with chip strips and 
 - **Status tabs** — Active / Archived / All, plus quick filters Used / New, plus stock filter All / Stock (no slicer profile) / Configured (has slicer profile).
 - **Brand dropdown** — single-select.
 - **View modes** — **Table** (data-focused, sortable columns), **Cards** (visual swatches), or **[History](#history)** (every consumption record on the farm). *Forecast* sits beside them when you have permission for it.
-- **Group similar** — toggle that visually collapses identical spools into one expandable row with a count badge (e.g. *5 identical spools*). Grouping key is `manufacturer + material + colour name + label weight + subtype`; lot is deliberately **not** part of it, so a batch created with **auto-numbered lots** (see below) still collapses into one row, and a group may span several lots. A spool that is loaded in a printer always appears individually, so you can tell which physical spool is in which slot; a started spool back on the shelf groups with its twins, and the row's remaining weight is the exact sum over the members. Group state persists across sessions.
+- **Group** — toggle that visually collapses identical spools into one expandable row with a count badge (e.g. *5 identical spools*). Grouping key is `manufacturer + material + colour name + label weight + subtype`; lot is deliberately **not** part of it, so a batch created with **auto-numbered lots** (see below) still collapses into one row, and a group may span several lots. A spool that is loaded in a printer always appears individually, so you can tell which physical spool is in which slot; a started spool back on the shelf groups with its twins, and the row's remaining weight is the exact sum over the members. Group state persists across sessions.
 
 !!! info "Grouped sorting"
     Click **ID**, **Lot**, **Purchased**, **Location**, **Label**, **Net** or **Remaining** to sort both groups and their expanded spools. Groups are ordered before pagination. Label and net weights use group totals; remaining percentage uses the group's total remaining divided by its total label weight. ID, lot, purchase date and location use the representative spool (the lowest ID in the group).
 
 ## :material-package-variant: Adding spools
 
-**Inventory** in the sidebar opens the spool list. **+ Add Spool** asks for:
+**Filament** in the sidebar opens the spool list. **+ Add Spool** asks for:
 
 | Field | Notes |
 |---|---|
@@ -72,8 +72,8 @@ Each ticked field pre-fills only when the selection already shares one value (ot
 
 Two buttons in the inventory header move whole spool lists in and out as CSV — handy for backing up your inventory, editing it in a spreadsheet, or bulk-loading a freshly-received order.
 
-- **Export** downloads a date-stamped `bamdude_inventory_YYYYMMDD.csv`, one row per active spool.
-- **Import** bulk-adds spools from a CSV. Instead of writing straight away, it first shows a **preview table** that marks every row as *valid*, *error*, or *skipped* — and flags rows where a colour was auto-filled from the colour catalogue, or where a matching spool already exists — **before anything is written**. A confirm click then saves only the valid rows.
+- **Export CSV** downloads a date-stamped `bamdude_inventory_YYYYMMDD.csv`, one row per spool matching the current filters — not just the page on screen.
+- **Import CSV** bulk-adds spools from a CSV. Instead of writing straight away, it first shows a **preview table** that marks every row as *valid*, *error*, or *skipped* — and flags rows where a colour was auto-filled from the colour catalogue, or where a matching spool already exists — **before anything is written**. A confirm click then saves only the valid rows.
 
 CSV headers are case- and spacing-tolerant, so a column titled `Label Weight`, `label_weight`, or `LABELWEIGHT` all resolve the same way. Only `material` is required; every other column is optional, and the same validation as the manual add-spool form applies to each row.
 
@@ -87,7 +87,6 @@ Where a spool physically lives — a shelf, drawer, or dry-box — is a **manage
 
 - **Rename propagates** — renaming a location updates every spool assigned to it in one write, so there's no orphaned free-text drift.
 - **Delete is guarded** — move assigned spools and detach Zigbee or Home Assistant sensors before deleting the location.
-- **Legacy free-text migrates** — on first launch after upgrade, BamDude backfills the catalog from the distinct free-text storage values already on your spools and links each spool to its matching catalog row.
 - **Spoolman sync** — in Spoolman mode the catalog imports Spoolman's distinct locations, and a rename cascades to Spoolman's per-spool `location` field (rolled back locally if Spoolman rejects it, so the two never diverge).
 
 Viewing the catalog needs `inventory:read`; creating / renaming / deleting a location needs `inventory:update`.
@@ -96,24 +95,21 @@ A location can show readings from [Zigbee and Home Assistant sensors](sensors.md
 
 ### Editing a spool created by Quick Add, CSV import or RFID
 
-Those three routes create a spool with a material and little else — no slicer preset, no brand, no subtype. **Editing and copying now ask for exactly what the server asks for: the material.**
+Those three routes create a spool with a material and little else — no filament family, no brand, no subtype. **Editing and copying such a spool ask for exactly what the server asks for: the material.** So you can change its shelf location, its cost or a note without filling in anything else.
 
-Reopening such a spool in Edit used to demand preset, brand *and* subtype before it would save anything, so changing its shelf location, its cost or a note was simply impossible — and the Quick Add toggle that waives those fields only exists when creating. Copy Spool hit the same wall with no way around it at all.
+Family, brand and subtype stay visible and editable; the little `*` markers appear only where a field is genuinely required.
 
-Preset, brand and subtype stay visible and editable; the little `*` markers appear only where a field is genuinely required.
+!!! info "The brand and material lists offer every product"
+    The colour catalogue knows only some brand/material pairs — Elegoo is
+    catalogued for PLA only, yet **Elegoo ASA** is a real filament you can buy.
 
-!!! info "The brand and material lists no longer hide real products"
-    They used to filter themselves down to the brand/material pairs the colour
-    catalogue happens to know. Elegoo is catalogued for PLA only — so **Elegoo
-    ASA**, a real filament you can buy, looked impossible to enter.
-
-    Both lists now always offer everything: the known pairings ranked first under
+    Both lists therefore always offer everything: the known pairings ranked first under
     **Suggested**, the rest under **All**. A spool's own brand or material is always
     present in its own dropdown, even if nothing else has heard of it.
 
-### The spool links to a filament family (0.5.5)
+### The spool links to a filament family
 
-The per-variant Slicer Preset dropdown is gone: the spool form carries a single **Filament family** picker — the same identity Bambu Studio uses (`filament_id`), shared with the AMS slot dialog and the K-profile editor. The spool is printer-agnostic by construction now: per-printer preset variants are the *family's* business, resolved per printer at slot-assignment and slicing time. Picking a family prefills material and brand; custom families carry a badge saying which cloud they came from; a "Create new family…" row opens the [Create Filament dialog](filament-families.md#creating-your-own-filament) without leaving the form. Existing spools were migrated onto families automatically on the first start after upgrading. Full model: [Filament Families](filament-families.md).
+The spool form carries a single **Filament family** picker — the same identity Bambu Studio uses (`filament_id`), shared with the AMS slot dialog and the K-profile editor. The spool is printer-agnostic by construction: per-printer preset variants are the *family's* business, resolved per printer at slot-assignment and slicing time. Picking a family prefills material and brand; custom families carry a badge saying which cloud they came from; a **Create new family…** row opens the [Create Filament dialog](filament-families.md#creating-your-own-filament) without leaving the form. Full model: [Filament Families](filament-families.md).
 
 ### Per-spool category & low-stock override
 
@@ -121,8 +117,8 @@ Two extra optional fields on the spool form fine-tune both filtering and alertin
 
 | Field | Effect |
 |---|---|
-| **Category** | A free-form short tag — e.g. `PETG`, `ABS`, `TPU`, `paint`, `experimental`. Inventory page renders a category-filter chip strip at the top so you can show "only TPU" or "only experimental". The chip strip only appears once at least one spool has a category set, so it doesn't clutter the page on day one. The special chip `__none__` filters to spools with no category. |
-| **Low-stock threshold (override)** | Per-spool override for the global `low_stock_threshold`. Use this when a particular spool needs an earlier warning (e.g. an expensive PA — 50% remaining means time to order; cheap throwaway PLA can wait until 10%). Empty = inherit the global setting. |
+| **Category** | A free-form short tag — e.g. `PETG`, `ABS`, `TPU`, `paint`, `experimental`. Inventory page renders a category-filter chip strip at the top so you can show "only TPU" or "only experimental". The chip strip only appears once at least one spool has a category set, so it doesn't clutter the page on day one. The **No category** chip filters to spools with no category. |
+| **Low-stock override (%)** | Per-spool override for the global `low_stock_threshold`. Use this when a particular spool needs an earlier warning (e.g. an expensive PA — 50% remaining means time to order; cheap throwaway PLA can wait until 10%). Empty = inherit the global setting. |
 
 Both columns are surfaced in the inventory table and editable inline.
 
@@ -138,15 +134,15 @@ The "+ Add Spool" form has two tabs. The first one — Filament Info — covers 
 | **Subtype** | Basic, Matte, Silk, HF, Metal, CF, … |
 | **Label Weight** | Net weight as printed on the spool (default 1000 g; AMS-HT cardboard core ~250 g). |
 | **Quantity (bulk)** | 1–100 spools created in one operation. Useful for "I bought a 5-pack of PLA" scenarios — every spool shares the same material / colour / weight / cost (lots can differ, see **Lot** + auto-numbering below). |
-| **Colour** | Visual picker with shade + opacity + finish pickers. Recent-colours strip + brand palettes. |
-| **Extra colours** | Optional. Comma-separated list of 2–8 hex stops (e.g. `EC984C,#6CD4BC,A66EB9,D87694`) for multi-colour spools. Renders the swatch differently based on the **Effect** value below — gradient blend, hard-split bars, or colour-wheel pie. Format matches 3dfilamentprofiles.com so paste-and-go works. |
-| **Effect** | Layered on top of the colour swatch — does **not** change the slicer profile. Full enumeration: surface effects (*Sparkle*, *Wood*, *Marble*, *Glow*, *Matte*) paint a CSS overlay; sheen variants (*Silk*, *Galaxy*, *Rainbow*, *Metal*, *Translucent*) carry a soft sheen; structural variants drive the colour-layer shape — *Gradient* = smooth 135° blend, *Dual Color* / *Tri Color* = hard-split horizontal bars (each stop occupies its own contiguous segment, no diagonal blend), *Multicolor* = conic-gradient colour-wheel pie. The form has a live preview pane below the dropdown so you see the effect before save. |
+| **Color** | Visual picker with shade + opacity + finish pickers. Recent-colours strip + brand palettes. |
+| **Extra colour stops** | Optional. Comma-separated list of 2–8 hex stops (e.g. `EC984C,#6CD4BC,A66EB9,D87694`) for multi-colour spools. Renders the swatch differently based on the **Visual effect** value below — gradient blend, hard-split bars, or colour-wheel pie. Format matches 3dfilamentprofiles.com so paste-and-go works. |
+| **Visual effect** | Layered on top of the colour swatch — does **not** change the slicer profile. Full enumeration: surface effects (*Sparkle*, *Wood*, *Marble*, *Glow*, *Matte*) paint a CSS overlay; sheen variants (*Silk*, *Galaxy*, *Rainbow*, *Metal*, *Translucent*) carry a soft sheen; structural variants drive the colour-layer shape — *Gradient* = smooth 135° blend, *Dual Color* / *Tri Color* = hard-split horizontal bars (each stop occupies its own contiguous segment, no diagonal blend), *Multicolor* = conic-gradient colour-wheel pie. The form has a live preview pane below the dropdown so you see the effect before save. |
 
 #### Quick Add (Stock) mode
 
-Toggle **Quick Add (Stock)** at the top of the form to switch to a minimal mode that hides the slicer preset + PA Profile tab. Only **Material** (required), **Brand**, **Subtype** (both optional), **Label Weight**, **Quantity**, and **Colour** are shown — perfect for inventorying a freshly-arrived order before you've decided which slicer profile to associate.
+Toggle **Quick Add (Stock)** at the top of the form to switch to a minimal mode that drops the filament-family requirement and hides the PA Profile tab. Only **Material** is required; **Brand** and **Subtype** are optional, next to **Label Weight**, **Quantity** and **Color** — perfect for inventorying a freshly-arrived order before you've decided which filament family to associate.
 
-Quick-Add spools are called **stock spools** — they track weight and usage like any other spool, but they aren't linked to a printer filament profile. You can edit a stock spool later to assign a slicer preset (it becomes a *configured* spool at that point) or filter to just the stock pile via the inventory's stock filter.
+Quick-Add spools are called **stock spools** — they track weight and usage like any other spool, but they aren't linked to a printer filament profile. You can edit a stock spool later to assign a filament family (it becomes a *configured* spool at that point) or filter to just the stock pile via the inventory's stock filter.
 
 The **Quantity** field is only shown in Quick Add and creates that many spools in a single transaction. Quick Add also shows the **Lot** field together with an **Auto-number lots (+1 per copy)** checkbox:
 
@@ -154,7 +150,7 @@ The **Quantity** field is only shown in Quick Add and creates that many spools i
 - **Auto-number unticked** — every copy shares the single Lot value you typed (or no lot at all).
 
 !!! tip "Bulk buying"
-    A 5-pack of PLA from the same batch → Quantity = 5, Lot = 1, **Auto-number lots** on → five spools with lots 1–5, each traceable by its lot, and still one *5 identical spools* row under the **Group similar** toggle — lot is not part of the grouping key, so numbering the lots costs you nothing in the list.
+    A 5-pack of PLA from the same batch → Quantity = 5, Lot = 1, **Auto-number lots** on → five spools with lots 1–5, each traceable by its lot, and still one *5 identical spools* row under the **Group** toggle — lot is not part of the grouping key, so numbering the lots costs you nothing in the list.
 
 #### Where families come from
 
@@ -177,7 +173,7 @@ Custom materials work like built-ins for inventory tracking, usage history, filt
 
 !!! example "Adding PCTG (3D-Fuel Pro)"
     1. **+ Add Spool**.
-    2. **Slicer Preset**: pick the closest PETG preset (PCTG is a PETG variant). For a custom OrcaSlicer PCTG profile, import via [Local Profiles](local-profiles.md) first.
+    2. **Filament family**: pick the closest PETG family (PCTG is a PETG variant). For a custom OrcaSlicer PCTG profile, import via [Local Profiles](local-profiles.md) first.
     3. **Material**: type `PCTG` → click *Use custom material: PCTG*.
     4. **Brand**: `3D-Fuel`. **Subtype**: `Pro`.
     5. Set colour (315 °C max bed, 80 °C bed for PCTG — print/bed defaults are inherited from the base PETG preset; override on the slicer side if needed). Save.
@@ -197,7 +193,7 @@ Custom materials work like built-ins for inventory tracking, usage history, filt
 
 **Material number** is a free-text internal article code, next to **Lot**: the number your shop or accounting uses for a filament, whatever the brand calls it. The field suggests the numbers already in use.
 
-- A new spool of a filament that already has a number gets it automatically — "the same filament" being what **Group similar** groups by (brand, material, colour name, label weight, subtype). A number you type is never replaced, and editing a spool never changes it by itself. CSV import does not inherit: a blank cell there states "no number".
+- A new spool of a filament that already has a number gets it automatically — "the same filament" being what **Group** groups by (brand, material, colour name, label weight, subtype). A number you type is never replaced, and editing a spool never changes it by itself. CSV import does not inherit: a blank cell there states "no number".
 - It is available as an optional table column (off by default — enable it in the column settings), as a filter, in the search box, in **Bulk edit**, as a level in [Spool order](#spool-order), as the `{material_number}` variable of the spool display-name template and of label templates, and as the `material_number` column of the CSV export and import.
 - [Stats](stats.md#by-material-number) totals consumption and cost per material number.
 - In Spoolman mode the field shows the article number of the filament in Spoolman and is read-only — change it in Spoolman.
@@ -227,14 +223,14 @@ The second tab links pressure-advance (K-factor) calibration profiles to the spo
 - **Auto-select** — fills the matrix from your existing K-profiles automatically.
 - **Grouped view** — collapsible printer headings, each with per-nozzle (L / R) sub-rows.
 - **K-factor values** displayed inline so you can sanity-check before saving.
-- **Nozzle diameter badge** on each row. Profiles are fetched for *every* nozzle size a printer reports, so on a multi-nozzle machine one filament can contribute two rows that share a name — the diameter is what tells them apart. A printer that has not yet reported its hardware is queried for 0.4 mm, as before.
+- **Nozzle diameter badge** on each row. Profiles are fetched for *every* nozzle size a printer reports, so on a multi-nozzle machine one filament can contribute two rows that share a name — the diameter is what tells them apart. A printer that has not yet reported its hardware is queried for 0.4 mm.
 - **Per-printer override** — pick a different profile for one printer if you have brand-specific calibration values that differ between machines.
 
 See [K-Profiles](kprofiles.md) for the calibration workflow that produces these profiles.
 
 ## :material-checkbox-multiple-marked: Mass actions
 
-Every row on the Filament tab has a checkbox. Tick one, and a toolbar appears above the list with **Edit · Print labels · Reset usage · Archive** (or **Restore**, on the Archived tab) **· Delete**.
+Every row on the Filament page has a checkbox. Tick one, and a toolbar appears above the list with **Edit · Print label for this spool · Reset counter · Archive** (or **Restore**, on the Archived tab) **· Delete**.
 
 Four ways to select:
 
@@ -259,7 +255,7 @@ All of this works in **Spoolman mode** as well as with the built-in inventory. B
 
 ## :material-format-list-checkbox: AMS slot assignments
 
-Once a spool exists, you can park it in a specific AMS slot on a specific printer. The right-side AMS panel on each printer card shows the four slots (or eight, on AMS-HT) and lets you drop a spool into each slot.
+Once a spool exists, you can park it in a specific AMS slot on a specific printer. The right-side AMS panel on each printer card shows the four slots of each AMS (one, on an AMS HT) and lets you drop a spool into each slot.
 
 Behind the scenes, this is the `spool_assignment` table — one row per `(printer, ams_id, tray_id)` triple. Two assignments to the same physical slot can't exist simultaneously; assigning a new spool releases the previous one (which goes back to "available, not in any printer").
 
@@ -270,7 +266,7 @@ Two things do **not** remove an assignment:
 - **A single "empty" report from an idle AMS.** A slot that reports no spool while nothing prints loses its assignment only when it still reports empty about 25 seconds later. One stray status message therefore leaves the assignments alone, while a reel you really took out is unlinked shortly afterwards.
 - **Unplugging an AMS.** The unit leaves the printer card, and its spools stay assigned for when it is plugged back in.
 
-Two extra niceties:
+A few extra niceties:
 
 - **RFID auto-assign** — Bambu spools with intact RFID tags get matched to the catalog the moment the AMS reads the tag. If a tag points at a known catalog entry but no inventory row exists yet, BamDude offers to create one inline. If the tag is unknown (third-party, custom), you can bind it to an existing spool to skip the manual look-up next time.
 - **Auto-tracking new Bambu spools** — when an AMS RFID matches no existing tray UUID, BamDude first looks for an **untagged** spool with the same material + colour + brand (`Bambu` / `Bambu Lab` / unspecified) and attaches the RFID to it. So a Quick-Add stock entry you logged ahead of time gets reused (your weight, notes, cost data are preserved) instead of producing a duplicate. If no match is found, a fresh inventory row is created from the AMS data — drawn the way a hand-added spool of the same colour would be: the colour name, extra colour stops and effect come from your colour catalogue, and where the catalogue carries no effect, the subtype supplies one when it names a finish (*Wood*, *Silk*, *Sparkle*, *Gradient*…; *Basic* or *CF* name none).
@@ -299,21 +295,21 @@ Assigning a spool is the simplest workflow — it handles tracking + printer con
 
 ### Stock forecasting + Logistics view
 
-A third inventory tab next to **Table** / **Cards** that turns the raw `spool_usage_history` table into reorder intelligence:
+The **Forecast** view, next to **Table** / **Cards** / **History**, turns the raw `spool_usage_history` table into reorder intelligence:
 
 - **Daily-consumption rate** — exponentially-weighted moving average with a 30-day half-life, computed per **colour group** (material / subtype / brand / colour name). Five colours of the same PLA Basic become five independent forecast rows, each with its own runway and reorder date — so running low on black doesn't hide behind a full spool of white. One spool of recent prints weighs more than a year-old burst. A colour with too little recorded history for a trend is estimated from its spools' totals instead: each spool's consumption is spread over the time it was actually printed with — from its first use to its last — and only what falls inside the last 90 days counts. Time a spool spent on the shelf before it was opened is not use, so a filament bought months ago and opened last week forecasts at the pace of that week; a filament not printed for 90 days shows no consumption.
 - **Days-left projection** — current stock divided by daily rate, with a 95%-service-level safety stock factored in (`σ × √lead_time × 1.65`).
 - **Reorder-by date** — when to place the order so the new spool arrives *before* you run out, given the configured lead time.
-- **Reserved by orders** — how many known grams of that colour your active orders still have to take off the shelf: the plan they have not printed yet plus what is already waiting in the queues, counted exactly as the order pages count it and projected onto the SKUs that can serve it (split by remaining weight when several brands match). If any active-order slicer channel has no trustworthy weight, the panel warns that **Reserved** and **Reorder by** cover only the known part; it never invents grams or assigns that uncertainty to a SKU. Beneath it sits what is left to promise, and **Reorder by** counts down from *that* rather than from everything on the shelf — **Empty by** deliberately does not, because the consumption rate already contains those orders being printed. Promise more than the shelf holds and the row reads **Over-committed**, which counts as an alert even before the SKU has a consumption rate. Need in a colour you do not stock is listed under the table instead of being spread over the colours you do.
+- **Reserved by orders** — how many known grams of that colour your active orders still have to take off the shelf: the plan they have not printed yet plus what is already waiting in the queues, counted exactly as the order pages count it and projected onto the SKUs that can serve it (split by remaining weight when several brands match). If any active-order slicer channel has no trustworthy weight, the panel warns that **Reserved** and **Reorder By** cover only the known part; it never invents grams or assigns that uncertainty to a SKU. Beneath it sits what is left to promise, and **Reorder By** counts down from *that* rather than from everything on the shelf — **Empty By** deliberately does not, because the consumption rate already contains those orders being printed. Promise more than the shelf holds and the row reads **Over-committed**, which counts as an alert even before the SKU has a consumption rate. Need in a colour you do not stock is listed under the table instead of being spread over the colours you do.
 - **Filter + count controls** — **Material** and **Brand** dropdowns narrow the table; a dedicated **Spools** column shows how many physical spools back each colour row. Every column is sortable.
-- **Per-colour expanded editors** — lead-time-days, safety-margin (dual-unit days|grams), alert-snooze toggle. Each setting persists across sessions in the `filament_sku_settings` table; colours with no settings yet fall back to the global lead-time floor (Settings → Inventory → **Forecast global lead time**). Overrides you saved before the colour split are carried onto the matching colour rows on first load, so no per-SKU tuning is lost in the migration.
+- **Per-colour expanded editors** — lead-time-days, safety-margin (dual-unit days|grams), alert-snooze toggle. Each setting persists across sessions in the `filament_sku_settings` table; colours with no settings yet fall back to the global lead-time floor (the **Global lead time** field in the Forecast view).
 - **Top-5 chart** — stacked-area, multi-series projection of the five fastest-burning colours with ROP reference lines. Timeframe toggle: 1W / 1M / 6M.
 - **Shopping list (Logistics view)** — separate panel below the forecast table. Add SKUs to a `pending → purchased → received` queue. Marking an item *received* auto-creates `category='Stock'` spools via bulk-create (uses the average historical spool weight). CSV export + clear-all helpers.
-- **Notification toggles** — two new notification-provider events appear in **Settings → Notifications → Inventory Alerts**: *Reorder Alert* (SKU crossed reorder point) and *Stock Break Alert* (will run out before lead time). Both are sent through the provider like any other event; see [Notifications](notifications.md).
+- **Notification toggles** — two notification-provider events sit under **Settings → Notifications → Inventory Alerts**: *Reorder Alert* (SKU crossed reorder point) and *Stock Break Alert* (will run out before lead time). Both are sent through the provider like any other event; see [Notifications](notifications.md).
 
 The forecast tab works in **Spoolman mode** too: BamDude keeps its own record of every print it charges to a Spoolman spool and forecasts from it. See [Spoolman → Usage history and Forecast](spoolman.md#spoolman-usage-history).
 
-Permissions: `inventory:forecast_read` (see the panel) and `inventory:forecast_write` (modify SKU settings + shopping list) are added to existing groups automatically on upgrade — viewers get read, operators get both.
+Permissions: `inventory:forecast_read` (see the panel) and `inventory:forecast_write` (modify SKU settings + shopping list). In the default groups, Viewers have read and Operators have both.
 
 ### Pre-load assignment (weigh-then-assign)
 
@@ -331,8 +327,8 @@ You can assign a spool to a slot **before** loading the filament — useful when
 
 Use this when a printer is routinely loaded with new, full, untagged spools of the same filament. BamDude can assign the next matching inventory spool when it observes filament being inserted into an empty AMS slot, including a replacement after runout.
 
-1. Add the full spools to **Inventory** with their actual material, colour, brand, subtype, filament family and label weight.
-2. Open **Printers → Edit printer**, enable **Assign a full stock spool on loading**, and choose the **Inventory filament group**. Save the printer.
+1. Add the full spools on the **Filament** page with their actual material, colour, brand, subtype, filament family and label weight.
+2. Open **Printers → Edit Printer**, enable **Assign a full stock spool on loading**, and choose the **Inventory filament group**. Save the printer.
 3. While BamDude is connected to the printer, load a new full spool from that group into an empty AMS slot. Check the resulting assignment on the slot or in Inventory.
 
 Editing the policy requires both printer-edit and inventory-update permission; reading the group list requires inventory-read permission.
@@ -362,7 +358,7 @@ Every print BamDude dispatches reads the per-filament `weight` from the source 3
 - `spool.used_grams` is the running total.
 - `spool.weight - spool.used_grams` is what's left.
 
-The inventory page colour-codes each spool by remaining percentage, with a configurable **low-stock threshold** (Settings → Inventory). When a spool drops below the threshold, the matching `filament_low` notification fires (subscribe to it under whichever providers you care about). A Spoolman-bound slot is judged by Spoolman's figure against the same threshold. A slot with no inventory binding is not judged at all: the printer's own counter reads 0 % for any spool without an RFID tag, and that is no answer — assign the spool, and BamDude knows what is on it.
+The inventory page colour-codes each spool by remaining percentage, with a configurable **low-stock threshold** (the pencil on the **Low Stock** summary card). When a spool drops below the threshold, the matching `filament_low` notification fires (subscribe to it under whichever providers you care about). A Spoolman-bound slot is judged by Spoolman's figure against the same threshold. A slot with no inventory binding is not judged at all: the printer's own counter reads 0 % for any spool without an RFID tag, and that is no answer — assign the spool, and BamDude knows what is on it.
 
 If a print fails partway through, the deducted amount is the slicer-estimate × completion ratio (best effort) rather than the full estimate. External-print fallback archives — the ones from prints started directly on the printer touchscreen — get reconciled the same way once their 3MF is recovered.
 
@@ -381,7 +377,7 @@ The deduction pipeline is more nuanced than a flat "subtract slicer estimate at 
 | **G-code-only print, no 3MF** | AMS `remain%` delta between print start and end (integer-precision, ~10 g per 1 % step on a 1 kg spool) | — |
 | **External print, fallback archive recovered later** | Re-uses the 3MF source the moment recovery completes, retroactively reconciling the deduction | — |
 
-### Runouts close the spool at exactly empty (0.5.5)
+### Runouts close the spool at exactly empty
 
 A filament runout is the one moment reality reports an exact figure: the spool holds **0 g**, whatever the books said. BamDude listens for the printer's **own runout codes** — an AMS slot waiting for new filament, the AMS auto-switching to a backup slot, or the external holder running dry — and turns each into precise accounting. Jams and tangles are *never* mistaken for runouts (only the exact firmware codes count), and a spool whose slot can't be positively identified is never touched.
 
@@ -411,7 +407,7 @@ Two runouts of the same slot in one long print (two short reels back-to-back) ar
 **Refilling an inactive slot after a backup switch.** A repeated autoswitch status is not a second empty spool.
 When the journal shows the backup in another slot of the same four-slot AMS, a different replacement reel
 is positively present, and feeding has not returned to the original slot, BamDude ignores that repeated
-status for the new reel. This also protects accounting from matching events saved before the fix.
+status for the new reel. Matching events already saved in the journal are left out of the accounting the same way.
 A real return to the refilled slot allows its next runout normally. The check uses sensor and feeding
 history, not a time delay; it does not infer this condition from another AMS unit or an external holder.
 
@@ -427,15 +423,15 @@ If BamDude restarts in the middle of this, it picks the tail back up from the jo
 
 ### Archive a spool closed by runout
 
-Since 0.7.0, **Settings → Filament → Usage accuracy → Archive the spool it closed** can archive an empty spool after its unambiguous runout episode closes and the printer has demonstrably moved to a backup or replacement. It is **off by default** and works with built-in inventory and Spoolman. A spool reinserted to continue the same print stays active; a low or negative accounting balance alone does not prove a physical runout.
+**Settings → Filament → Usage accuracy → Archive the spool it closed** can archive an empty spool after its unambiguous runout episode closes and the printer has demonstrably moved to a backup or replacement. It is **off by default** and works with built-in inventory and Spoolman. A spool reinserted to continue the same print stays active; a low or negative accounting balance alone does not prove a physical runout.
 
-### Two-way AMS weight sync for tagged spools (0.5.5)
+### Two-way AMS weight sync for tagged spools
 
-For spools with a valid Bambu RFID tag, idle AMS readings can now correct the books **downward** as well as upward — the firmware's own remaining estimate is the same number Bambu Studio mirrors into its filament manager. A downward correction is deliberately cautious: the same value must repeat across two reports at least a minute apart, so a garbled report after a reconnect can never rewrite a spool. Untagged spools are never touched by this path.
+For spools with a valid Bambu RFID tag, idle AMS readings can correct the books **downward** as well as upward — the firmware's own remaining estimate is the same number Bambu Studio mirrors into its filament manager. A downward correction is deliberately cautious: the same value must repeat across two reports at least a minute apart, so a garbled report after a reconnect can never rewrite a spool. Untagged spools are never touched by this path.
 
 The sync waits for the print to be booked. While a print runs, and until its filament has been charged at completion, no AMS reading is written to the spools of that printer — the remaining-percent reading already contains part of what the print used, and writing it would count that filament twice. A [weight entered by hand](#hand-entered-weight-lock) is not touched by the sync at all.
 
-### Live "filament so far" (0.5.5)
+### Live "filament so far"
 
 While a print runs, the expanded printer card shows how much filament it has consumed so far — per-layer G-code accuracy, per slot on multicolour jobs, refreshed twice a minute — and says **"split across spools"** once a runout has genuinely divided the print between reels. Display-only: inventory is still written once, at completion.
 
@@ -446,9 +442,9 @@ While a print runs, the expanded printer card shows how much filament it has con
 
 ### Reset counter
 
-Each spool has an eraser action — **Reset counter** — that zeroes the displayed **Total Consumed** counter (a reset-all variant resets every spool's counter at once). The button, its confirmation dialogs, and tooltips all read "Reset counter". Crucially, this only zeroes the *displayed* consumption figure — the spool's remaining weight is **not** changed (the old "Reset usage" name misleadingly implied it wiped the used grams). Mechanically it records a `weight_used_baseline`, so reported consumption becomes "used since the last reset" rather than lifetime — useful when you refill or swap a roll but keep the same inventory entry instead of creating a new one.
+Each spool has an eraser action — **Reset counter** — that zeroes the displayed **Total Consumed** counter (**Reset all counters** resets every active spool's counter at once). Crucially, this only zeroes the *displayed* consumption figure — the spool's remaining weight is **not** changed. Mechanically it records a `weight_used_baseline`, so reported consumption becomes "used since the last reset" rather than lifetime — useful when you refill or swap a roll but keep the same inventory entry instead of creating a new one.
 
-The backing API endpoints were renamed accordingly — the per-spool and reset-all paths now end in `.../reset-consumed-counter` (previously `.../reset-usage`).
+The backing API endpoints are `POST /inventory/spools/{id}/reset-consumed-counter` for one spool and `POST /inventory/spools/reset-consumed-counter-bulk` for all of them.
 
 ### The History view — every consumption record at once {#history}
 
@@ -482,8 +478,8 @@ Every spool can carry a per-kg cost; BamDude rolls it up into per-print, per-arc
 | Where | Field | Notes |
 |---|---|---|
 | Spool form → Additional section | **Cost per kg** | Per-spool override; takes precedence over the global default |
-| **Settings → Filament** | **Default Filament Cost** | Per-kg fallback when a spool has no cost set (default 25.00 in `default_filament_cost`) |
-| **Settings → Filament** | **Currency** | Symbol used everywhere — USD, EUR, GBP, MYR, and ~25 more |
+| **Settings → Printing → Cost Tracking** | **Default filament cost (per kg)** | Per-kg fallback when a spool has no cost set (default 25.00 in `default_filament_cost`) |
+| **Settings → Printing → Cost Tracking** | **Currency** | Symbol used everywhere — USD, EUR, GBP, MYR, and ~25 more |
 
 ### How costs are calculated
 
@@ -515,14 +511,14 @@ To correct prints that were booked at a wrong spool price, change the spool's **
 
 Colour names come from the `color_catalog` table — manufacturer-aware. When two brands ship a paint chip with the same hex, the Bambu Lab name wins for clarity in the UI; non-Bambu brands resolve via their own entries. If a spool's hex isn't in the catalog at all, BamDude falls back to an HSL-derived name ("dark cyan", "light yellow") so you never see a raw hex string in the UI. One hex can also be two colours in one brand's range — `#FFFFFF` is Jade White in PLA Basic and Ivory White in PLA Matte — so an AMS slot asks with its own material first, and a slot with an assigned spool shows that spool's colour name.
 
-You can extend the catalog manually under **Settings → Inventory → Colour Catalog**. The frontend pulls a runtime `{hex: name}` map once per session — adding a new entry takes effect on next login (or on a hard refresh).
+You can extend the catalog manually under **Settings → Filament → Color Catalog**. The frontend pulls a runtime `{hex: name}` map once per session — adding a new entry takes effect on next login (or on a hard refresh).
 
 ### Multi-colour gradients
 
 Painted, dual-colour, and silk filaments aren't one hex value — they're a gradient between two or more. BamDude renders these as **actual gradient swatches** on inventory cards, AMS slot indicators, and the colour picker, instead of collapsing them into a single flat hex (which always picks the wrong "dominant" colour). The 3MF metadata carries the colour stops; the catalog resolves the name; the swatch widget paints the gradient in CSS. No hand-curated paint-chip table — purely data-driven.
 
-!!! tip "Don't reintroduce hard-coded colour tables anywhere"
-    BamDude deliberately removed hard-coded `tray_id_name` / hex tables that would inevitably mislabel third-party filaments. The catalog is the only source of truth — even if you're tempted to "shortcut" colour resolution somewhere.
+!!! tip "No hard-coded colour tables anywhere"
+    BamDude deliberately carries no hard-coded `tray_id_name` / hex tables — they would inevitably mislabel third-party filaments. The catalog is the only source of truth — even if you're tempted to "shortcut" colour resolution somewhere.
 
 ### Transparent / clear filament
 
@@ -547,13 +543,13 @@ Every label carries the colour swatch (with multi-colour stripes for spools with
 
 ### Display name follows your template
 
-The bold central line on each label reuses the same **Spool display name template** the Inventory page uses (Settings → Inventory → Spool display name template). So if you set the template to `{brand} {material} {color_name} (#{id})` for the inventory list, that's exactly what gets printed on each label too. The 16 placeholders (`{brand}`, `{material}`, `{color_name}`, `{remaining_pct}`, `{filament_diameter}`, `{lot}`, …) are documented in the same Settings panel that lets you edit the template.
+The bold central line on each label reuses the same **Spool display name** template the Filament page uses (Settings → Filament → **Spool display name**). So if you set the template to `{brand} {material} {color_name} (#{id})` for the inventory list, that's exactly what gets printed on each label too. The 18 placeholders (`{id}`, `{brand}`, `{material}`, `{subtype}`, `{color_name}`, `{slicer_filament_name}`, `{note}`, `{label_weight_g}`, `{label_weight_kg}`, `{remaining_g}`, `{remaining_kg}`, `{remaining_pct}`, `{color_hex}`, `{cost_per_kg}`, `{purchase_date}`, `{filament_diameter}`, `{lot}`, `{material_number}`) are documented in the same Settings panel that lets you edit the template.
 
 ### How the QR deeplink resolves
 
 The QR encodes `<base>/inventory?spool=<id>`. The base is resolved in this order:
 
-1. The `external_url` setting (Settings → Server → External URL) — preferred so a phone scan reaches your public BamDude URL rather than an internal address.
+1. The `external_url` setting (Settings → Network → External URL) — preferred so a phone scan reaches your public BamDude URL rather than an internal address.
 2. The `APP_URL` environment variable.
 3. The current request's scheme + host (whatever you'd see in your browser when you fired the export).
 
@@ -570,7 +566,7 @@ The modal scales to large inventories with:
 
 ### Server-side rendering
 
-PDFs are rendered server-side via ReportLab + qrcode (added as deps). Pure Python, no headless browser, output is byte-identical across browsers, Avery sheets align to <0.1 mm. Endpoints (both gated on `inventory:read`):
+PDFs are rendered server-side via ReportLab + qrcode. Pure Python, no headless browser, output is byte-identical across browsers, Avery sheets align to <0.1 mm. Endpoints (both gated on `inventory:read`):
 
 - `POST /inventory/labels` — local-DB spools.
 - `POST /spoolman/labels` — Spoolman-backed spools (only when Spoolman integration is enabled).
@@ -583,21 +579,21 @@ Both accept `{spools: [{id, display_name?}], template}` and return `application/
 |---|---|
 | `inventory:read` | View spool list and AMS assignments; **render PDF labels**. |
 | `inventory:create` | Add new spools. |
-| `inventory:update` | Edit spool fields, assign to slots, set spool-specific K-profile overrides. |
-| `inventory:delete` | Remove spools. A spool with usage history, in a slot or in a running print is archived instead — see [Mass actions](#mass-actions). |
+| `inventory:update` | Edit spool fields, assign to slots, set spool-specific K-profile overrides, archive and restore spools — and **delete** them, one at a time or in bulk. A spool with usage history, in a slot or in a running print cannot be deleted and is archived instead — see [Mass actions](#mass-actions). |
+| `inventory:delete` | Listed in the group editor and held by the default Administrators and Operators groups, but no inventory action checks it: deleting spools is covered by `inventory:update`. |
 | `inventory:view_assignments` | Specifically the spool-on-slot indicators rendered on printer cards. Granted to Viewers separately so a non-operator can see "what's loaded where" without getting `inventory:read`. |
 
 ## :material-clipboard-list: Settings reference
 
-The relevant settings keys (all under Settings → Inventory):
+The relevant settings keys and where each one is set:
 
-| Setting | Default | Effect |
-|---|---|---|
-| `low_stock_threshold` | `20` | Spool remaining percentage at which the `filament_low` notification fires (range 0.1 – 99.9). |
-| `disable_filament_warnings` | `false` | Master mute for low / out-of-filament alerts. |
-| `prefer_lowest_filament` | `true` | When automatically assigning a source, after compatibility and exact-colour preference favour the lowest remaining source to use up odd ends first. Tracked AMS grams and firmware percentages are separate tiers. |
-| `default_filament_cost` | `25` | Per-kg fallback cost when a spool's `cost` field is unset. |
-| `spoolman_enabled` | `false` | Toggle the Spoolman integration. See [Spoolman](spoolman.md). |
+| Setting | Where | Default | Effect |
+|---|---|---|---|
+| `low_stock_threshold` | The pencil on the **Low Stock** card of the Filament page | `20` | Spool remaining percentage at which the `filament_low` notification fires (range 0.1 – 99.9). |
+| `disable_filament_warnings` | Settings → Filament → Filament checks → **Disable filament warnings** | `false` | Master mute for low / out-of-filament alerts. |
+| `prefer_lowest_filament` | Settings → Filament → Filament checks → **Drain the emptiest spool first** | `true` | When automatically assigning a source, after compatibility and exact-colour preference favour the lowest remaining source to use up odd ends first. Tracked AMS grams and firmware percentages are separate tiers. |
+| `default_filament_cost` | Settings → Printing → Cost Tracking → **Default filament cost (per kg)** | `25` | Per-kg fallback cost when a spool's `cost` field is unset. |
+| `spoolman_enabled` | Settings → Filament → Filament Tracking | `false` | Toggle the Spoolman integration. See [Spoolman](spoolman.md). |
 
 ### Spool order {#spool-order}
 
@@ -606,11 +602,11 @@ The relevant settings keys (all under Settings → Inventory):
 Two places follow it:
 
 - **The dialog for putting a spool into a slot** lists the spools in this order.
-- **The Filaments page**, while no column is chosen: a line above the table reads *Order from settings: …* and names the levels. Clicking a column header still sorts by that column.
+- **The Filament page**, while no column is chosen: a line above the table reads *Order from settings: …* and names the levels. Clicking a column header still sorts by that column.
 
 The fields are **Name (by template)** — the spool name as your display-name template composes it — **Material**, **Subtype**, **Brand**, **Colour name**, **Slicer profile**, **Remaining, g**, **Remaining, %**, **Used, g**, **Label weight**, **Added**, **Purchased**, **Last used**, **Last dried**, **Storage location**, **Cost per kg**, **Lot**, **Material number** and **Spool number**.
 
-With no levels set, the slot dialog orders by material, brand and colour, and the Filaments page by spool number. The order applies to Spoolman inventories too.
+With no levels set, the slot dialog orders by material, brand and colour, and the Filament page by spool number. The order applies to Spoolman inventories too.
 
 ### Sync Weights from AMS (recovery tool)
 
@@ -628,7 +624,7 @@ Two kinds of spools are left out, and counted as skipped in the result:
 
 ### Spool Catalog
 
-Pre-defined empty-spool weights for quick selection when adding spools. Ships with 90+ entries covering the common manufacturers (Bambu Lab cardboard core, eSun, Polymaker, Overture, etc.). Lives at **Settings → Inventory → Spool Catalog**.
+Pre-defined empty-spool weights for quick selection when adding spools. Ships with 90+ entries covering the common manufacturers (Bambu Lab cardboard core, eSun, Polymaker, Overture, etc.). Lives at **Settings → Filament → Spool Catalog**.
 
 | Button | Description |
 |---|---|
@@ -678,7 +674,7 @@ Type the material name directly into the Material field. A green *Use custom mat
 
 ### Do I need to pick a slicer profile for every spool?
 
-No. Use **Quick Add (Stock)** mode to add spools with just material + weight. Stock spools track weight, usage, and cost; you can edit them later to assign a profile. In full mode the Slicer Preset is required — pick the closest available preset (a generic *PETG Basic* for a third-party PETG, for example), or import your custom OrcaSlicer profiles via [Local Profiles](local-profiles.md) so they appear in the dropdown.
+No. Use **Quick Add (Stock)** mode to add spools with just material + weight. Stock spools track weight, usage, and cost; you can edit them later to assign a profile. In full mode the **Filament family** is required — pick the closest available family (a generic PETG for a third-party PETG, for example), or create your own with the picker's **Create new family…** row.
 
 ### I have different printers (P1S + H2D) and nozzles — do presets matter?
 

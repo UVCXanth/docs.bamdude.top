@@ -122,7 +122,7 @@ Off is the right default for most farms: you pressed the button, you want the pr
 
 Stagger gates the **start** of a print. It does not serialise the dispatcher.
 
-BamDude's dispatcher runs **in parallel across printers** since `c485db1` (mid-0.4.1 reverted the brief "always-serialised" gate). The only serialised step is the millisecond-long `INSERT INTO print_archives` write, which sits behind a startup-lock so SQLite doesn't trip on concurrent writers. FTP upload, the `start_print` MQTT command, and swap-mode macros all run concurrently. See [Print queue → Dispatch behaviour](print-queue.md#dispatch-behaviour) for the full breakdown.
+BamDude's dispatcher runs **in parallel across printers**. The only serialised step is the millisecond-long `INSERT INTO print_archives` write, which sits behind a startup-lock so SQLite doesn't trip on concurrent writers. FTP upload, the `start_print` MQTT command, and swap-mode macros all run concurrently. See [Print queue → Dispatch behaviour](print-queue.md#dispatch-behaviour) for the full breakdown.
 
 What this means:
 
@@ -132,7 +132,7 @@ What this means:
 
 Use stagger when peak power draw during heating is the constraint. Skip it when your circuit can handle simultaneous bed heating.
 
-- **The ETA forecast counts it.** *Ready ≈* on an order and *free at* on a printer already include the waiting a stagger cap imposes, group by group, seeded with the slots that are heating right now — so a farm that staggers hard no longer reads a date that assumes it does not. See [When will it be ready](../scenarios/when-will-it-be-ready.md).
+- **The ETA forecast counts it.** *Ready ≈* on an order and *free at* on a printer already include the waiting a stagger cap imposes, group by group, seeded with the slots that are heating right now — so a farm that staggers hard does not read a date that assumes it does not. See [When will it be ready](../scenarios/when-will-it-be-ready.md).
 
 ---
 

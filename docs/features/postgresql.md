@@ -92,7 +92,7 @@ The server listens on `127.0.0.1` only — it is not exposed to your network.
 
 ## :material-download: Choosing the backend in the installers
 
-Every installer now asks which backend you want, and an upgrade keeps whatever you already use.
+Every installer asks which backend you want, and an upgrade keeps whatever you already use.
 
 === "Linux / macOS (`install.sh`)"
 
@@ -335,7 +335,7 @@ Large farms can raise these with `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `DB_POOL_TIM
 
 ## :material-clock-alert: Slow first-boot migrations
 
-Some migrations are slow whatever the backend, because the bottleneck is opening 3MFs on disk, not database writes. **m022** (0.4.1), for example, reads one config file from inside every existing 3MF; a library of thousands can spend a few minutes there before the API comes up — the same wall-clock cost on PostgreSQL and SQLite. Watch for `m022 … progress` lines if a boot looks stuck.
+Some migrations are slow whatever the backend, because the bottleneck is opening 3MFs on disk, not database writes. **m022**, for example, reads one config file from inside every existing 3MF; a library of thousands can spend a few minutes there before the API comes up — the same wall-clock cost on PostgreSQL and SQLite. Watch for `m022 … progress` lines if a boot looks stuck.
 
 ---
 

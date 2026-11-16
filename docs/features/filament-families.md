@@ -5,7 +5,7 @@ description: One filament identity across spools, AMS slots, K-profiles and slic
 
 # Filament Families
 
-Bambu Studio thinks in **families**: one identity (`filament_id`) behind every filament — "Generic PETG" is `GFG99` whichever printer or nozzle preset you slice with, and a custom filament you create gets a `P…` id of its own. Since 0.5.5 BamDude adopts that model outright: spools, AMS slots, K-profiles and slicing all key on the family.
+Bambu Studio thinks in **families**: one identity (`filament_id`) behind every filament — "Generic PETG" is `GFG99` whichever printer or nozzle preset you slice with, and a custom filament you create gets a `P…` id of its own. BamDude adopts that model outright: spools, AMS slots, K-profiles and slicing all key on the family.
 
 ---
 

@@ -199,18 +199,18 @@ Both orders are also offered on the [queue page](print-queue.md), under the same
 
 Above the grid, group printers by **location** — the place picked on each printer card. Useful when the farm spans rooms / floors — collapse the room you're not watching.
 
-A location is a real entity, not text typed per printer: you pick it from a list, and printers, sensors and auto-queue targets all point at the same row. That is what stops `Shelf 2` and `shelf 2` from becoming two different places — which used to send auto-queue items to a location no printer had, silently and permanently.
+A location is a real entity, not text typed per printer: you pick it from a list, and printers, sensors and auto-queue targets all point at the same row. That is what stops `Shelf 2` and `shelf 2` from becoming two different places — which would send auto-queue items to a location no printer has, silently and permanently.
 
-The list itself lives under **Settings → Printing → Locations** — its own card, under the permission that governs locations rather than the one for permanently deleting a printer. (It used to be nested inside the archived-printers card, which meant anyone who could manage places but not delete printers never saw it at all.)
+The list itself lives under **Settings → Printing → Locations** — its own card, under the permission that governs locations rather than the one for permanently deleting a printer.
 
 !!! note "Location lists are in alphabetical order"
     Everywhere: the filters on the printers, queues and maintenance pages, the
     picker in the printer and auto-queue dialogs, and the list under Settings.
 
-    They used to be ordered by character code, which is not the alphabet — Ґ, Є, І
-    and Ї sort before А, and anything typed in lower case fell to the very end, so
-    a farm with places called *Ірпінь* and *Ангар* saw what looked like no order at
-    all. Numbered halls also count properly now: **Цех 2** comes before **Цех 10**,
+    The order is the alphabet, not character code — where Ґ, Є, І
+    and Ї sort before А, and anything typed in lower case falls to the very end, so
+    a farm with places called *Ірпінь* and *Ангар* would see what looks like no order at
+    all. Numbered halls also count properly: **Цех 2** comes before **Цех 10**,
     not after it.
 
 ### Search + filters
@@ -252,8 +252,8 @@ a different mechanism on a different machine: on an X2D `0300_401F` says the
 *right* hotend is missing, and that machine has two.
 
 An error with no description is still shown, with its code and a link to Bambu's
-HMS reference. BamDude used to hide those, which meant a fault the printer's own
-screen was showing about was invisible here.
+HMS reference, so a fault the printer's own
+screen is showing is never invisible here.
 
 Ukrainian is ours: Bambu ships sixteen languages and Ukrainian is not one of
 them, so the descriptions are being translated a batch at a time. Anything not
@@ -337,7 +337,7 @@ Click the **folder icon** (:material-folder:) on any printer card → modal open
 **X2D, P2S and the H2 family (H2C, H2D, H2D Pro, H2S)** keep files in built-in storage as well as on a card. On those printers the modal shows a **SD card / Internal storage** switch, and everything below works on both: listing, download, plate previews, Save to Library and delete.
 
 - A printer with **no card inserted** opens on its internal storage rather than on an empty list.
-- Printers with only a card — every A1 and P1 — show **no switch** and behave exactly as before.
+- Printers with only a card — every A1 and P1 — show **no switch**: the card is their only storage.
 
 !!! note "Why the switch is not on every printer"
     Internal storage is reached over a second, printer-native file channel that only the newer generation speaks. BamDude decides by what the printer reports about itself, not by model name.
@@ -383,7 +383,7 @@ When the printer reports it, used / free space appears in the modal header. It i
 
 ### What BamDude leaves on the printer after a print
 
-Set per printer, in its settings: **Clean up after print**. Printers added from now on have it **on**; printers you already have keep whatever they are set to today.
+Set per printer, in its settings: **Clean up after print**. A newly added printer has it **on**; a printer added before the setting existed keeps whatever it is set to.
 
 | | SD card | Built-in storage |
 |---|---|---|

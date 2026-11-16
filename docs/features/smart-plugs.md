@@ -291,7 +291,7 @@ When power / energy live on a separate URL or path:
     - **Energy per print** (and its cost, on the archive card) is the difference between the counter at print start and at print end.
     - **Date-range energy** on the Stats page is the difference between hourly snapshots of that counter.
 
-    A daily figure resets at midnight, so it can't answer either. Before 0.4.7b4 BamDude filed whatever a REST plug returned under "today" and never had a cumulative value at all — which is why REST plugs showed no per-print energy and a blank figure for any date range. Fill in the Lifetime Energy path and both start working; the daily path is optional and only feeds the live "today" reading.
+    A daily figure resets at midnight, so it can't answer either — a REST plug without a cumulative value shows no per-print energy and a blank figure for any date range. Fill in the Lifetime Energy path and both work; the daily path is optional and only feeds the live "today" reading.
 
 ### Examples
 
@@ -410,11 +410,11 @@ When state / energy / power live on **the same topic** (Zigbee2MQTT default), us
     ```
 
 !!! warning "Switching an MQTT plug needs the Control block filled in"
-    The MQTT plug type was monitor-only from the day it was added until migration `m113`. The **Control** block — command topic plus **Payload to turn ON** / **Payload to turn OFF** — is what gives it a command channel. Leave the topic empty and the plug stays monitor-only, which is also what an existing plug does after the upgrade, since the columns arrive empty.
+    An MQTT plug is monitor-only by itself. The **Control** block — command topic plus **Payload to turn ON** / **Payload to turn OFF** — is what gives it a command channel. Leave the topic empty and the plug stays monitor-only.
 
     The payloads are free text on purpose, because they belong to the device: Zigbee2MQTT expects `{"state": "ON"}` on `<name>/set`, Tasmota a bare `ON` on `cmnd/<name>/POWER`.
 
-    Before `m113` a switch attempt did not fail — it silently did nothing, because the plug fell through to the Tasmota driver and got an HTTP call aimed at an `ip_address` an MQTT plug has no reason to have. Auto-on at print start, auto-off afterwards, schedules, the manual buttons and Obico's pause-and-power-off were all affected alike.
+    Without it nothing can switch the plug: auto-on at print start, auto-off afterwards, schedules, the manual buttons and Obico's pause-and-power-off are all affected alike.
 
 !!! tip "Per-print energy needs the Lifetime Energy block"
     **Lifetime JSON path** is separate from the ordinary energy path because a plug may publish either a counter that resets at midnight (Tasmota's `ENERGY.Today`) or a running total that never resets (Zigbee2MQTT's `energy`), and only you know which yours points at. Per-print energy and cost need the running total: a print that crosses midnight would otherwise measure as **negative**.
@@ -435,7 +435,7 @@ A printer can have several plugs linked to it: its own mains feed plus accessori
 
 It's **on by default**, so nothing changes for a setup that has one plug per printer. Turn it off on accessories, because only the plug that's marked as the power source:
 
-- **marks the printer offline** when it's switched off. An accessory doing that used to blank the printer's state and stop the queue from sending it work, even though the printer was running fine.
+- **marks the printer offline** when it's switched off. An accessory doing that would blank the printer's state and stop the queue from sending it work, even though the printer is running fine.
 - **gets switched on** to wake the printer for a queued print. Powering up a filter fan would never bring the printer online, and the queue would sit waiting for a connection that can't happen.
 
 Accessory plugs still switch on and off normally, and still report power and energy — they just don't speak for the printer's state.
@@ -649,14 +649,12 @@ The startup-restore code path, the create route, and the update route all funnel
     Combine auto power-off with a `print_finished` macro to turn off
     chamber lights at the same time. See [Macros](macros.md).
 
-!!! info "`auto_light_off` is gone — macros replaced it"
-    The legacy `auto_light_off` flag on each printer was dropped in
-    migration `m021`. Recreate the behaviour with a `chamber_light_off`
-    MQTT-action macro on `print_finished` (and a symmetric
-    `chamber_light_on` on `print_started` if you want full cycling).
+!!! info "Automatic chamber light is a macro"
+    There is no per-printer "auto light off" switch. Use a `chamber_light`
+    MQTT-action macro with the value `off` on `print_finished` (and a
+    symmetric one with `on` on `print_started` if you want full cycling).
     The macro framework adds delay control, on/off symmetry, per-model
-    targeting, and per-swap-profile filtering — none of which the old
-    boolean had.
+    targeting, and per-swap-profile filtering.
 
 !!! tip "Energy reporting"
     Switch the energy display mode to `print` if you charge customers

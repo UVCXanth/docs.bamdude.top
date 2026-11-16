@@ -46,7 +46,7 @@ The Telegram bot provides:
 5. The bot starts polling automatically
 
 !!! note "Bot-level config is intentionally minimal (m045)"
-    The Telegram provider row only stores `name`, bot token, `enabled`, and the optional **daily-digest schedule** (`daily_digest_enabled` + `daily_digest_time`). Per-event opt-ins, quiet hours, and the per-chat digest opt-in all live on each `TelegramChat` — see **Per-Chat Notification Preferences** below. The 24 `on_*` event toggles and `quiet_hours_*` columns that the provider row shares with email / ntfy / pushover / discord / webhook / homeassistant / callmebot are normalised to dispatch-transparent values for telegram (`on_*=True`, `quiet_hours_enabled=False`) — they no longer drive any behaviour for the bot.
+    The Telegram provider row only stores `name`, bot token, `enabled`, and the optional **daily-digest schedule** (`daily_digest_enabled` + `daily_digest_time`). Per-event opt-ins, quiet hours, and the per-chat digest opt-in all live on each `TelegramChat` — see **Per-Chat Notification Preferences** below. The 24 `on_*` event toggles and `quiet_hours_*` columns that the provider row shares with email / ntfy / pushover / discord / webhook / homeassistant / callmebot are normalised to dispatch-transparent values for telegram (`on_*=True`, `quiet_hours_enabled=False`) — they do not drive any behaviour for the bot.
 
 ### Step 3: Authorize Your Chat
 
@@ -241,7 +241,7 @@ preferences leak between chats — set them once per chat.
 
 ### Event filter
 
-Pick which of the 23 event types (`backend/app/models/telegram_chat.py::ALL_NOTIFY_EVENTS`) this chat should receive. After m045 this is the **sole** authority for telegram per-event filtering — the bot-level provider row no longer gates events. The defaults mirror what most operators care about:
+Pick which of the 23 event types (`backend/app/models/telegram_chat.py::ALL_NOTIFY_EVENTS`) this chat should receive. This is the **sole** authority for telegram per-event filtering — the bot-level provider row does not gate events. The defaults mirror what most operators care about:
 
 | Default events ON |
 |---|

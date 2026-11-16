@@ -8,12 +8,12 @@ description: Soft-delete with restore, scheduled retention, and reference-aware 
 BamDude keeps two independent **trash bins** so deletions never silently destroy data:
 
 - **Library trash** — for files you uploaded or sliced into the library. Has an opt-in **auto-purge** that moves idle files into the bin on a 24h drift schedule.
-- **Archive trash** — for archive rows you (or "Empty trash" sweeps) explicitly delete. Manual-only since 0.4.2 — there is no longer a daily auto-purge that moves old archive rows here.
+- **Archive trash** — for archive rows you (or "Empty trash" sweeps) explicitly delete. Manual-only — no auto-purge moves old archive rows here.
 
 Both bins have the same shape: soft-delete on user-initiated delete, configurable restore window, scheduled retention sweeper that hard-deletes anything past the window, and a chain-of-custody guard that refuses to hard-delete library bytes still referenced by an active archive.
 
-!!! note "Why archive auto-purge was removed in 0.4.2"
-    The upstream-ported archive auto-purge ran daily and moved any archive row older than the configured threshold into the trash. In a BamDude post-b1 world this was both **redundant** (the per-design [3MF Auto-Cleanup](archiving.md#3mf-auto-cleanup-041-drift-mode-in-042) already reclaims the disk for cold designs while preserving history) and **harmful** (per-row aging meant a model printed weekly for two years would lose its earliest ~70 archive rows individually, even though the design was still hot — silently destroying the print history BamDude exists to preserve). The manual delete → trash → restore → empty-trash flow stays intact for explicit row deletes; only the daily auto-purge sweep is gone.
+!!! note "Why archive rows are not auto-purged"
+    A daily sweep that moved every archive row older than a threshold into the trash would be both **redundant** (the per-design [3MF Auto-Cleanup](archiving.md#3mf-auto-cleanup-041-drift-mode-in-042) already reclaims the disk for cold designs while preserving history) and **harmful** (per-row aging means a model printed weekly for two years would lose its earliest ~70 archive rows individually, even though the design is still hot — silently destroying the print history BamDude exists to preserve). The manual delete → trash → restore → empty-trash flow covers explicit row deletes.
 
 ---
 
@@ -65,17 +65,17 @@ The expanded controls collapse out of view when the toggle is off; flip it on to
 | **Auto-purge enabled** | off | Master toggle for the drift-mode purge that moves idle library files into the trash. Gates the 15-min auto-tick only — manual `/library/purge` always works. |
 | **Auto-purge age** | 90 days | Files idle (no recent print, no recent edit) longer than this become eligible for auto-purge. |
 | **Include never-printed** | off | When on, never-printed files also count toward the auto-purge threshold. When off, only printed files get auto-purged — protects files you uploaded but haven't printed yet. |
-| **Last / Next run cards** *(0.4.2)* | — | Same shared `<LastNextRunCards>` component used by [archive 3MF cleanup](archiving.md#3mf-auto-cleanup-041-drift-mode-in-042). Shows "moved 5 file(s) to trash, 4 hours ago" + "in ~20 hours". After a server restart the in-memory `moved` count is lost; the card reads "count was lost on restart — see logs" instead of `0` (the persistent `library_auto_purge_last_run` timestamp survives, only the count goes). |
+| **Last / Next run cards** | — | Same shared `<LastNextRunCards>` component used by [archive 3MF cleanup](archiving.md#3mf-auto-cleanup-041-drift-mode-in-042). Shows "moved 5 file(s) to trash, 4 hours ago" + "in ~20 hours". After a server restart the in-memory `moved` count is lost; the card reads "count was lost on restart — see logs" instead of `0` (the persistent `library_auto_purge_last_run` timestamp survives, only the count goes). |
 
 ### Library trash retention
 
 | Setting | Default | What it controls |
 |---------|---------|------------------|
-| **Trash retention** | 30 days | How long a soft-deleted file sits in the bin before the sweeper hard-deletes it. Range 1–365 days. The retention sweeper runs every 15 min — same cadence as before. |
+| **Trash retention** | 30 days | How long a soft-deleted file sits in the bin before the sweeper hard-deletes it. Range 1–365 days. The retention sweeper runs every 15 min. |
 
 ### Archive trash retention
 
-Auto-purge for archives was removed in 0.4.2 (see the note at the top of this page). Only the trash retention sweeper remains:
+Archives have no auto-purge (see the note at the top of this page), only the trash retention sweeper:
 
 | Setting | Default | What it controls |
 |---------|---------|------------------|
@@ -116,14 +116,14 @@ Both trash pages support:
 - **Multi-select** — bulk Restore and bulk Hard-delete on selected rows.
 
 !!! warning "Restoring a library file asks before it recreates a duplicate"
-    Every other path now refuses to store the same file twice, so taking one back out of the trash is the one way left to end up with two identical files. Restore checks first, and speaks up **only when the file really is byte-identical to one you already have** — the dialog names the file that is already there and you decide.
+    Every other path refuses to store the same file twice, so taking one back out of the trash is the one way left to end up with two identical files. Restore checks first, and speaks up **only when the file really is byte-identical to one you already have** — the dialog names the file that is already there and you decide.
 
-    Restoring several at once asks **once**, listing exactly which of them are duplicates, and offers to restore only the rest. A file with nothing matching it restores as before, without a question.
+    Restoring several at once asks **once**, listing exactly which of them are duplicates, and offers to restore only the rest. A file with nothing matching it restores without a question.
 
     It asks; it does not refuse. A duplicate can be deliberate — two MakerWorld profiles can produce byte-identical 3MFs — and the person restoring is the one who put the file there.
 
-!!! danger "The archive trash never actually deleted anything before 0.5.4"
-    Emptying it reported *0 deleted* and removed nothing at all; **Delete permanently** on a single archive answered an error; and the retention sweeper removed the database rows while leaving every 3MF, preview, timelapse and photo on disk. Fixed in 0.5.4 — but files leaked before then are still on disk, and BamDude will not go and delete them unasked. `scripts/prune_orphan_archive_files.py` lists what is no longer referenced and removes it only with `--apply`.
+!!! danger "An installation that ran a version older than 0.5.4 may hold leaked archive files"
+    In those versions the archive trash and its retention sweeper removed the database rows while leaving every 3MF, preview, timelapse and photo on disk. Those files are still there, and BamDude will not go and delete them unasked. `scripts/prune_orphan_archive_files.py` lists what is no longer referenced and removes it only with `--apply`.
 
 ---
 

@@ -11,9 +11,6 @@ That's the whole feature. It's a shortcut for repeatable work, not a dispatcher:
 
 !!! info "Printing many copies? That's the auto-queue's job"
     Saved settings don't set a quantity or pick printers. To print a batch, use [Auto-Queue Routing](auto-queue.md) — set how many you want and which printer model, and BamDude spreads them across every matching printer, matching filament type and colour as it goes.
-
-    Earlier betas (`0.4.7b2`–`0.4.7b5`) shipped this as "Slicer Pipelines", which could also dispatch copies — two ways to do one job. That half was removed; the auto-queue does it and always did.
-
 ---
 
 ## :material-cog-outline: What gets saved

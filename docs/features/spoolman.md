@@ -5,7 +5,7 @@ description: Built-in BamDude spool inventory plus optional bi-directional sync 
 
 # Filament Inventory & Spoolman
 
-BamDude ships with a **first-class filament inventory** (Settings → Filaments). It is the source of truth for spool weight, RFID, location, and cost — no external service required. If you already run [Spoolman](https://github.com/Donkie/Spoolman), the optional sync layer keeps both systems in step; if you don't, BamDude does the whole job on its own.
+BamDude ships with a **first-class filament inventory** — the **Filament** page in the sidebar. It is the source of truth for spool weight, RFID, location, and cost — no external service required. If you already run [Spoolman](https://github.com/Donkie/Spoolman), the optional sync layer keeps both systems in step; if you don't, BamDude does the whole job on its own.
 
 !!! tip "You don't need Spoolman"
     Built-in inventory works fully standalone. Spoolman sync is purely an integration choice for users who already centralise spools across multiple tools (e.g. OctoPrint, Mainsail, Klipper, multiple slicer hosts). Pick whichever flow matches your setup.
@@ -22,7 +22,7 @@ BamDude ships with a **first-class filament inventory** (Settings → Filaments)
 
 ## :material-package-variant: Built-in Inventory
 
-Open **Settings → Filaments**. Each row is a physical spool — manually added, RFID-imported, or auto-created from an AMS scan.
+Open **Filament** in the sidebar. Each row is a physical spool — manually added, RFID-imported, or auto-created from an AMS scan.
 
 ### :material-plus-box: Adding spools
 
@@ -47,7 +47,7 @@ Bulk-add takes a quantity and creates N rows in one go — combine with **auto-i
 
 ### :material-format-text: Spool display-name template
 
-The Filaments page synthesises a human label per spool via a user-configurable template — search and sort use the same string. Edit it under **Settings → System → Spool Display Template**.
+The Filament page synthesises a human label per spool via a user-configurable template. Edit it under **Settings → Filament → General → Spool display name**.
 
 Default: `{brand} {material} {subtype} {color_name}` (renders as e.g. `Polymaker PLA Matte Jade White`; a spool with no subtype simply leaves that word out). The template changes only how a spool is named — searching finds a spool by its brand, material, subtype, colour, note or lot whatever the template shows.
 
@@ -75,16 +75,16 @@ Default: `{brand} {material} {subtype} {color_name}` (renders as e.g. `Polymaker
 
 ### :material-view-column: Column visibility
 
-Click **Column Config** on the Filaments page to toggle which columns are visible and in what order. Settings are per-user.
+Click **Configure Columns** on the Filament page to toggle which columns are visible and in what order. Settings are per-user.
 
 **Visible by default:** `brand`, `material`, `color_name`, `remaining`, `location`, `note`, `purchase_date`.
 **Hidden by default:** `created_at` ("added time" — superseded by `purchase_date`).
 
-Newly-added columns land at their default position rather than being appended to the end, so post-upgrade existing users don't have to re-arrange.
+A column your saved layout does not know yet lands at its default position rather than at the end, so a saved layout needs no re-arranging.
 
 ### :material-magnify-scan: Auto-assign by RFID
 
-The Filaments page header has an **Auto-assign** action: BamDude scans every connected printer's AMS slots, matches each slot's `tag_uid` / `tray_uuid` against inventory rows, and creates `SpoolAssignment` records in bulk. Useful after a multi-spool reload — one click, no manual picking.
+The Filament page header has an **Auto-assign** action: BamDude scans every connected printer's AMS slots, matches each slot's `tag_uid` / `tray_uuid` against inventory rows, and creates `SpoolAssignment` records in bulk. Useful after a multi-spool reload — one click, no manual picking.
 
 ### :material-link-plus: Bind unknown RFID to a manual spool
 
@@ -104,14 +104,15 @@ If you only run BamDude, the built-in inventory above already does everything Sp
 
 ### :material-link: Connecting
 
-1. **Settings** → **Filament** → **Filament Tracking** → **Spoolman**
-2. Set the **URL** (e.g. `http://192.168.1.50:7912` or a docker-compose service alias like `http://spoolman:7912`)
-3. (Optional) **API Key** — required only if your Spoolman instance is behind authentication; leave blank for the default open setup.
-4. **Save**
+1. **Settings** → **Filament** → **General** → **Filament Tracking** → **Spoolman**
+2. Set the **Spoolman URL** (e.g. `http://192.168.1.50:7912` or a docker-compose service alias like `http://spoolman:7912`)
+3. **Save**
+
+There is no API-key field: BamDude talks to Spoolman's open HTTP API, so a Spoolman behind an authenticating proxy has to be reachable from BamDude without credentials.
 
 The status beside the URL asks the configured Spoolman whether it answers, every time — not whether BamDude happened to talk to it earlier. While it does not answer, a **Connect** button retries. There is no Disconnect: Spoolman is a plain HTTP API with no session to close, and the enable switch is what turns the integration off.
 
-The extra fields BamDude keeps on a spool (the RFID tag, the slicer preset, the colour name) are registered in Spoolman by the first write that carries them, so enabling the integration from Settings is enough — the first AMS sync no longer fails with *Unknown extra field*. A field that already exists is left alone, including one you renamed or retyped in Spoolman's own UI.
+The extra fields BamDude keeps on a spool (the RFID tag, the slicer preset, the colour name) are registered in Spoolman by the first write that carries them, so enabling the integration from Settings is enough — nothing has to be created in Spoolman by hand for the first AMS sync. A field that already exists is left alone, including one you renamed or retyped in Spoolman's own UI.
 
 !!! tip "Network reachability"
     BamDude must be able to reach the Spoolman URL from inside its own process. On docker-compose, put both services on the same network and use the service alias; on bare metal, a LAN hostname or static IP is enough.
@@ -126,7 +127,7 @@ The extra fields BamDude keeps on a spool (the RFID tag, the slicer preset, the 
 | `spoolman_report_partial_usage` | When a print fails or is cancelled, report the **estimated grams used up to the abort point** based on layer progress, instead of dropping the whole estimate. Helps Spoolman keep an accurate weight after failures. |
 
 !!! warning "Switching the tracking mode removes slot assignments"
-    Choosing **Built-in Inventory** or **Spoolman** under **Settings → Filament** removes every AMS slot assignment of the mode you leave — each mode keeps its own, and in the new one spools are assigned to slots anew. The page therefore asks before it switches, saying how many assignments go and which printers are printing right now: filament those prints use reaches neither inventory. Nothing is switched by the click alone.
+    Choosing **Built-in Inventory** or **Spoolman** under **Settings → Filament → General → Filament Tracking** removes every AMS slot assignment of the mode you leave — each mode keeps its own, and in the new one spools are assigned to slots anew. The page therefore asks before it switches, saying how many assignments go and which printers are printing right now: filament those prints use reaches neither inventory. Nothing is switched by the click alone.
 
     A print that finishes and cannot charge a slot it drew from — its assignment was removed during the print, or it never had one — sends a **Filament not charged** notification naming the slots and the grams. It rides the **Missing spool assignment** toggle of your notification providers.
 
@@ -142,7 +143,10 @@ The extra fields BamDude keeps on a spool (the RFID tag, the slicer preset, the 
 
 ### :material-link-off: Unlinking
 
-In `manual` sync mode, each Bambu spool card shows an **Unlink** button — useful when you want to migrate a spool from Spoolman back to BamDude-only inventory without breaking the AMS assignment.
+There is no separate **Unlink** button on a slot, in either sync mode. A spool is taken apart from a slot or from its tag in two places:
+
+- **Unassign** on the AMS slot's hover card removes the slot assignment. The spool stays in Spoolman.
+- **Clear RFID Tag** in the spool's form on the **Filament** page removes the tag link — `extra.tag` and, on Spoolman 0.27 and newer, the spool's native tags (see [Tags](#spoolman-tags)).
 
 ### :material-tag-multiple: Tags {#spoolman-tags}
 
@@ -166,7 +170,7 @@ After every sync (auto or manual) BamDude shows a result panel:
 - **Errors** — any HTTP / network / data errors encountered during the run.
 
 !!! note "Bambu Lab RFID detection"
-    Auto-sync only fires for **official Bambu Lab spools with RFID** — third-party, refilled, or SpoolEase spools are intentionally skipped to avoid creating bogus rows in Spoolman. Bambu Lab spools are identified by their hardware identifiers (`tray_uuid` and `tag_uid`), not by filament preset name. Non-Bambu spools can still be **manually linked** (see below).
+    Auto-sync only fires for **official Bambu Lab spools with RFID** — third-party, refilled, or SpoolEase spools are intentionally skipped to avoid creating bogus rows in Spoolman. Bambu Lab spools are identified by their hardware identifiers (`tray_uuid` and `tag_uid`), not by filament preset name. Non-Bambu spools can still be **assigned to a slot by hand** (see below).
 
 ### :material-chart-line: Usage tracking detail
 
@@ -175,7 +179,7 @@ Each completed print reports per-filament consumption to Spoolman as a usage eve
 1. BamDude extracts per-filament usage data from the archived 3MF file (slicer estimates).
 2. For partial prints (failures, cancellations), per-layer G-code analysis provides precise consumption up to the exact failure layer. If the reel changed during the print — an AMS backup taking over, or a new reel loaded into the same slot, on single- and multi-colour prints alike — that consumption is divided by the stretch each reel actually printed before the stop, exactly as the built-in inventory divides it (see [Inventory](inventory.md)).
 3. On completion, each spool's usage is reported individually — multi-material prints update each linked spool separately. The tray each filament came from is the one the print was sent with; for a print BamDude did not send and whose mapping it could not see (an A1 publishes none), a one-filament print is charged to the tray the printer itself reported feeding from. Only when nothing names a tray is it charged by tray position — a guess, logged as a warning, and then the archive keeps the colour and material the file was sliced with rather than taking them from a spool picked by position. On a printer with two external holders (X2D, H2D) a print fed from an external spool charges the holder that was actually used.
-4. **AMS remain-% fallback for slots the 3MF didn't cover.** When a slot has no 3MF estimate — a no-3MF "Untitled" print (the `.gcode.3mf` was never downloadable, so the archive is a fallback row) **or** partial 3MF coverage where a loaded slot wasn't in the slice info — BamDude falls back per-slot to the AMS remaining-percentage drop. At completion it writes `(remain% at start − remain% at end) × the spool's size in Spoolman` grams as the usage event — the spool's own size, or its filament's weight when the spool states none (see [Spool size, tare and price](#spoolman-spool-size)). It uses that Spoolman weight (not the AMS's unreliable reported tray weight) and **skips any slot swapped mid-print** (tray UUID changed), since it can't split consumption across two spools. Before this, no-3MF "Untitled" prints reported zero weight change to Spoolman.
+4. **AMS remain-% fallback for slots the 3MF didn't cover.** When a slot has no 3MF estimate — a no-3MF "Untitled" print (the `.gcode.3mf` was never downloadable, so the archive is a fallback row) **or** partial 3MF coverage where a loaded slot wasn't in the slice info — BamDude falls back per-slot to the AMS remaining-percentage drop. At completion it writes `(remain% at start − remain% at end) × the spool's size in Spoolman` grams as the usage event — the spool's own size, or its filament's weight when the spool states none (see [Spool size, tare and price](#spoolman-spool-size)). It uses that Spoolman weight (not the AMS's unreliable reported tray weight) and **skips any slot swapped mid-print** (tray UUID changed), since it can't split consumption across two spools.
 
 This matches BamDude's per-spool tracking model — the same numbers feeding the Stats page also feed Spoolman. A failed or cancelled print is charged by the same calculation in both inventories. Spoolman itself keeps a spool's totals and no per-print log; the per-print record is BamDude's own (see [Usage history and Forecast](#spoolman-usage-history)).
 
@@ -206,39 +210,41 @@ AMS Lite units (e.g. A1 series) have **no weight sensor** and always report 0% f
 
 When Spoolman data is the source, the hover card displays "(Spoolman)" next to the percentage so you can distinguish the data source.
 
-### :material-link: Open / Link / Manual link buttons
+### :material-link: Slot actions on the hover card
 
-Each AMS slot's hover card carries a primary action button whose label depends on link state:
+Each AMS slot's hover card carries the actions for the spool in that slot; which ones appear depends on the slot's state:
 
 | State | Button | What it does |
 |-------|--------|--------------|
-| **Linked** | **Open in Spoolman** | Opens the spool's page in Spoolman in a new tab — edit vendor, cost, notes, weight directly there. |
-| **Unlinked, Bambu Lab spool, candidates available** | **Link to Spoolman** | Opens a picker showing all unlinked Spoolman spools — pick one, click **Link** to confirm. |
-| **Unlinked, Bambu Lab spool, no candidates** | **Link to Spoolman** (disabled) | No unlinked Spoolman spools currently available — add one in Spoolman first. |
-| **Non-Bambu Lab spool** | **Manual Link** | Manually associate this slot with a Spoolman spool — bypasses RFID matching for refilled cores or third-party spools. |
+| **A spool is assigned or tag-linked** | **Open in inventory** | Opens that spool on BamDude's **Filament** page. Spoolman's own interface opens from the **Open Spoolman** button in that page's header. |
+| **A spool is assigned** | **Replace spool** | Opens the spool picker and puts another Spoolman spool into the slot in one step. |
+| **A spool is assigned** | **Unassign** | Removes the slot assignment. The spool stays in Spoolman. |
+| **No spool assigned** | **Assign Spool** | Opens the spool picker — this is also how a refilled core or a third-party spool with no RFID is bound to a slot. Disabled, with the reason, while Spoolman is unreachable. |
 
-To **unlink**: open the spool's form on the **Filament** page and press **Clear RFID Tag** — it clears `extra.tag` and, on Spoolman 0.27 and newer, the spool's native tags.
+The card has no **Link to Spoolman**, **Manual Link** or **Open in Spoolman** button: a slot is bound to a spool by assigning it.
+
+To remove a **tag link**: open the spool's form on the **Filament** page and press **Clear RFID Tag** — it clears `extra.tag` and, on Spoolman 0.27 and newer, the spool's native tags.
 
 ### :material-database: Adding spools — AMS vs Inventory view comparison
 
 | Surface | Action | When to use |
 |---------|--------|-------------|
-| **From AMS hover** | **Add to Spoolman** when an unknown filament appears in a slot | First-time onboarding, adding a freshly-loaded Bambu spool to Spoolman. |
+| **From the AMS** | A Bambu Lab RFID spool that Spoolman does not know yet is created there by the AMS sync | First-time onboarding, adding a freshly-loaded Bambu spool to Spoolman. |
 | **In Spoolman directly** | Add Spool form on Spoolman's web UI | Bulk-import historical spools, adding spools you haven't loaded yet, vendor/cost data entry. |
-| **Inventory view** (BamDude) | Add via Settings → Filaments | When you want the spool to live in BamDude's inventory regardless of Spoolman state — useful for full-detail rows that Spoolman doesn't track (e.g. lot number, custom notes). |
+| **Filament page** (BamDude) | **Add Spool** on the **Filament** page | In Spoolman mode the form works on Spoolman's spools, so the spool is created in Spoolman without leaving BamDude. |
 
-Both backends co-exist; the link is what lets the AMS hover card resolve a slot to a Spoolman row.
+The slot assignment is what lets the AMS hover card resolve a slot to a Spoolman row.
 
 ### :material-robot: Auto-features
 
-Three independent automation toggles (Settings → Spoolman):
+Three things happen without a click while Spoolman is enabled. They have no switches of their own — the AMS-driven ones follow **Sync Mode** (**Automatic** / **Manual Only**), and usage reporting for stopped prints follows **Report Partial Usage for Failed Prints**:
 
 - **Auto-sync on print complete** — every completed print reports per-filament usage individually to Spoolman, so spool quantities update automatically.
 - **Auto-detect on AMS change** — when AMS filament changes, BamDude detects the new configuration, matches against Spoolman, and updates slot mappings without intervention.
 - **Auto-clear location on removal** — when spools are removed from AMS, BamDude detects the empty slot, finds Spoolman spools with the matching location string, and clears the `location` field. The spool is now available for other printers.
 
-!!! info "Old slot markers in `location`"
-    Older versions wrote the slot a spool was loaded into — `H2D-Workshop - AMS A1`, `AMS-HT A1`, `External Spool` — into Spoolman's `location` field. Those strings are left on your Spoolman spools, but they are not offered as storage locations, and the ones already imported were removed from the list (unless a spool here is filed under one). A marker is cleared from a Bambu Lab spool once it leaves the AMS.
+!!! info "Slot markers in `location`"
+    A Spoolman spool's `location` field may hold a slot marker — `H2D-Workshop - AMS A1`, `AMS-HT A1`, `External Spool` — naming the slot the spool was once loaded into. BamDude does not write such markers. The ones that exist are left on your Spoolman spools, but they are not offered as storage locations (unless a spool here is filed under one). A marker is cleared from a Bambu Lab spool once it leaves the AMS.
 
 ### :material-server-network: Multi-printer sync
 
@@ -254,7 +260,7 @@ This is the main reason most farm operators choose to run Spoolman alongside Bam
 
 ## :material-table-cog: Inventory UI (BamDude-side, Spoolman-backed)
 
-When you run BamDude against Spoolman, the **Inventory page** (`/inventory`) and **Printers page** (`/`) light up a full first-class Spoolman experience: AMS slot assignments live in BamDude's own tables (so the assignment survives reboots and travels in BamDude backups), K-profiles per spool round-trip across BamDude installs that share the same Spoolman backend, and a free-form storage label sits next to every spool. Built on upstream Bambuddy [#1241](https://github.com/maziggy/bambuddy/pull/1241) ported in BamDude **0.4.4**.
+When you run BamDude against Spoolman, the **Filament page** (`/inventory`) and **Printers page** (`/`) light up a full first-class Spoolman experience: AMS slot assignments live in BamDude's own tables (so the assignment survives reboots and travels in BamDude backups), K-profiles per spool round-trip across BamDude installs that share the same Spoolman backend, and a free-form storage label sits next to every spool.
 
 ### :material-table: The Filament page in Spoolman mode
 
@@ -293,7 +299,7 @@ Spoolman keeps how much filament a full spool holds on the spool itself and fall
 
 **Spools whose size differs from their filament.** A spool's size in Spoolman is set when the spool is created and does not follow a later change of the filament's weight, so a spool can show a size other than the one you expect from its filament. For a connected Spoolman, **Settings → Filament → Filament Tracking** lists every such active spool with its own size, its filament's size and the grams left. **Use the filament's size for this spool** changes that one spool after a confirmation; what it has consumed stays, so its grams left change with the size.
 
-### :material-table-row: Three new pieces of state
+### :material-table-row: Three pieces of state
 
 | Where | What | Why it isn't on Spoolman directly |
 |-------|------|-----------------------------------|
@@ -315,13 +321,12 @@ Per slot the hover card carries:
 
 | Button | When it appears |
 |--------|-----------------|
-| **Link to Spoolman** | Slot has a Bambu RFID tag, no assignment exists yet, and there's at least one unlinked Spoolman spool whose `extra.tag` matches. |
-| **Manual Link** | Slot has no RFID match (refilled core, third-party spool). Picker shows every unlinked Spoolman spool. |
-| **Assign** | Slot is empty in inventory but operator wants to manually point it at a Spoolman spool (no RFID involved). |
-| **Unassign** | Slot has either a Spoolman SlotAssignment OR a local SpoolAssignment — clears the BamDude-side assignment. |
-| **Open in Spoolman** | Slot is RFID-linked. Opens the spool's Spoolman edit page in a new tab. |
+| **Assign Spool** | No spool is assigned to the slot. Opens the picker of Spoolman spools — no RFID involved, so it also covers a refilled core or a third-party spool. |
+| **Replace spool** | A spool is assigned. Puts another spool into the slot in one step. |
+| **Unassign** | A spool is assigned. Clears the BamDude-side assignment; the spool stays in Spoolman. |
+| **Open in inventory** | A spool is assigned or RFID-linked. Opens that spool on the **Filament** page. |
 
-The Link button auto-suppresses when a slot already has either a Spoolman SlotAssignment OR a local SpoolAssignment, so the operator can't accidentally double-bind.
+The card carries no separate tag-link buttons (**Link to Spoolman**, **Manual Link**, **Open in Spoolman**), so one slot never shows two ways to bind a spool.
 
 What an assignment does to the slot:
 
@@ -338,11 +343,11 @@ Drift detection is bounded — BamDude only re-issues when there's a genuine dif
 
 ### :material-storage: Storage location column
 
-`Settings → Filaments` (Inventory page) gains a **Storage location** column shipped on every backend (local-DB inventory + Spoolman). Edit per row inline; the value is stored on `spool.storage_location` and surfaced everywhere the spool is rendered (cards, hover-cards, spool form, search). On Spoolman-mode installs the field is BamDude-local — Spoolman's own `location` field stays for the operator to manage independently if they prefer that flow.
+The **Filament** page has a **Storage location** column on every backend (local-DB inventory + Spoolman). Edit per row inline; the value is stored on `spool.storage_location` and surfaced everywhere the spool is rendered (cards, hover-cards, spool form, search). On Spoolman-mode installs the field is BamDude-local — Spoolman's own `location` field stays for the operator to manage independently if they prefer that flow.
 
 ### :material-tag-multiple: Wider RFID UID support
 
-BamDude widens `spool.tag_uid` from 16 to 32 chars on Postgres (SQLite ignores VARCHAR length). Bambu's RFID UIDs are 16 hex chars, but third-party tags (e.g. NTAG216 stickers) carry up to 32 hex chars — the wider column lets you bind those tags to refilled cores without truncation.
+`spool.tag_uid` holds up to 32 characters. Bambu's RFID UIDs are 16 hex chars, but third-party tags (e.g. NTAG216 stickers) carry up to 32 hex chars — the column is wide enough to bind those tags to refilled cores without truncation.
 
 ### :material-api: API surface
 
@@ -394,20 +399,20 @@ run is easy to spot and undo.
 
 - Verify the Spoolman URL — open it in a browser to confirm Spoolman itself is up.
 - Check network reachability from inside the BamDude container/process to Spoolman (e.g. `curl http://spoolman:7912/api/v1/info` from inside the BamDude container).
-- If Spoolman has authentication enabled, double-check the API Key.
+- If Spoolman sits behind authentication, BamDude cannot sign in to it — there is no API-key setting. Make it reachable from BamDude without credentials.
 - Firewall / Docker network isolation — both services need to be on the same network or have explicit routing.
 
 **Sync not working**
 
 - Confirm `spoolman_enabled` is on and the status beside the URL says **Connected**.
 - Check Spoolman's own logs — newer / older Spoolman versions occasionally tighten or change their REST contract.
-- Verify the spool is recognised as Bambu Lab (auto-sync only fires for Bambu RFID — see above). For non-Bambu spools, use **Manual Link**.
+- Verify the spool is recognised as Bambu Lab (auto-sync only fires for Bambu RFID — see above). For non-Bambu spools, use **Assign Spool** on the slot's hover card.
 - For multi-printer setups, confirm the printer name in BamDude matches the location string Spoolman expects.
 
 **Wrong spool linked**
 
 - Open the spool's form on the **Filament** page and press **Clear RFID Tag** to unlink.
-- From BamDude's AMS hover card, **Manual Link** → pick the correct Spoolman spool.
+- From BamDude's AMS hover card, **Replace spool** → pick the correct Spoolman spool.
 - Verify the RFID tag UUID matches what Spoolman has stored — mismatched UUIDs are the most common cause of "linked, but pointing at the wrong row".
 
 ---

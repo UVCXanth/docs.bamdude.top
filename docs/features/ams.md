@@ -22,6 +22,7 @@ Each AMS slot displays:
 - **K value** -- Known pressure-advance calibration, such as `K 0.024`, directly on the slot card; no guessed default when calibration is unknown.
 - **Remaining** -- Estimated filament left
 - **Active** -- Currently feeding indicator
+- **Print slot** -- While a print is running or paused, every AMS and AMS-HT slot the job draws from carries a small green **P1**, **P2**, … badge in its corner — the number of the print's own filament slot mapped to that tray. It is read from the print's slot mapping, so it marks all the slots the job uses, not only the one feeding at the moment.
 - **Slot number** -- 1-based number with auto-contrast text
 
 ### RFID Re-read
@@ -66,25 +67,23 @@ mismatch before uploading and fails the item with an actionable message
 instead.
 
 !!! success "Assignments are confirmed, not assumed"
-    Assigning a spool from Inventory, or configuring a slot here, used to report
-    success the moment the command was sent — whether or not the tray accepted
-    it. A silently-dropped assignment never surfaced anywhere, and because a
-    print only deducts from the spool on the exact tray it pulls from, it also
-    recorded no filament usage.
-
-    BamDude now reads the AMS telemetry back and tells you the outcome:
+    Assigning a spool from Inventory, or configuring a slot here, is not
+    reported as done the moment the command is sent. BamDude reads the AMS
+    telemetry back and tells you the outcome:
     **loaded** when the tray echoes the filament you assigned, a **warning** when
     the filament landed but its flow calibration (K-profile) didn't, and **not
     confirmed** if the tray hasn't reported it after about 30 seconds. If the
     printer goes quiet it stays silent rather than inventing a failure.
 
+    The outcome matters for accounting too: a print only deducts from the
+    spool on the exact tray it pulls from, so an assignment the tray dropped
+    would record no filament usage.
+
 !!! tip "Slot names come from what is loaded, not from what was sent"
-    Earlier builds remembered which preset was *sent* to each slot (and an AMS-HT
-    keying bug, #1053, made even that memory slip to `Generic PLA`). That
-    memory table is gone since 0.5.5: the name shown for a tray is resolved
-    from the id the printer itself reports, through the local catalog — which
-    works offline and stays correct when the slot is changed from Bambu Studio
-    or the printer's screen, cases the old memory could never see.
+    BamDude keeps no memory of which preset was *sent* to a slot. The name
+    shown for a tray is resolved from the id the printer itself reports,
+    through the local catalog — which works offline and stays correct when the
+    slot is changed from Bambu Studio or the printer's screen.
 
 ### Slots showing "?" instead of "Empty"
 
@@ -127,10 +126,10 @@ On the printer card the filament section has three rows, each laid out by the ca
 
 ### Assign Spool from Inventory
 
-The AMS slot menu's **Assign Spool** option pairs a physical inventory row (from [Filaments](spoolman.md)) with the slot. The picker now includes:
+The AMS slot menu's **Assign Spool** option pairs a physical inventory row (from [Filament](spoolman.md)) with the slot. The picker includes:
 
 - **RFID-detected spools** — Bambu Lab tags read on the slot.
-- **Manually-added inventory rows without RFID** — refills, third-party brands, untagged spools (#1047). Earlier builds required exact `slicer_filament_name` equality and hid every spool that didn't carry a slicer profile name; the picker now also accepts partial-material match (a `PLA` spool shows up for a `PLA Basic` slot, and vice versa).
+- **Manually-added inventory rows without RFID** — refills, third-party brands, untagged spools. A spool needs no slicer profile name to be offered, and a partial material match is enough (a `PLA` spool shows up for a `PLA Basic` slot, and vice versa).
 - **External slots (`amsId 254/255`)** — those have no RFID reader so the picker shows the full inventory.
 
 A spool sits in one slot only: assigning it removes it from any other slot it was still recorded in. The assignment is refused when that other slot is feeding a running print.
@@ -155,7 +154,7 @@ Drive **Load** and **Unload** directly from any AMS slot — AMS-HT included —
 **Unload** acts on the slot whose menu you used. On a two-nozzle printer with both nozzles loaded it unloads the nozzle fed from that slot; if no nozzle is loaded from it, BamDude says so and sends nothing.
 
 !!! info "With a Filament Track Switch"
-    Either nozzle can be fed from any slot, so **Load** asks which one — as Bambu Studio does. Nothing is preselected, and a nozzle already loaded from that slot is greyed out. While the switch is not set up on the printer (every AMS assigned to an inlet on its Manual AMS Setup screen), or right after a reconnect before the printer has confirmed the switch is still there, BamDude refuses the load instead of sending one the printer would drop. Printers without a switch load in one click, as before.
+    Either nozzle can be fed from any slot, so **Load** asks which one — as Bambu Studio does. Nothing is preselected, and a nozzle already loaded from that slot is greyed out. While the switch is not set up on the printer (every AMS assigned to an inlet on its Manual AMS Setup screen), or right after a reconnect before the printer has confirmed the switch is still there, BamDude refuses the load instead of sending one the printer would drop. Printers without a switch load in one click.
 
 !!! note "Availability"
     The Load / Unload menu is hidden while the printer is `RUNNING` — wait for idle.
@@ -352,15 +351,15 @@ On models whose firmware declares the extra left-nozzle TPU check, a plain `TPU`
 | 40-60% | :material-alert:{ style="color: #ff9800" } Fair | Consider drying |
 | > 60% | :material-alert-circle:{ style="color: #f44336" } High | Replace desiccant |
 
-Configure custom warning thresholds in **Settings** > **General**.
+Configure custom warning thresholds in **Settings → Filament → General → AMS Display Thresholds** (**Humidity**: **Good (green)** and **Fair (orange)**).
 
 ### Per-filament thresholds
 
-The single Fair / High band above is a global default. You can also set **per-filament-type** auto-dry / alarm humidity thresholds under **Settings → Filaments** (`ams_humidity_thresholds`) — PLA, PETG, TPU, ABS, ASA, PA, PC, PVA, plus a `default` catch-all. When one AMS holds several materials, BamDude resolves to the **strictest (lowest)** threshold across all loaded spools, so the most moisture-sensitive filament in the unit sets the trigger. Empty slots contribute no constraint; unknown types fall back to `default`, then to the global Fair threshold.
+The single Fair / High band above is a global default. You can also set **per-filament-type** auto-dry / alarm humidity thresholds under **Settings → Filament → General → AMS Display Thresholds → Per-Filament Humidity Thresholds** (`ams_humidity_thresholds`) — PLA, PETG, TPU, ABS, ASA, PA, PC, PVA, plus a `default` catch-all. When one AMS holds several materials, BamDude resolves to the **strictest (lowest)** threshold across all loaded spools, so the most moisture-sensitive filament in the unit sets the trigger. Empty slots contribute no constraint; unknown types fall back to `default`, then to the global Fair threshold.
 
 ### Temperature alarm
 
-The AMS card colours its temperature by the **Good** and **Fair** bands (`ams_temp_good` / `ams_temp_fair`). The notification has its own threshold, **Alarm above** (`ams_temp_alarm`) under **Settings → Filaments → AMS Display Thresholds**: leave it empty and the alarm fires above Fair, as it always did; set it higher (say 45 °C) and a warm room turns the card amber without paging you every hour. A value of 0 or less is ignored and falls back to Fair.
+The AMS card colours its temperature by the **Good** and **Fair** bands (`ams_temp_good` / `ams_temp_fair`). The notification has its own threshold, **Alarm above** (`ams_temp_alarm`) under **Settings → Filament → General → AMS Display Thresholds** (**Temperature**): leave it empty and the alarm fires above Fair; set it higher (say 45 °C) and a warm room turns the card amber without paging you every hour. A value of 0 or less is ignored and falls back to Fair.
 
 No temperature alarm is sent while an AMS is **drying**, nor while it **cools down** afterwards: the firmware's own drying state (`dry_time`, and `dry_status` Checking / Drying / Cooling) holds the alarm back, and the hold ends as soon as the unit reads at or below the alarm threshold again — or after two hours if it never does. A heater that has lost control (`dry_status` 6) is never treated as drying heat. The hold survives a restart. Humidity alarms are unaffected — humidity falling is the point of drying.
 
@@ -398,7 +397,7 @@ For models not listed above (future hardware), BamDude lets the drying command t
 !!! warning "P1P / P1S: drying can only be started at the printer"
     Bambu's own P1 manual is explicit — *"P1S connected AMS drying functions may only be controlled from the P1S screen."* The firmware accepts the drying command, answers **success**, and then discards it, which is why a P1S with an AMS 2 Pro would sit at zero dry status no matter how many times Start Drying was pressed.
 
-    Since 0.4.7b4 BamDude no longer sends a command it can't fulfil. **The flame button stays on the card**, disabled, with a tooltip explaining that drying here is screen-only — the point is to learn *where* to dry, not to watch the control quietly disappear. A cycle you start at the printer still shows in BamDude with its live countdown, because reading the state was never the problem; only the Stop button is hidden, since a P1 ignores stop exactly as it ignores start. Queue auto-drying and ambient drying skip P1 printers for the same reason.
+    BamDude does not send a command it can't fulfil. **The flame button stays on the card**, disabled, with a tooltip explaining that drying here is screen-only — the point is to learn *where* to dry, not to watch the control quietly disappear. A cycle you start at the printer still shows in BamDude with its live countdown, because the state can be read; only the Stop button is hidden, since a P1 ignores stop exactly as it ignores start. Queue auto-drying and ambient drying skip P1 printers for the same reason.
 
 ### Power supply requirements
 
@@ -483,10 +482,10 @@ The AMS card then shows a grey **Drying not running** bar instead of the **Dryin
 
 Automatically dry filament between scheduled prints when humidity exceeds the threshold.
 
-- Enable in **Settings** > **AMS Display Thresholds** > **Queue Auto-Drying** (`queue_drying_enabled`).
+- Enable in **Settings → Filament → General → AMS Display Thresholds → Queue Auto-Drying → Enable auto-drying** (`queue_drying_enabled`).
 - **Non-blocking** (default, `queue_drying_block=false`) — drying runs in the background; prints in the queue take priority.
 - **Blocking** (**Wait for drying to complete**, `queue_drying_block=true`) — the queue stalls until drying completes. Use this when you really want a dry spool before the next print starts and don't mind the wait. Blocking does not stop drying ahead of a later job: only a job that could start right away keeps a new cycle from starting on its printer — a job scheduled for later, waiting for a manual start or sitting in a paused queue does not. While a cycle holds a printer's queue, the [Auto-Queue](auto-queue.md) prefers an equally suitable printer that is not held, and the farm forecast counts the rest of the cycle as a wait for that printer — whichever kind of drying holds it: queue auto-drying, ambient drying or a scheduled run.
-- Per-filament temperature + duration come from the configurable presets (Settings → AMS Display Thresholds → Drying Presets), not hard-coded defaults — AMS 2 Pro and AMS-HT have separate columns since they reach different temperatures.
+- Per-filament temperature + duration come from the configurable presets (**Settings → Filament → General → AMS Display Thresholds → Drying Presets**), not hard-coded defaults — AMS 2 Pro and AMS-HT have separate columns since they reach different temperatures.
 
 #### Detailed flow
 
@@ -530,7 +529,7 @@ If you want drying to run without a scheduled print, see [Ambient Drying](#ambie
 
 #### Configurable drying presets
 
-Defaults are based on BambuStudio's official filament drying profiles. Edit them under **Settings → AMS Display Thresholds → Drying Presets**; changes auto-save and apply to manual drying, queue auto-drying, and ambient drying simultaneously.
+Defaults are based on BambuStudio's official filament drying profiles. Edit them under **Settings → Filament → General → AMS Display Thresholds → Drying Presets**; changes auto-save and apply to manual drying, queue auto-drying, and ambient drying simultaneously.
 
 | Filament | AMS 2 Pro temp | AMS-HT temp | AMS 2 Pro duration | AMS-HT duration |
 |---|:---:|:---:|:---:|:---:|
@@ -555,7 +554,7 @@ Plan a drying cycle instead of starting it on the spot. The drying popover (the 
 
 | Choice | What happens |
 |---|---|
-| **Now** | Starts immediately, as before. |
+| **Now** | Starts immediately. |
 | **After delay** | Starts in 1–48 hours. |
 | **At time** | Starts at the date and time you pick (your browser's clock). |
 | **When free** | Starts as soon as the printer is free. |
@@ -575,7 +574,7 @@ How a scheduled run behaves:
 - Days missed while BamDude was down are skipped quietly — no burst of notifications on restart.
 - Archiving a printer cancels its waiting runs and pauses its schedules; deleting it removes both.
 
-Under the AMS units the printer card lists what is planned — waiting, running and missed runs with their reason, and the schedules — with cancel / dismiss, edit, pause / resume and delete — changing them takes `printers:control`, and deleting a schedule or stopping a running cycle asks first. **Settings → Filament → Drying schedules** shows every schedule of the farm; new schedules are created from a printer card. Editing a schedule while its run waits keeps that night and applies the new settings; moving its time or days re-plans from now.
+Under the AMS units the printer card lists what is planned — waiting, running and missed runs with their reason, and the schedules — with cancel / dismiss, edit, pause / resume and delete — changing them takes `printers:control`, and deleting a schedule or stopping a running cycle asks first. **Settings → Filament → General → Drying schedules** shows every schedule of the farm; new schedules are created from a printer card. Editing a schedule while its run waits keeps that night and applies the new settings; moving its time or days re-plans from now.
 
 Three notifications, per provider and per Telegram chat: **Scheduled drying started** and **finished** (off by default — a nightly schedule would send two a night per AMS) and **did not happen** (on by default — a missed night otherwise looks like a dried spool). "On by default" applies to new providers and to Telegram chats that keep the default selection; a provider or chat with its own event selection keeps it exactly as saved, so tick the event there.
 
@@ -583,11 +582,11 @@ API: `GET` / `POST /api/v1/scheduled-dryings`, `DELETE /api/v1/scheduled-dryings
 
 ### Ambient Drying
 
-A separate path that doesn't depend on the queue. Enable under **Settings** > **Print Queue** > **Ambient Drying** (`ambient_drying_enabled`). On any idle printer where humidity is above the threshold — and has [stayed there for the set time](#wait-for-sustained-humidity) — BamDude starts drying without setting a target temperature — useful as a 24/7 humidity-keeper for an idle farm.
+A separate path that doesn't depend on the queue. Enable under **Settings → Filament → General → AMS Display Thresholds → Queue Auto-Drying → Ambient drying** (`ambient_drying_enabled`). On any idle printer where humidity is above the threshold — and has [stayed there for the set time](#wait-for-sustained-humidity) — BamDude starts drying without setting a target temperature — useful as a 24/7 humidity-keeper for an idle farm.
 
 ### Continue drying while printing
 
-By default, drying only runs on **idle** printers — starting a print stops any active cycle. Turn on **Continue drying while printing** (`print_drying_enabled`, **Settings → Print Queue**, default **off**) to let auto-drying also fire *while a print is running*, so a humid spool keeps drying without stalling the queue.
+By default, drying only runs on **idle** printers — starting a print stops any active cycle. Turn on **Continue drying while printing** (`print_drying_enabled`, **Settings → Filament → General → AMS Display Thresholds → Queue Auto-Drying**, default **off**) to let auto-drying also fire *while a print is running*, so a humid spool keeps drying without stalling the queue.
 
 This needs firmware that supports concurrent "Print While Drying". BamDude only offers it on:
 
@@ -609,7 +608,7 @@ Opening an AMS lid lets room air in, and the humidity reading jumps for a few mi
 
 | Setting | Where | Default |
 |---|---|---|
-| **Wait for sustained humidity** | **Settings → Filament → AMS Display Thresholds → Queue Auto-Drying** | on |
+| **Wait for sustained humidity** | **Settings → Filament → General → AMS Display Thresholds → Queue Auto-Drying** | on |
 | **Sustained time (minutes)** | shown while the switch is on; 5–240 | **15** |
 
 Switching **Wait for sustained humidity** off stores `0` (`auto_drying_sustained_minutes`), and a cycle then starts on the first reading above the threshold.
@@ -650,9 +649,9 @@ AMS humidity / temperature samples are persisted to the local DB for the histori
 
 | Setting | Default | Range |
 |---|---|---|
-| AMS data retention | **90 days** | 1–365 days |
+| AMS data retention | **30 days** | 1–365 days |
 
-Configure under **Settings → General → AMS Data Retention**. Older samples are pruned by the daily cleanup tick.
+Configure under **Settings → General → History retention → AMS humidity and temperature (days)**, or under **Settings → Filament → General → AMS Display Thresholds → History Retention** — both edit the same value. Older samples are pruned by the daily cleanup tick.
 
 !!! warning "Storage impact"
     Longer retention means more rows in `ams_history` and a bigger DB. On a busy farm with 4× printers × 4× AMS × 4 slots updating every 30 s, 90 days is roughly 90 × 86400 / 30 × 64 = ~16 M rows — fine on SQLite WAL with the default page size, but worth keeping in mind if you bump the window way up.

@@ -164,7 +164,7 @@ sudo systemctl reload nginx
 
 ## :material-folder-network: Розгортання під subpath (path-prefix)
 
-Якщо віддаєте BamDude під subpath — `https://example.com/bamdude/` (Traefik з правилом `PathPrefix(/bamdude)`, nginx `location /bamdude/`, Cloudflare Tunnel з path-routed services) — SPA-бандл з 0.4.3 емітить **відносні URL для assets** (`./assets/...`, `./manifest.json`, `./img/...`, `./sw-register.js`), тож браузер резолвить кожен script / stylesheet / іконку відносно шляху, з якого завантажилась сторінка. Жодного `BASE_URL` env-варіанту не треба.
+Якщо віддаєте BamDude під subpath — `https://example.com/bamdude/` (Traefik з правилом `PathPrefix(/bamdude)`, nginx `location /bamdude/`, Cloudflare Tunnel з path-routed services) — SPA-бандл емітить **відносні URL для assets** (`./assets/...`, `./manifest.json`, `./img/...`, `./sw-register.js`), тож браузер резолвить кожен script / stylesheet / іконку відносно шляху, з якого завантажилась сторінка. Жодного `BASE_URL` env-варіанту не треба.
 
 Що це означає на практиці:
 

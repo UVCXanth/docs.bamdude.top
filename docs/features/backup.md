@@ -88,7 +88,7 @@ ReadWritePaths=/mnt/your-nas-share
 sudo systemctl restart bamdude
 ```
 
-Reinstalling backs the old unit up as `bamdude.service.bak-<timestamp>` and carries any extra `ReadWritePaths` forward, so a carve-out you added by hand no longer disappears on the next update.
+Reinstalling backs the old unit up as `bamdude.service.bak-<timestamp>` and carries any extra `ReadWritePaths` forward, so a carve-out you added by hand survives the next update.
 
 In Docker the failure is quieter: a host path that was never bind-mounted is still *writable* — the write lands in the container's ephemeral layer and vanishes on the next `docker compose up`. BamDude compares the folder's device against the container root and warns, with the compose snippet that mounts it properly.
 

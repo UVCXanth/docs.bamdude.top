@@ -73,7 +73,7 @@ The toggle is per-VP because some installs want VP-A on the LAN (factory floor) 
 You still import BamDude's CA certificate (`bbl_ca.crt`) into your slicer once, exactly as you would for a LAN VP — see [Virtual Printer](virtual-printer.md).
 
 !!! info "Why there's no Let's Encrypt path"
-    An earlier version of this integration provisioned real Let's Encrypt certificates via `tailscale cert` and advertised the tailnet FQDN over SSDP, so the slicer would trust the VP without importing anything. **That was removed**, because it cannot work: Bambu Studio and OrcaSlicer validate a printer's MQTT connection **only against their own bundled Bambu CA store**, not the system trust store. A publicly-signed chain is rejected at the issuer check, before any hostname logic runs — and their Add Printer dialog takes an IP anyway, which a `*.ts.net` certificate would never match.
+    Provisioning real Let's Encrypt certificates via `tailscale cert` and advertising the tailnet FQDN over SSDP looks like a way to make the slicer trust the VP without importing anything. **It cannot work**: Bambu Studio and OrcaSlicer validate a printer's MQTT connection **only against their own bundled Bambu CA store**, not the system trust store. A publicly-signed chain is rejected at the issuer check, before any hostname logic runs — and their Add Printer dialog takes an IP anyway, which a `*.ts.net` certificate would never match.
 
     So the one-time CA import is unavoidable, and Tailscale's role is strictly network reach: the same trust burden as plain LAN.
 

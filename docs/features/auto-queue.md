@@ -17,7 +17,7 @@ Printers of the same model with and without AMS are checked against their actual
 
 When BamDude accepts a job it takes one verified immutable copy of the actual bytes into `data/queue-sources/`. Routing, preparation and upload read that copy from then on. A laptop can sleep, an SMB share can disconnect, an external library file can move or be deleted, and archive retention can run without changing work already in either queue. Identical bytes queued many times are stored once. The shared copy is released only when its last printer-queue or Auto-Queue job is removed. Portable backups include the ready queue copies named by their database snapshot, so a restored farm does not need the original folders. The `staging/` subdirectory contains unfinished copies only; it is never queued or backed up.
 
-Rows created before this change remain legacy rows until they are captured by a later operation. A missing or checksum-mismatched snapshot, or a vanished legacy source, produces **File error** and is skipped. Other jobs continue; the printer queue is not paused and no failed physical print is counted. Failed AutoQueue jobs remain visible with **Retry** and removal actions; printer queues show them under Issues. Restore access only for a legacy row, then retry explicitly. A ready snapshot never retries an old NAS path.
+A row that has no captured copy of its own is a legacy row until a later operation captures it. A missing or checksum-mismatched snapshot, or a vanished legacy source, produces **File error** and is skipped. Other jobs continue; the printer queue is not paused and no failed physical print is counted. Failed AutoQueue jobs remain visible with **Retry** and removal actions; printer queues show them under Issues. Restore access only for a legacy row, then retry explicitly. A ready snapshot never retries an old NAS path.
 
 ### Assignment
 
@@ -29,7 +29,7 @@ Rows created before this change remain legacy rows until they are captured by a 
 
 ## :material-sort-numeric-ascending: SJF + starvation guard
 
-When **Queue Shortest First** is enabled (Settings → Printing → Queue & Scheduling → Auto-Queue Routing → Queue Shortest First), pending rows are sorted by:
+When **Shortest job first** is enabled (**Settings → Printing → Queue & Scheduling → Auto-Queue Routing → Shortest job first**), pending rows are sorted by:
 
 ```
 ORDER BY target_model,
@@ -52,8 +52,10 @@ When the toggle is off, items dispatch in FIFO order (by `position`).
 
 | Setting | Effect |
 |---------|--------|
-| **Queue Shortest First** | Enables SJF + the starvation guard. Default: off (FIFO). |
+| **Shortest job first** | Enables SJF + the starvation guard. Default: off (FIFO). |
+| **Rebalance across printer models** | Lets idle printers of another model take an order line's pending copies — see [Rebalancing](#rebalancing-across-printer-models). Default: off. |
 | **Use compatible printers in Auto Queue** | Allows compatible-model fallback when no exact-model printer is ready. Default: off. A manual choice of a compatible model does not depend on this switch. |
+| **Automatically return failed AutoQueue jobs** | Returns a proven failed job to the Auto-Queue — see [Automatic return after a failed print](#automatic-return-after-a-failed-print). Default: off. |
 
 The router itself is **always on** — there's no master switch. If no auto-queue items exist, the scheduler is a 30 s no-op.
 
@@ -133,12 +135,12 @@ An [order plan](projects.md) can send one row or the whole plan to Auto-Queue; p
 
 The Queue page has an **Auto-Queue panel** above the per-printer queue cards. **Always rendered** so the drop-zone is permanently available; when there are no pending auto items the panel collapses to a one-line hint inviting a drag-drop.
 
-Since **0.5.5** the panel is a real queue, not just a pile:
+The panel is a real queue, not just a pile:
 
 - **Items list in true dispatch order.** Adjacent copies of one submission collapse into a compact **×N** row; the row expands into its individual copies.
-- **Everything drags.** A collapsed batch moves as a block, an expanded copy moves anywhere in the order — queue five copies of A, add two of B, pull one B to the front and leave the other at the end, and the list shows exactly that. With **Queue Shortest First** enabled the drag handles hide and a hint explains that the distributor owns the order.
+- **Everything drags.** A collapsed batch moves as a block, an expanded copy moves anywhere in the order — queue five copies of A, add two of B, pull one B to the front and leave the other at the end, and the list shows exactly that. With **Shortest job first** enabled the drag handles hide and a hint explains that the distributor owns the order.
 - **Every copy edits in the full Schedule dialog** — the same one the per-printer queue uses: target model and location, schedule, print options, macros. Editing a batch applies the change to all of its copies at once; a single copy can also be edited, deleted or force-assigned on its own.
-- Each row still shows thumbnail, name, plate, target model, estimated print time and the waiting reason when no printer is eligible.
+- Each row shows thumbnail, name, plate, target model, estimated print time and the waiting reason when no printer is eligible.
 
 Once an item is assigned to a printer, it disappears from the panel and shows up in that printer's queue card with a small "auto-assigned" badge.
 
@@ -160,8 +162,8 @@ Among eligible candidates, readiness comes first, then the best color match. See
     governs automatic matching for print-dialog and virtual-printer jobs.
     An explicit physical slot selection is retained instead of ranked again.
 
-    It is on by default and lives under **Settings → Filament → Filament
-    checks → «Drain the emptiest spool first»**. On BamDude's own dispatch paths
+    It is on by default and lives under **Settings → Filament → General →
+    Filament checks → Drain the emptiest spool first**. On BamDude's own dispatch paths
     — this router and the queue scheduler — it is additionally skipped for a
     printer whose **AMS Filament Backup** is off; see
     [Print Queue](print-queue.md) for why.
@@ -178,7 +180,7 @@ Choosing which printer a job belongs to and deciding when it may start are two d
 
 The router only answers the first. It will hand a job to a printer that cannot start right now — one waiting for a **Clear Plate** confirmation, mid plate-change, drying, or held by staggered start. The job then sits **visibly** in that printer's queue until the printer is ready, and every safety check still applies at the moment it actually matters.
 
-Before **0.5.1.2** the router refused to route to such a printer at all. That sounded safer and was not: the printer's queue stayed empty, so nothing on screen explained the hold-up, and the **Clear Plate** prompt — which appears on a printer's queue — never had a chance to show. Operators saw idle machines reported as busy and a farm that looked dead. Placing the work is what makes the reason visible.
+Refusing to route to such a printer would sound safer and would not be: its queue would stay empty, so nothing on screen would explain the hold-up, and the **Clear Plate** prompt — which appears on a printer's queue — would never have a chance to show. Idle machines would be reported as busy and the farm would look dead. Placing the work is what makes the reason visible.
 
 A printer that *is* ready still wins when there's a choice.
 
@@ -202,7 +204,7 @@ Among several models that qualify, the earliest finish wins, then the least surp
 
 **Three ways to run it.**
 
-- **Automatically** — Settings → Printing → Auto-Queue Routing → **Rebalance across printer models** (off by default). The scheduler checks after every placement pass, moves at most one copy per idle printer per pass, and leaves a line alone for five minutes after a move. The pause is not a promise that the next move comes five minutes later: a pass only moves what the farm allows at that moment. The scheduled pass moves a copy only once — after that only the buttons move it again — and when one of a pass's moves cannot be made, the rest of that pass's moves wait for the next pass.
+- **Automatically** — **Settings → Printing → Queue & Scheduling → Auto-Queue Routing → Rebalance across printer models** (off by default). The scheduler checks after every placement pass, moves at most one copy per idle printer per pass, and leaves a line alone for five minutes after a move. The pause is not a promise that the next move comes five minutes later: a pass only moves what the farm allows at that moment. The scheduled pass moves a copy only once — after that only the buttons move it again — and when one of a pass's moves cannot be made, the rest of that pass's moves wait for the next pass.
 - **Per line** — the **Rebalance** button on an order line's plan, shown while the line has pending auto-queue copies. It runs regardless of the setting and ignores the five-minute pause — nothing else: it never overrides a filament, colour or model rule.
 - **Per copy** — **Rebalance** on a pending row or a collapsed `×N` block of the auto-queue panel. A row that cannot move says why.
 
@@ -220,14 +222,14 @@ Among several models that qualify, the earliest finish wins, then the least surp
 
 ## :material-fire-off: Drying takes lower priority than a print
 
-[Queue Auto-Drying](ams.md#queue-auto-drying) keeps idle spools dry between prints. When **Settings → AMS Display Thresholds → Queue Auto-Drying** is in its default **non-blocking** mode (`queue_drying_block=false`, *"prints take priority over drying"*), a job queued **directly** to a printer already stops an in-progress dry cycle and starts printing.
+[Queue Auto-Drying](ams.md#queue-auto-drying) keeps idle spools dry between prints. When Queue Auto-Drying is in its default **non-blocking** mode — **Settings → Filament → General → AMS Display Thresholds → Queue Auto-Drying → Wait for drying to complete** switched off (`queue_drying_block=false`), so prints take priority over drying — a job queued **directly** to a printer stops an in-progress dry cycle and starts printing.
 
-The auto-queue router behaves the same way, and since **0.5.1.2** it does so by *ranking* rather than excluding: a printer that is free to take work but currently drying still receives jobs, it simply loses to one that can start immediately. The per-printer dispatch then stops the dry cycle and begins the print (the same `_stop_drying` step described in [AMS → Queue Auto-Drying flow](ams.md#queue-auto-drying)).
+The auto-queue router behaves the same way, and it does so by *ranking* rather than excluding: a printer that is free to take work but currently drying still receives jobs, it simply loses to one that can start immediately. The per-printer dispatch then stops the dry cycle and begins the print (the same `_stop_drying` step described in [AMS → Queue Auto-Drying flow](ams.md#queue-auto-drying)).
 
 When Queue Auto-Drying is set to **blocking** (`queue_drying_block=true`), drying still holds the queue — the job waits in that printer's queue until the dry cycle ends, exactly as a directly-queued item would. The router takes that into account: while a cycle holds a printer's queue, an equally suitable printer that is not held wins the job. The held printer still receives it when it is the only one that fits, and the wait is then visible on its row. [Rebalancing](#rebalancing-across-printer-models) does not move work onto a printer whose queue drying holds.
 
-!!! note "Behaviour added in 0.4.5"
-    Before 0.4.5 the auto-queue treated a drying printer as plain "busy" and skipped it, so an auto-routed job could sit waiting behind a dry cycle even though a directly-queued job would have taken priority. This is most noticeable on P2S / H2 farms with AMS auto-drying enabled.
+!!! note "A drying printer is not a busy printer"
+    The router does not treat a drying printer as plain "busy" and skip it — otherwise an auto-routed job could sit waiting behind a dry cycle that a directly-queued job would simply have stopped. This matters most on P2S / H2 farms with AMS auto-drying enabled.
 
 ---
 
@@ -264,7 +266,7 @@ Checks repeat before preparation and immediately before the start command. A cha
 
 Per-printer queues remain the way to choose a specific machine; Auto-Queue defers that choice. Both paths apply complete filament checks before starting.
 
-After an upgrade, older jobs retain established source restrictions and physical selections. If there is not enough saved evidence to recover their rules, mapping review is required. Schedule edits, copies, and repeats retain the rules; a different printer or plate requires a new answer for a manual mapping. See [Editing and repeats](filament-routing.md#editing).
+Jobs saved without the complete routing rules retain their established source restrictions and physical selections. If there is not enough saved evidence to recover their rules, mapping review is required. Schedule edits, copies, and repeats retain the rules; a different printer or plate requires a new answer for a manual mapping. See [Editing and repeats](filament-routing.md#editing).
 
 ## Notifications about obstacles
 
@@ -278,7 +280,7 @@ This deduplication is held in memory: after restarting BamDude, one alert about 
 
 ## Automatic return after a failed print
 
-Enable **Automatically return failed AutoQueue jobs** under the system Auto-Queue routing settings. It is off by default. A proven live failed print may return its logical job at most twice, after at least two minutes. The accepted file and saved options are retained. Each physical attempt keeps its own archive and costs; the old failed row shows **Returned to Auto Queue**, and Retry/Repeat stay unavailable for that row. Clear and removal remain separate operator actions.
+Enable **Automatically return failed AutoQueue jobs** under **Settings → Printing → Queue & Scheduling → Auto-Queue Routing**. It is off by default. A proven live failed print may return its logical job at most twice, after at least two minutes. The accepted file and saved options are retained. Each physical attempt keeps its own archive and costs; the old failed row shows **Returned to Auto Queue**, and Retry/Repeat stay unavailable for that row. Clear and removal remain separate operator actions.
 
 The failed printer stays in its error/pause state. It ranks last among current eligible candidates. Busy printers remain excluded: BamDude does not hold the job waiting for them. If the failed printer is the only candidate, a new attempt can wait there for Resume. Before it starts, use **Move to AutoQueue** to return that attempt manually; the automatic-return count is preserved. Returned jobs are excluded from automatic model rebalancing. Explicit reviewed order replanning remains available.
 

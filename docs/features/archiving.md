@@ -24,7 +24,7 @@ graph LR
 
 **The row comes first, and the file catches up.** Fetching the 3MF back off a printer is not quick: measured on a P1S, 22 MB took 8m40s while the printer was printing, because the file is read from the same SD card the print is reading from. (The identical fetch on an idle printer took 96 seconds.) Creating the row afterwards meant the print did not exist anywhere in BamDude until the download finished — no entry in Archives, no start notification, and the queue still showing the printer free. Worse, the smart-plug meter reading that a print's energy is measured against was taken at the end of that download, so everything the printer drew during it went uncounted, bed heating included.
 
-If the FTP fetch fails, the row simply keeps `file_path = ""` — see [3MF download recovery](#3mf-download-recovery) below. The dispatcher creates exactly one archive per physical print and wires `PrintQueueItem.archive_id` to it inside the same transaction (post-b1: there's no longer a race between scheduler and dispatcher creating duplicate rows). Prints BamDude dispatched itself already have their row before the file is uploaded, so the flow above describes prints started elsewhere — the printer's screen, a slicer's **Send to Printer**, Bambu Cloud.
+If the FTP fetch fails, the row simply keeps `file_path = ""` — see [3MF download recovery](#3mf-download-recovery) below. The dispatcher creates exactly one archive per physical print and wires `PrintQueueItem.archive_id` to it inside the same transaction (so the scheduler and the dispatcher never race to create duplicate rows). Prints BamDude dispatched itself already have their row before the file is uploaded, so the flow above describes prints started elsewhere — the printer's screen, a slicer's **Send to Printer**, Bambu Cloud.
 
 !!! warning "The 3MF has to be somewhere BamDude can reach"
     BamDude fetches it from the printer's SD card over FTP, so on most printers the card must be inserted. Without one, only the metadata reported over MQTT can be recorded; thumbnails and 3D preview are unavailable.
@@ -32,7 +32,7 @@ If the FTP fetch fails, the row simply keeps `file_path = ""` — see [3MF downl
     On **X2D, P2S and the H2 family** the file is also fetched from the printer's built-in storage when the card has nothing — including for prints started on the printer's own screen, which would otherwise leave an archive with nothing attached.
 
 !!! note "X2D / P2S firmware TLS quirk (handled automatically)"
-    Some firmware trips over modern Python's default TLS 1.3 on the FTPS channel — X2D fails the implicit-FTPS handshake outright, P2S hits a session-reuse bug — which left their archive cards empty (no filament / layers / MakerWorld link / thumbnail). BamDude now caps the FTPS session to TLS 1.2 for these models so the 3MF download at print start connects and the archive populates. No configuration needed.
+    Some firmware trips over modern Python's default TLS 1.3 on the FTPS channel — X2D fails the implicit-FTPS handshake outright, P2S hits a session-reuse bug — which left their archive cards empty (no filament / layers / MakerWorld link / thumbnail). BamDude caps the FTPS session to TLS 1.2 for these models so the 3MF download at print start connects and the archive populates. No configuration needed.
 
 ---
 
@@ -90,7 +90,7 @@ Each archive row carries the file, the parsed metadata, the run state, and full 
     | Field | Description |
     |-------|-------------|
     | `content_hash` | SHA256 of the bytes actually stored in the archive directory. |
-    | `source_content_hash` | SHA256 of the chain-root (unpatched) source. **Always populated** since 0.4.2: when no chain ancestor exists, this archive becomes the chain root and the column is seeded with its own `content_hash`. Patched variants of a library file inherit this from the library row's hash. Migration **m039** backfills legacy NULLs to the same invariant. |
+    | `source_content_hash` | SHA256 of the chain-root (unpatched) source. **Always populated**: when no chain ancestor exists, this archive becomes the chain root and the column is seeded with its own `content_hash`. Patched variants of a library file inherit this from the library row's hash. Migration **m039** backfills legacy NULLs to the same invariant. |
     | `applied_patches` | JSON list of the patches the dispatch pipeline applied before upload — plain identifiers and descriptor objects side by side, e.g. `["mesh_mode_fast_check_off", {"name": "gcode_injection", "plate_id": 2}]`. The API returns it exactly as recorded. Informational only — never used to infer disk-file state. |
 
 === "Skip-objects metadata"
@@ -100,8 +100,8 @@ Each archive row carries the file, the parsed metadata, the run state, and full 
     | Key | Description |
     |-----|-------------|
     | `printable_objects` | `{ id: name }` dict from the 3MF — populated for both the modal and `M623` skip-objects calls. |
-    | `gcode_label_objects` | Whether the slicer wrote per-object identifiers into the gcode. Bambu Studio doesn't emit this field, so missing → `True` (BS default). OrcaSlicer writes it explicitly. *Added in 0.4.1.* |
-    | `exclude_object` | Whether the slicer enabled object exclusion in the print profile. *Added in 0.4.1.* |
+    | `gcode_label_objects` | Whether the slicer wrote per-object identifiers into the gcode. Bambu Studio doesn't emit this field, so missing → `True` (BS default). OrcaSlicer writes it explicitly. |
+    | `exclude_object` | Whether the slicer enabled object exclusion in the print profile. |
 
     The skip-objects button in the printer view requires **both** `gcode_label_objects` and `exclude_object` to be true — otherwise sending `M623` would fail at the firmware (the gcode lacks the per-object markers).
 
@@ -147,20 +147,20 @@ The reason: the dispatch pipeline can patch a 3MF before upload — for example,
 
 - When BamDude dispatches a patched print, it stores the SHA256 of the **unpatched** source in `source_content_hash` and the SHA256 of the bytes that landed on the SD in `content_hash`.
 - The on-disk file at `file_path` is **always** the unpatched original. Patched bytes live only in `/tmp/bamdude_patch_*` for the FTP-upload window and are cleaned up by the dispatcher; `archive/` never holds a patched variant. This is what lets reprint re-run the patcher per-job and toggle `mesh_mode_fast_check` / gcode injection in either direction — the patcher's `M970` regex only matches uncommented lines and couldn't undo a previously-baked patch if the on-disk source were post-patch.
-- Dedup queries use `effective_hash = COALESCE(source_content_hash, content_hash)`. Since 0.4.2 every new archive populates `source_content_hash` (chain root or self-seed), so `effective_hash` reads `source_content_hash` directly for new rows; `COALESCE` stays as defence-in-depth.
+- Dedup queries use `effective_hash = COALESCE(source_content_hash, content_hash)`. Every new archive populates `source_content_hash` (chain root or self-seed), so `effective_hash` reads `source_content_hash` directly; `COALESCE` stays as defence-in-depth.
 - Reprinting from an existing archive copies the unpatched file into a fresh archive directory — new `content_hash` if the new run patches differently, but the same `source_content_hash`, so reprint history stays linked to the original design.
-- External prints (started on the printer screen / cloud / manual SD start) get a one-SELECT lookup at archive creation: if any prior archive on **any** printer matches by `content_hash` or `source_content_hash`, the chain is inherited (cross-printer in 0.4.2 — was per-printer before).
+- External prints (started on the printer screen / cloud / manual SD start) get a one-SELECT lookup at archive creation: if any prior archive on **any** printer matches by `content_hash` or `source_content_hash`, the chain is inherited.
 
 The Archives page exposes a "duplicates" filter that groups rows by this effective hash. The "Original print" badge, the `original_archive_id` link, the detail-endpoint duplicates list, and library-file print counts all bind on `source_content_hash` with `content_hash` only as a defence fallback for legacy NULL rows. Consequence: a printer-A unpatched run + a printer-B mesh-mode-disabled run of the same library file are grouped together in the badge **and** share one on-disk file (see below).
 
-### Cross-printer file-on-disk dedup *(0.4.2)*
+### Cross-printer file-on-disk dedup
 
 When BamDude archives a print whose `effective_hash` matches an existing archive on **any** printer, the new archive row reuses the existing on-disk path instead of writing another copy. Match is on the chain-root hash (`COALESCE(source_content_hash, content_hash)`) — every row sharing an unpatched origin shares one on-disk file regardless of which patches each individual dispatch applied. Net effect: printing the same library file on N printers with M different patch combinations still stores **one** copy on disk + N×M archive rows. `delete_archive` ref-counts shared `file_path`s and only removes bytes when the last referencing row is hard-deleted. The same dedup runs in `attach_3mf_to_archive` (background download-retry path), so a fallback archive whose 3MF lands later joins the existing chain instead of writing the printer-fetched (patched) bytes when an unpatched copy already exists.
 
 If you upgrade from a pre-0.4.2 install where `archive/` may still contain leftover patched copies from the prior semantics, run `python scripts/prune_orphan_archive_files.py` (default dry-run, `--apply` to delete) to reconcile the directory against the current DB references.
 
 !!! info "Migrations m009 + m039"
-    `source_content_hash` and `applied_patches` were added in m009. Migration **m039** (0.4.2) backfills `source_content_hash = content_hash` for legacy NULL rows so the always-populated invariant holds across upgrade.
+    `source_content_hash` and `applied_patches` were added in m009. Migration **m039** backfills `source_content_hash = content_hash` for legacy NULL rows so the always-populated invariant holds across upgrade.
 
 ---
 
@@ -199,7 +199,7 @@ In the file manager, sort by **most printed** or **least recently printed** to f
 Every archive row starts with `file_path = ""` and gets its 3MF attached once BamDude has fetched it from the printer. That fetch can fail — the printer is slow, the network glitches, the file has already been moved on the SD card, the path doesn't match. When it does, the row keeps its empty `file_path` and gains `extra_data["no_3mf_available"] = True` together with `extra_data["no_3mf_reason"]` — why the fetch failed (see the banner below) — and is filled in retroactively.
 
 !!! tip "There is no size limit on the 3MF — `ftp_timeout` bounds a stall, not a slow transfer"
-    A print's 3MF comes back over the same SD card the print is reading from, so the transfer rate depends on what the printer is doing: 231 KB/s on an idle P1S, 43 KB/s on a printing one. `ftp_timeout` used to be applied to the whole download as well as to the socket, which quietly turned it into a **limit on file size** — at 30 seconds, anything past a few megabytes was abandoned mid-transfer and archived as "3MF unavailable". It now applies per socket operation: a connection that has gone quiet is dropped after the configured seconds, and one that keeps delivering is left to finish. Uploads to the printer are separately capped at 10 minutes, which `ftp_timeout` does not affect.
+    A print's 3MF comes back over the same SD card the print is reading from, so the transfer rate depends on what the printer is doing: 231 KB/s on an idle P1S, 43 KB/s on a printing one. `ftp_timeout` applies per socket operation, not to the whole download, so it is not a **limit on file size**: a connection that has gone quiet is dropped after the configured seconds, and one that keeps delivering is left to finish. Uploads to the printer are separately capped at 10 minutes, which `ftp_timeout` does not affect.
 
 !!! note "Empty `file_path` and `no_3mf_available` are not the same thing"
     The empty path is what the recovery triggers select on, and it is the normal state of a print that started ninety seconds ago. The flag means something narrower: **an attempt was made and it failed**. Only the flag raises the Archives banner below, which is why it is never set optimistically while a download is still running.
@@ -238,7 +238,7 @@ When the file lands, `ArchiveService.attach_3mf_to_archive()` fills the existing
 
 ### A print that started while BamDude was off
 
-Until 0.5.6, a print begun from the printer's screen or the slicer while BamDude was down left no trace at all — no archive, no queue row — because the only place an external print's archive is created is the print-start event, and on a fresh start BamDude deliberately does not treat the first "running" it sees as a start (doing so would re-archive a print already under way). Now the print that is running when BamDude comes up is **adopted**: it gets the same row an external print gets at start, the queue row is claimed, the 3MF and thumbnails are fetched through the recovery path above, and the archive card appears like any other.
+A print begun from the printer's screen or the slicer while BamDude was down has no print-start event for BamDude to archive it from. Instead, the print that is running when BamDude comes up is **adopted**: it gets the same row an external print gets at start, the queue row is claimed, the 3MF and thumbnails are fetched through the recovery path above, and the archive card appears like any other.
 
 Two figures on such a row are honest rather than exact, and are marked so:
 
@@ -249,7 +249,7 @@ There is no late "print started" notification, and only the print in progress at
 
 ---
 
-## :material-broom: 3MF Auto-Cleanup *(0.4.1, drift-mode in 0.4.2)*
+## :material-broom: 3MF Auto-Cleanup {#3mf-auto-cleanup-041-drift-mode-in-042}
 
 The archive directory is the largest single chunk of disk BamDude owns — every print copies its 3MF in. The auto-cleanup feature lets you set a retention window: 3MF files belonging to designs that haven't been printed for N days are deleted, but the archive rows themselves stay so the history (thumbnails, costs, notes, energy data, project links) is preserved.
 
@@ -262,7 +262,7 @@ The archive directory is the largest single chunk of disk BamDude owns — every
 - **Live preview** — shows what would be cleaned right now: `X archives in Y groups, Z MB`.
 - **Last / Next run cards** — extracted into a shared `<LastNextRunCards>` component reused by the library auto-purge. Shows "cleared 5 archive(s), 240 MB freed, 4 hours ago" + "in ~20 hours" so admins can see the schedule without grepping logs. After a server restart the in-memory `archives_cleared` count is lost; the card shows "count was lost on restart — see logs" instead of a misleading zero (the persistent `archive_3mf_cleanup_last_run` timestamp survives, only the count goes).
 
-### Manual run — Archives page header *(0.4.2)*
+### Manual run — Archives page header
 
 The Archives page header has a **Cleanup 3MFs** button that opens the same cleanup with a per-run override:
 
@@ -281,9 +281,9 @@ Eligibility is evaluated **per design**, not per archive row. A "design" is a gr
     - An active queue item (pending / printing / paused) references any archive in the group.
     - The originating `library_files` row still exists with a matching hash. The library is your deliberate source of truth — no need to wipe an archive copy when it's still on the source path. The skip-set is built from the always-populated `source_content_hash` (the canonical chain root), so a patched archive variant correctly maps back to the library row that produced it.
 
-### Plan-phase optimisation *(0.4.2)*
+### Plan-phase optimisation
 
-The plan phase first does a SQL-side `GROUP BY effective_hash HAVING MAX(activity_ts) < cutoff` and only loads full rows for buckets that actually fell out of retention. Healthy installs (most groups still hot) skip the heavy row load entirely — significant win on installs with 10k+ archives where the previous "load every row, group in Python" path was a noticeable hot spot during the daily sweep.
+The plan phase first does a SQL-side `GROUP BY effective_hash HAVING MAX(activity_ts) < cutoff` and only loads full rows for buckets that actually fell out of retention. Healthy installs (most groups still hot) skip the heavy row load entirely — which matters on installs with 10k+ archives.
 
 ### What happens during cleanup
 
@@ -297,7 +297,7 @@ For each eligible design group:
 
 Re-printing a cleaned archive shows "3MF unavailable" in the same way as a fallback archive that never had a file. Re-upload from your library or slicer to print it again.
 
-### Schedule *(drift-mode since 0.4.2)*
+### Schedule
 
 | Aspect | Behaviour |
 |--------|-----------|
@@ -306,7 +306,7 @@ Re-printing a cleaned archive shows "3MF unavailable" in the same way as a fallb
 | First-fire delay | The loop sleeps `TICK_INTERVAL_SECONDS` (15 min) **before** evaluating, so the first auto-run lands ~15 min after enabling the toggle (or ~15 min after server boot if the toggle was already on). Click "Run now" in Settings or in the Archives page modal to fire instantly — the manual run stamps the same timestamp and starts the 24h drift cycle. |
 | Manual-run effect | A successful manual run stamps the same timestamp, so it postpones the next auto-tick by 24 h instead of stacking. |
 | Toggle effect | Consulted every tick — flipping it on/off takes effect without a restart. Toggle gates the auto-tick only; manual runs always work. |
-| Timezone | Independent of server-local time (the previous "midnight cron" anchored to the OS clock). |
+| Timezone | Independent of server-local time — the cycle counts 24 h from the last run, not from midnight. |
 
 The library auto-purge follows the same pattern (15 min tick, 24 h drift, manual runs reset). See [Library Trash](library-trash.md) for its analog of the Last/Next run cards.
 
@@ -318,8 +318,8 @@ The library auto-purge follows the same pattern (15 min tick, 24 h drift, manual
 
 The optional `?days=N` query param (1–3650, clamped) lets the manual dialog override the saved retention threshold without persisting it.
 
-!!! note "What changed in 0.4.2"
-    The upstream-ported per-row archive auto-purge (which moved old archive rows to trash on a separate 365-day timer) was **removed** in 0.4.2 — see [the trash docs](library-trash.md) for the rationale. The 3MF cleanup described above is the only auto-mechanism that touches archive storage now; manual delete → trash → restore → empty-trash is unchanged for "I want this row gone" workflows.
+!!! note "Archive rows are never moved to the trash automatically"
+    There is no per-row archive auto-purge — see [the trash docs](library-trash.md) for the rationale. The 3MF cleanup described above is the only auto-mechanism that touches archive storage; manual delete → trash → restore → empty-trash covers the "I want this row gone" workflows.
 
 ---
 
@@ -337,7 +337,7 @@ Three.js scene with proper Phong shading:
 - **Build-volume wireframe** — translucent box matching the printer's bed; pulled from the 3MF's `printer_settings` so an A1-mini archive renders against a 180×180 box, not a hardcoded 256³.
 - **Wireframe / X-ray toggle** — flip every mesh in the scene from solid to wireframe so thin walls, supports, and non-manifold edges are visible. Persists across modal opens via `localStorage`.
 - **Supported formats:** `.stl`, `.3mf`, `.obj` (OBJ via Three's stock `OBJLoader`, mounted alongside STL + the custom 3MF parser).
-- **Theme-synced background** — light SPA theme renders the scene against a light grey, dark theme keeps the off-black bed; the canvas no longer punches a black rectangle through a light modal.
+- **Theme-synced background** — light SPA theme renders the scene against a light grey, dark theme keeps the off-black bed; the canvas never punches a black rectangle through a light modal.
 
 For multi-plate prints the archive remembers which plate of the source 3MF was actually printed — the 3D preview, G-code preview, thumbnail, and per-plate slicer metadata (print time, filament weight, layers, printable objects) all reflect that plate. **There is no plate picker on archives** — the archive is a record of one specific print, not a browser. Migration **m038** populates `plate_index` on historical rows and re-parses 3MFs where `plate_index > 1` so older multi-plate archives gain the same correctness.
 
@@ -544,7 +544,7 @@ Each card shows the thumbnail, filename, printer / model line, duration, status 
 
 The cost of a print that is **still running** is an estimate and is shown with a `~` prefix (`~12.50`), on cards and in the list view: it is the filament weight at the default filament price, and the cost is taken from the spools when the print ends. Hovering the figure says so.
 
-The printer / model line is **uniform across provenance**: archives tied to a real BamDude printer used to render `H2D-1 GCODE …` while slicer-only uploads rendered `Sliced for X1C GCODE …` — two different shapes on the same line. The `Sliced for ` prefix is gone, so both now read as `<name-or-model> [bed-icon] GCODE <hash>` and scan identically regardless of whether the archive came from a live printer or a slicer-only upload.
+The printer / model line is **uniform across provenance**: every archive reads as `<name-or-model> [bed-icon] GCODE <hash>` and scans identically regardless of whether the archive came from a live printer or a slicer-only upload.
 
 The **build-plate icon** sits next to the printer / model name and reflects the plate the 3MF was sliced for (Cool / Cool SuperTack / Engineering / High Temp / Textured PEI / Smooth PEI), with the full plate name in the hover tooltip — so you don't have to open the source 3MF in a slicer just to read the bed setting before a re-print. The icon is populated from `curr_bed_type` in the 3MF's `slice_info.config` (per-plate, authoritative) with a fallback to `project_settings.config` for older 3MF shapes; archives created before this feature shipped show no icon until you hit the per-archive **Rescan** action, which re-parses the on-disk 3MF.
 
@@ -616,7 +616,7 @@ Changing the page size returns you to the first page — staying on page 3 of a 
 | **Printer** | Single-select; defaults to "All printers". |
 | **Colour** | Multi-select. Default semantics is **OR** — pick *Red* + *Blue* to see archives that used Red **or** Blue. The chip strip exposes an **AND/OR toggle** — flip to AND when you need archives that used *Red* **and** *Blue* together (multi-colour prints). |
 | **Material** | Multi-select OR (PLA + PETG → either). |
-| **Kind** | Single-select: **All prints** / **Calibration prints** / **Regular prints**. Keyed on the `is_calibration` flag the Filament Calibration wizard stamps on every test print it dispatches (since 0.4.5). The old GCODE / SOURCE / ALL split lost meaning once archive went print-history-only in 0.4.2. |
+| **Kind** | Single-select: **All prints** / **Calibration prints** / **Regular prints**. Keyed on the `is_calibration` flag the Filament Calibration wizard stamps on every test print it dispatches. |
 | **Favourites** | Toggle: show only archives flagged with the heart. |
 | **Date range** | Two-input picker: shows archives whose `started_at` falls inside the range. Pairs with the calendar view. |
 | **Status** | Multi-select status filter — printing / completed / failed / cancelled / archived. |

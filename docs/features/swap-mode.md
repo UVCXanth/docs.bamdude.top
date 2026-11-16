@@ -74,7 +74,7 @@ Swap intent is **persisted to disk**, not held in memory. Restarting BamDude mid
 
 **Why this matters**
 
-- A backend restart between print start and print complete used to wipe the in-memory `_active_swap_config` dict, leaving `on_print_complete` with nothing to act on. Now the pending list is read from the archive row and only the events still in it fire.
+- A backend restart between print start and print complete loses nothing: the pending list is read from the archive row, not from memory, and only the events still in it fire.
 - A duplicate `on_print_complete` (MQTT replay, reconnect flap) finds the event already removed and does nothing — no double swap.
 
 !!! info "Where the marker lives"
@@ -99,7 +99,6 @@ The brief DB-insert phase (`INSERT INTO print_archives`) sits behind a startup-l
 
 - Two printers get their `swap_mode_start` macros nearly simultaneously.
 - Their FTP uploads happen in parallel (you'll see two upload progress bars in the dispatch toast).
-- The earlier "one job at a time across the whole farm" gate that landed in mid-0.4.1 was scrapped once the startup-lock was in.
 
 ---
 
@@ -183,8 +182,8 @@ trusted); a library file without a content hash — one in an external folder un
 it, a managed one until it is uploaded again as a new copy — and its SWAP tag is not shown meanwhile; a print started
 from the printer's screen whose file could not be downloaded. Any of them can be [declared by you](#declaring-a-file-yourself).
 
-**Older external files.** A file an external folder scan brought in before this version recorded only "no", whatever
-it held. BamDude now judges such a file by its name **on the share** — the same `.swap.` / `.swaps.` rule a new file
+**Older external files.** A file an external folder scan brought in before files were classified by name recorded only "no", whatever
+it held. BamDude judges such a file by its name **on the share** — the same `.swap.` / `.swaps.` rule a new file
 gets — never by the name the library shows, which a rename in BamDude changes. The upgrade records that answer once,
 so the SWAP tag and the tag filter agree with it. A managed library file from before keeps the answer it had: BamDude
 cannot tell any more whether that "no" was a declaration or an old default. The name on disk can be wrong about what

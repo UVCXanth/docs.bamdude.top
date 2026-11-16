@@ -11,10 +11,10 @@ OrcaSlicer 2.4.0-alpha added a Supabase-backed cloud sync (`sync_pull`). BamDude
 
 The integration is **per-user**. Each BamDude account holds its own Orca Cloud token — signing in doesn't touch anyone else's account.
 
-Since 0.5.5, BamDude pairs under its **own registered app identity**, issued by the Orca Cloud team — the approval card names BamDude (and your instance URL), and you can find and disconnect it in your Orca Cloud connected-apps list under its real name. The pairing requests **write access** (`sync:write`, which includes read), powering the [profile push](#pushing-profiles) below.
+BamDude pairs under its **own registered app identity**, issued by the Orca Cloud team — the approval card names BamDude (and your instance URL), and you can find and disconnect it in your Orca Cloud connected-apps list under its real name. The pairing requests **write access** (`sync:write`, which includes read), powering the [profile push](#pushing-profiles) below.
 
-!!! warning "Upgrading to 0.5.5: re-pair once"
-    The app identity and the granted scope are baked into the issued tokens, and **both changed together** in 0.5.5 — every existing Orca Cloud pairing stops working after the upgrade and asks to be reconnected. One re-pair covers both changes; nothing else is lost.
+!!! warning "A pairing made on a version older than 0.5.5 must be re-paired once"
+    The app identity and the granted scope are baked into the issued tokens, and those versions used different ones — such a pairing stops working after the upgrade and asks to be reconnected. One re-pair is enough; nothing else is lost.
 
 ---
 
@@ -87,7 +87,7 @@ An edit in BamDude never overwrites the cloud silently — the preset is marked 
 - **Overwrite cloud copy** — your local version wins;
 - **Adopt cloud version** — the cloud content is taken into your local preset.
 
-A pairing made without write access (an env-pinned `sync:read`, or a pre-0.5.5 pairing that somehow survived) shows the push controls disabled with an explanation — reconnect to grant writing.
+A pairing made without write access (an env-pinned `sync:read`) shows the push controls disabled with an explanation — reconnect to grant writing.
 
 ## :material-shield-key: Permissions
 
@@ -120,8 +120,9 @@ Like the Bambu Cloud token, the Orca access + refresh tokens are stored as plain
     A refresh-token rotation was rejected server-side (revoked, or the single-use token was replayed). Pair again from the Orca Cloud tab.
 
 ??? question "After updating BamDude it asked me to reconnect Orca Cloud"
-    Expected, once: 0.5.5 switched to BamDude's own app identity and the write
-    scope, and both are baked into the issued tokens. Pair again and it stays.
+    Expected, once, when the pairing was made on a version older than 0.5.5:
+    the app identity and the scope are baked into the issued tokens, and those
+    versions used different ones. Pair again and it stays.
 
 ??? question "The push buttons are disabled and say the pairing is read-only"
     The granted scope is fixed at pairing time. Disconnect and pair again — the

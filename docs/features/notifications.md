@@ -110,7 +110,7 @@ Pushover has one **Priority** per provider (`-2…+2`, `0` = normal), applied to
     | **Emergency Retry (s)** | How often Pushover re-alerts | 60 s (min 30 s) |
     | **Emergency Expire (s)** | When it gives up | 3600 s (max 10800 s) |
 
-    They're only sent at priority 2 — Pushover ignores them at every other level. Before 0.4.7b4 BamDude never sent them at all, so setting a provider to Emergency made every notification fail.
+    They're only sent at priority 2 — Pushover ignores them at every other level.
 
 ### Bark (iOS)
 
@@ -570,7 +570,7 @@ A provider or chat that should receive these has to be left on **All** printers.
 
 ## :material-inbox: The notification centre
 
-Every notification used to leave the farm — Telegram, e-mail, ntfy, Discord, whatever you had configured. An install with no provider at all had nowhere to put an alarm about its own hardware: the event fired, matched nobody, and was gone. The **Bell** in the sidebar now opens a per-user notification centre with three tabs, and **the inbox fills whether or not a single provider is set up**. That is the point of it — providers are how a notification reaches your phone, the inbox is how it reaches whoever logs in.
+A notification does not have to leave the farm. The **Bell** in the sidebar opens a per-user notification centre with three tabs, and **the inbox fills whether or not a single provider is set up** — so an install with no provider at all still has somewhere to put an alarm about its own hardware. That is the point of it — providers are how a notification reaches your phone, the inbox is how it reaches whoever logs in.
 
 Read and unread are **per person**. One operator opening an alarm does not clear it for anybody else. That is the difference between an inbox and a shared log: everyone subscribed to an event has to deal with it themselves.
 
@@ -599,9 +599,9 @@ Subscriptions belong to the person, not to the farm: two operators on the same i
 
 ### Email
 
-The four per-user e-mail switches that used to be this whole page, unchanged in behaviour — see [Per-User Email Notifications](#per-user-email-notifications) below for what they send and when.
+The four per-user e-mail switches — see [Per-User Email Notifications](#per-user-email-notifications) below for what they send and when.
 
-The tab appears only when Advanced Authentication is on, the **User Notifications** master switch is on, and you hold the `notifications:user_email` permission — the same three conditions as before.
+The tab appears only when Advanced Authentication is on, the **User Notifications** master switch is on, and you hold the `notifications:user_email` permission.
 
 ### The unread badge
 
@@ -632,7 +632,7 @@ Separate from the provider system above, BamDude can email the **owner** of a pr
 
 ### Requirements
 
-- Authentication enabled (it always is on 0.4.0+)
+- Authentication enabled (it always is)
 - SMTP configured under **Settings** → **System** → **Email**
 - **Settings** → **Notifications** → **User Notifications** toggled on
 - The user has an email address on their account
@@ -648,7 +648,7 @@ Separate from the provider system above, BamDude can email the **owner** of a pr
 | `user_print_failed` | Their print errored |
 | `user_print_stopped` | They cancelled their own print |
 
-Each user opts in and out of the four events individually on the **Email** tab of their own [notification centre](#the-notification-centre) — the Bell in the sidebar, which used to open this list of switches and nothing else. Operators / admins control the global **User Notifications** master switch under **Settings** → **Notifications**.
+Each user opts in and out of the four events individually on the **Email** tab of their own [notification centre](#the-notification-centre) — the Bell in the sidebar. Operators / admins control the global **User Notifications** master switch under **Settings** → **Notifications**.
 
 ---
 

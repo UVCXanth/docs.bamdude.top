@@ -122,7 +122,7 @@ Staggered start [Phase 2]: waiting for P1S-04 to heat up
 
 Stagger гейтить **старт** друку. Він не серіалізує диспатчер.
 
-Диспатчер BamDude працює **паралельно по принтерах** з `c485db1` (mid-0.4.1 відкотив короткочасний "always-serialised" gate). Серіалізованим лишається лише міллісекундне `INSERT INTO print_archives` — за startup-lock-ом, щоб SQLite не падав на конкурентних writer-ах. FTP-аплоад, MQTT-команда `start_print` і swap-mode-макроси біжать конкурентно. Повний розбір — у [Print queue → Dispatch behaviour](print-queue.uk.md#dispatch-behaviour).
+Диспатчер BamDude працює **паралельно по принтерах**. Серіалізованим лишається лише міллісекундне `INSERT INTO print_archives` — за startup-lock-ом, щоб SQLite не падав на конкурентних writer-ах. FTP-аплоад, MQTT-команда `start_print` і swap-mode-макроси біжать конкурентно. Повний розбір — у [Print queue → Dispatch behaviour](print-queue.uk.md#dispatch-behaviour).
 
 Що це означає:
 

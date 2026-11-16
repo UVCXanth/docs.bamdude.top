@@ -96,13 +96,12 @@ are then started at a limited pace; an inactive view refreshes when opened.
    tail -f logs/bamdude.log
    ```
 
-!!! info "A dropped printer now recovers itself"
+!!! info "A dropped printer recovers itself"
     BamDude checks every minute for a printer that **was** working, has been silent
     for five minutes, and **whose port still answers** — and rebuilds the connection
-    itself rather than waiting for the network library to get around to it. One
-    report had a printer offline from 02:19 to 11:24 with the page open the whole
-    time; the old check only ever looked at connections that were still up but had
-    gone quiet, so a fully dropped one fell outside it.
+    itself rather than waiting for the network library to get around to it. The
+    check covers a fully dropped connection as well as one that is still up but
+    has gone quiet.
 
     A printer that is simply **switched off** is left alone, so powering the farm
     down overnight causes no churn and no log noise. A printer whose connection
@@ -120,16 +119,15 @@ are then started at a limited pace; an inactive view refreshes when opened.
 1. On the printer's screen, enable **Developer Mode** (LAN Mode / Developer options, depending on firmware).
 2. **Restart the printer.**
 
-BamDude now recognises the code, shows it with the same four-group form the printer's own screen displays, and carries that remedy. (Bambu's own advice for this code is to update Bambu Studio or Handy, which is no help for a print sent from BamDude.)
+BamDude recognises the code, shows it with the same four-group form the printer's own screen displays, and carries that remedy. (Bambu's own advice for this code is to update Bambu Studio or Handy, which is no help for a print sent from BamDude.)
 
-!!! note "What else changed with it"
+!!! note "What goes with it"
     - Queueing a print onto such a printer **stops on the first attempt and names
-      the cause**, instead of spending four and a half minutes and three uploads
-      before failing with an unrelated message about SD cards.
+      the cause**.
     - The Developer Mode check in the support bundle and printer diagnostics has a
       third answer, **undetermined**, rather than treating any reply that was not an
       outright refusal as a pass.
-    - A healthy printer is no longer told to go check its serial number in the
+    - A healthy printer is not told to go check its serial number in the
       moment right after it reconnects.
 
 ---
@@ -198,7 +196,7 @@ If the result reads *not recorded*, look at the printer's recovery history befor
 
 ### Second printer waits a few seconds before starting
 
-Not a bug — but the diagnostic changed. Since `c485db1`, BamDude's dispatch runs **in parallel across printers**; only the brief DB-insert phase is wrapped in a startup-lock. The two printers really do receive their jobs simultaneously, and the dispatch toast shows two FTP progress bars side-by-side. The earlier "one job at a time across the whole farm" gate that landed in mid-0.4.1 was scrapped once the startup-lock was in. See [Per-Printer Queues → Dispatch behaviour](../features/print-queue.md#dispatch-behaviour) for the full description.
+Not a bug. BamDude's dispatch runs **in parallel across printers**; only the brief DB-insert phase is wrapped in a startup-lock. The two printers really do receive their jobs simultaneously, and the dispatch toast shows two FTP progress bars side-by-side. See [Per-Printer Queues → Dispatch behaviour](../features/print-queue.md#dispatch-behaviour) for the full description.
 
 ---
 
@@ -215,25 +213,15 @@ OrcaSlicer ships with both `Label objects` and `Exclude objects` **off** in the 
 3. Both must be ticked **before slicing**. Re-sending an old 3MF without these flags doesn't help -- re-slice with both on, re-upload, and the button lights up.
 
 The flags are stored in the source 3MF's `Metadata/project_settings.config`; BamDude extracts them on upload (and backfills existing files via migration `m022`).
-
-### Skip-objects button "dies" 5 minutes into a print (old behaviour)
-
-Fixed in 0.4.1, no action needed. Earlier versions periodically swapped the printer's MQTT client for a fresh instance every ~5 minutes, which wiped the in-memory `printable_objects` state. The button is now repopulated whenever the duplicate-guard branch of `on_print_start` re-fires, so it stays alive for the whole print. Restart-resilient as well -- printer-started fallback prints get the same treatment via `archive_download_retry`.
-
 ---
 
 ## :material-arrow-up-bold-circle: Upgrade-Time Hangs
 
-### "Server takes minutes to come up" on first boot after 0.4.1
+### "Server takes minutes to come up" on the first boot after an upgrade
 
 Migrations `m022` and `m023` both open every existing 3MF on disk to backfill metadata. `m022` extracts the `gcode_label_objects` / `exclude_object` flags; `m023` extracts the full per-plate breakdown that powers the per-plate gallery in File Manager. Roughly 50-200 ms per file each, and they run sequentially — an install with thousands of archives can spend several minutes inside the migration step before the API responds. Watch for `m022 library_files: progress`, `m022 print_archives: progress`, then the matching `m023` lines — if they're advancing in batches of 100, the migrations are healthy and just need to finish.
 
 Both are one-shot — subsequent boots skip them via the `_migrations` table.
-
-### Browser console floods with 401s after a long-idle tab
-
-Fixed in `dd1d9eb`, no action needed on 0.4.1+. Earlier versions waited for a 401 to fire `/auth/refresh` reactively; when a backgrounded tab returned with five React-Query keys all firing simultaneously, the network panel briefly logged 20–40 401s before the first refresh response unblocked them. The client now decodes the JWT `exp` claim, schedules a one-shot refresh ~60 s before expiry, and a near-expiry pre-flight check awaits the same coalesced refresh promise. Result: the access token is fresh by the time the visibility-sync invalidates queries, and no 401 leaves the browser. The reactive path stays as a fallback for binary / streaming endpoints.
-
 ---
 
 ## :material-docker: Docker Issues
@@ -357,7 +345,7 @@ BamDude can triage most setup problems for you. On the **System** page, the **Co
 
 ### Wrong access code
 
-The printer rejected the file-transfer login. The access code is wrong, or it changed after Developer Mode was toggled. Re-copy the access code from the printer screen (LAN settings) and update it in the printer's settings in BamDude. Note that the serial number is case-sensitive — BamDude now uppercases it for you on save.
+The printer rejected the file-transfer login. The access code is wrong, or it changed after Developer Mode was toggled. Re-copy the access code from the printer screen (LAN settings) and update it in the printer's settings in BamDude. Note that the serial number is case-sensitive — BamDude uppercases it for you on save.
 
 ### FTPS port 990 blocked
 
@@ -391,7 +379,7 @@ On some models this check is **skipped** rather than failed: the P1P, P1S, A2L a
 
 ### Printer is publishing status
 
-The MQTT broker accepted the connection, but no status reports arrived from the printer. The broker accepts a connection even when the serial number is wrong or mis-cased — the printer's report topic is case-sensitive — so control looks connected while the slicer side shows empty AMS, no filaments, and no K-profiles. The diagnostic waits up to 10 seconds for the printer's first status report, showing a live elapsed-seconds counter so the wait doesn't look hung. If it fails, re-check the serial number for typos and case (BamDude now uppercases it on save) and confirm the printer is powered on and reachable.
+The MQTT broker accepted the connection, but no status reports arrived from the printer. The broker accepts a connection even when the serial number is wrong or mis-cased — the printer's report topic is case-sensitive — so control looks connected while the slicer side shows empty AMS, no filaments, and no K-profiles. The diagnostic waits up to 10 seconds for the printer's first status report, showing a live elapsed-seconds counter so the wait doesn't look hung. If it fails, re-check the serial number for typos and case (BamDude uppercases it on save) and confirm the printer is powered on and reachable.
 
 ### Database is locked
 

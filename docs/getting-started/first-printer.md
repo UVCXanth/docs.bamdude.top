@@ -138,11 +138,6 @@ Bambu account with operators or viewers.
 4. The token is stored encrypted on the user row. Other users on the same
    BamDude install do **not** see or share it.
 
-!!! info "Auth disabled?"
-    On installs where auth is disabled (rare — auth has been on by default
-    since 0.4.0) the cloud token falls back to the global `Settings` table
-    instead of per-user storage.
-
 ---
 
 ## :material-check-circle: Verifying Connection

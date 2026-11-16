@@ -23,15 +23,19 @@ Different filaments compress differently — softer/wetter materials (PETG, TPU)
 
 ## :material-database: Storage model
 
-BamDude keys K-profiles on a **3-tuple composite**: printer × filament × nozzle.
+BamDude keys a K-profile on **five things**: printer × filament × nozzle diameter × extruder × flow type.
 
 | Dimension | Why it matters |
 |-----------|----------------|
-| **Printer** | Same filament on different printers may need different K — different extruder geometry, different bowden length, different firmware tuning. |
-| **Filament** | PLA needs different K than PETG, TPU, ABS, PA — material compressibility varies by an order of magnitude. |
-| **Nozzle** | A 0.2 mm nozzle has a different pressure profile from a 0.6 mm — the K value tracks nozzle diameter, not just material. |
+| **Printer** | Same filament on different printers may need different K — different extruder geometry, different bowden length, different firmware tuning. Profiles belong to one printer, not to a printer model: two printers of the same model keep separate values. |
+| **Filament** | PLA needs different K than PETG, TPU, ABS, PA — material compressibility varies by an order of magnitude. The key is the filament's own id — the identity the slicer and the AMS slot use — not just the material type. |
+| **Nozzle diameter** | A 0.2 mm nozzle has a different pressure profile from a 0.6 mm — the K value tracks nozzle diameter, not just material. The printer keeps a separate profile table per diameter. |
+| **Extruder** | On a two-nozzle printer the left and the right hotend are calibrated separately, and the printer numbers its profiles per hotend. A single-nozzle printer has one extruder. |
+| **Flow type** | **Standard** or **High Flow** — see [Flow Type](#flow-type-standard-high-flow) below. A printer that reports no flow type stores its profiles as Standard. |
 
-So a 3-printer farm running 4 materials at 2 nozzle sizes ends up with up to `3 × 4 × 2 = 24` distinct profiles. The profile picker filters down to the relevant subset for whatever printer/filament/nozzle you're configuring.
+Several calibrations can be stored for one combination; one of them is the active one, and that is what a slot gets by default.
+
+So a farm of 3 single-nozzle printers running 4 filaments at 2 nozzle sizes ends up with up to `3 × 4 × 2 = 24` distinct combinations; a second extruder or a second flow type multiplies that further. The profile picker filters down to the relevant subset for whatever printer, filament and nozzle you're configuring.
 
 ---
 
@@ -83,7 +87,7 @@ Use this after manual on-printer calibration — it pulls the freshly-tuned valu
 !!! warning "Push overwrites the printer's current K"
     Pushing profiles overwrites the printer's stored K values for the matching filament. If you've been tuning on-printer, **fetch first** to avoid clobbering uncommitted tuning work.
 
-**Saving and deleting wait for the printer's verdict.** They used to be fire-and-forget — BamDude reported success the moment the bytes left the process, and the printer's actual answer was thrown away in a debug log. If the printer says no, you now see **its own reason**.
+**Saving and deleting wait for the printer's verdict.** BamDude does not report success the moment the command is sent: it waits for the printer's answer, and if the printer says no, you see **its own reason**.
 
 !!! note "A printer that stays silent: sent, not confirmed"
     No answer is not evidence of refusal, so the save or delete still goes through — but it is not reported as confirmed either. On a printer that has answered such a write earlier in the same connection, a missing answer shows as a warning: *K-profile sent, but the printer did not confirm it. Refresh to check.* (deletes and imports say the same about themselves). Firmware that never answers these writes gets no such warning — there silence says nothing.
@@ -92,15 +96,11 @@ Use this after manual on-printer calibration — it pulls the freshly-tuned valu
 
 ### Nozzle size on a profile
 
-The printer reports the nozzle size **once**, on the envelope of its reply. On single-nozzle models the individual profile entries carry no size at all, so a profile's size is read from that envelope.
+The printer reports the nozzle size **once**, on the envelope of its reply — each reply is the complete profile table for one nozzle diameter. On single-nozzle models the individual profile entries carry no size at all, so a profile's size is read from that envelope; the H2D's firmware repeats the size on every entry. BamDude files each reply under its own diameter, so a profile made for a **0.6 or 0.8 mm nozzle** is listed, edited and deleted as that size. The size is more than a label:
 
-If you run a **0.6 or 0.8 mm nozzle** on a printer older than this release, every profile was listed as 0.4 mm — and it was not only a wrong label:
-
-- Editing a profile is delete-and-re-add on single-nozzle printers, and the dialog rebuilds the nozzle fields from what it was shown — so **saving an untouched 0.6 mm profile stored it back as 0.4**.
-- Deleting one aimed the command at the wrong nozzle the same way.
-- Assigning a spool's saved calibration to an AMS slot matches on nozzle size, so on a 0.6 or 0.8 nozzle it never found the printer's own entry and **the assignment silently failed to stick**.
-
-The H2D was never affected — its firmware does repeat the size per entry.
+- Editing a profile is delete-and-re-add on single-nozzle printers, and the dialog rebuilds the nozzle fields from the profile's own size — saving an untouched 0.6 mm profile stores it back as 0.6 mm.
+- Deleting a profile aims the command at that profile's nozzle.
+- Assigning a spool's saved calibration to an AMS slot matches on nozzle size (and extruder), so the slot gets the printer's entry for the nozzle it actually feeds.
 
 ### Flow Type (Standard / High Flow)
 
@@ -113,7 +113,7 @@ A K-profile can be **Standard** or **High Flow**, but only some firmware stores 
 
 This is **not** the single- versus dual-nozzle split — the P2S is single-nozzle and does offer both flows.
 
-A profile carrying no flow type at all reads as **Standard**, the way the slicer reads it, rather than the High Flow that used to be assumed on import.
+A profile carrying no flow type at all reads as **Standard**, the way the slicer reads it — on import as well.
 
 ### Sync status indicators
 
@@ -276,7 +276,7 @@ If the spool has **no stored K-profile** for that specific printer + nozzle comb
 - If the slot has no calibration loaded at all (`cali_idx < 0`), no command is sent — the firmware default behaviour stands.
 - A diagnostic log line records `No stored K-profile for spool … — preserved live cali_idx=N` so the choice is observable in Settings → System → Diagnostics.
 
-Why this matters: prior versions left the slot un-touched on re-tap when no stored profile existed, which on some firmware revisions produced a silent regression to slot 0 that operators only noticed mid-print as a quality drop. The new behaviour is a strict no-op for slots that already have your manually-picked calibration, but a corrective re-issue for the rare slots that would have regressed.
+Why this matters: on some firmware revisions a re-tap with nothing re-issued lets the slot fall back to calibration index 0 without a word, and the first sign is a quality drop mid-print. Re-issuing the live index changes nothing for a slot that already holds your manually-picked calibration, and corrects the rare slot that would otherwise regress.
 
 ---
 

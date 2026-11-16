@@ -76,13 +76,13 @@ For headless setups, SSO accounts, or environments where the email/OTP round-tri
 
 ## :material-clock-end: Token lifetime
 
-Bambu Cloud bearers are not permanent. Since 0.5.5 BamDude also stores the
+Bambu Cloud bearers are not permanent. BamDude also stores the
 **refresh token** from the login response, and when Bambu reports the stored
 token expired it first renews the pair silently — the connection self-heals
 within minutes instead of demanding a re-login with an email code every few
 months. Only when the renewal itself is refused does the sign-in-expired flow
-below appear. Access tokens pasted by hand have no refresh token and keep the
-old behaviour.
+below appear. Access tokens pasted by hand have no refresh token, so their
+expiry leads straight to that flow.
 
 BamDude checks the stored token **against Bambu Lab** rather than assuming it
 still works, so **Connected** means Bambu accepted it — not merely that one is
@@ -122,14 +122,14 @@ Once connected, the slice modal and other consumers can read your Bambu Cloud da
 | Bound printer devices | `GET /api/v1/cloud/devices` | Printer-add wizard, Bambu-Cloud firmware check |
 | Per-device firmware | `GET /api/v1/cloud/firmware-updates` | Cloud-side firmware check (different from the LAN-only path in [Firmware Updates](firmware-updates.md)) |
 | Filament-id → name resolution | `POST /api/v1/cloud/filament-info` | AMS tray tooltips, K-profile filament labels |
-| Official filament names | `GET /api/v1/cloud/builtin-filaments` | Served from the built-in [family catalog](filament-families.md) — the hardcoded table it used to read is gone |
+| Official filament names | `GET /api/v1/cloud/builtin-filaments` | Served from the built-in [family catalog](filament-families.md) |
 
 Custom (private) presets land first in the list, public (built-in) presets after. The slicer-presets unifier (`/slicer/...`) merges these with [Local Profiles](local-profiles.md) by name and surfaces a single deduplicated list to the slice modal.
 
-!!! note "The tab shows your presets only (0.5.5)"
+!!! note "The tab shows your presets only"
     The Bambu Cloud tab lists the **private** half of the listing — your own
-    presets — like the Orca tab always did. The cloud's public catalog is no
-    longer browsable there: a profile you want to see arrives after you save
+    presets — like the Orca tab does. The cloud's public catalog is not
+    browsable there: a profile you want to see arrives after you save
     or enable it in the slicer. The printer filter lists the printer models
     your presets mention, with the "A1M" / "A1 mini" spelling variants
     collapsed onto one row.

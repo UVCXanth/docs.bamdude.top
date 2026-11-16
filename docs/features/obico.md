@@ -93,7 +93,7 @@ The detection panel under **Settings → Failure Detection** is split into a Sta
 
 **Status card**
 
-- **Detection active** flag (green / red) — green only while Obico is enabled with an ML URL. The background loop itself starts with BamDude and merely sleeps while the feature is off; the flag used to report that loop, and said Yes with the toggle off.
+- **Detection active** flag (green / red) — green only while Obico is enabled with an ML URL. The background loop itself starts with BamDude and merely sleeps while the feature is off; the flag does not report that loop.
 - Active threshold values after sensitivity scaling (so you can sanity-check Low / Medium / High really did adjust the numbers).
 - For each currently-printing monitored printer:
     - Live classification — `safe` / `warning` / `failure`
@@ -118,7 +118,7 @@ Frames contain camera imagery and enter normal backups: grant access and retain 
 
 ### The AI badge on the printer cards
 
-You no longer have to be on this page to watch detection track a print. Each card on the **Printers** page carries an **AI** badge next to the other health badges — grey while nothing is being watched, then green / amber / red as a monitored print is classified. The tooltip carries the current score; clicking it comes back here for the full status and history.
+You do not have to be on this page to watch detection track a print. Each card on the **Printers** page carries an **AI** badge next to the other health badges — grey while nothing is being watched, then green / amber / red as a monitored print is classified. The tooltip carries the current score; clicking it comes back here for the full status and history.
 
 A printer detection is **not** watching shows no badge at all, rather than one implying it is covered.
 

@@ -32,7 +32,7 @@ A VP runs in **exactly one mode**. The mode is set per-VP and validated server-s
 | **`proxy`** | The slicer's TLS session is TCP-proxied to a real `target_printer_id` — BamDude is just the public endpoint. | Remote printing — slicer reaches BamDude over LAN/VPN, BamDude reaches the printer. |
 
 !!! info "There is no separate ‘archive only’ mode"
-    Earlier versions of this page mentioned an `immediate` mode that auto-created an archive row without involving the queue or library. **That mode was never in the code** — the docs were wrong. The code's mode enum is exactly the four above (see `backend/app/models/virtual_printer.py` and the validator in `backend/app/api/routes/virtual_printers.py`). To get archive-only behaviour, use `file_manager` mode and bulk-archive uploads from the review modal — they get a `print_archives` row without ever touching a printer.
+    No mode creates an archive row without involving the queue or library — there is no `immediate` mode. The code's mode enum is exactly the four above (see `backend/app/models/virtual_printer.py` and the validator in `backend/app/api/routes/virtual_printers.py`). An archive row is the record of a print, so it appears when a file is actually printed.
 
 ---
 
@@ -284,7 +284,7 @@ scp -r host1:/path/to/data/virtual_printer/certs/ host2:/path/to/data/virtual_pr
 # restart bamdude on host2
 ```
 
-All hosts now use the same CA — one cert in the slicer covers all of them.
+All hosts use the same CA — one cert in the slicer covers all of them.
 
 **Or: re-import per host**
 
@@ -704,8 +704,8 @@ Two behaviours worth knowing:
 - **Only `.3mf` is kept.** Anything else the slicer uploads is discarded on arrival rather than stored.
 - **Every mode goes through the library.** `print_queue` and `auto_queue` also save the file here first and then queue against the resulting library file — so the library is the complete record of what a VP received, whatever mode it runs in.
 
-!!! info "There is no separate review queue any more"
-    Earlier versions parked uploads in a `pending_uploads` table with its own review modal. That was folded into the library in 0.4.2, the table was drained by migration `m041` and both it and its endpoints were removed in 0.4.3. If you are following an older guide, the review modal and the `/api/v1/pending-uploads/…` endpoints no longer exist.
+!!! info "There is no separate review queue"
+    Uploads are reviewed in the library itself. If you are following an older guide: the review modal and the `/api/v1/pending-uploads/…` endpoints do not exist.
 
 ---
 
@@ -748,9 +748,9 @@ In both queue modes, explicitly disabling **Use AMS** in the slicer's job retain
 
 ## :material-tune-variant: System default print options (slicer-silent dispatches) {#system-default-print-options}
 
-When a slicer sends a print to a Queue-mode VP, it normally carries the per-job print-option toggles — **bed levelling**, **flow calibration**, **layer inspection**, and **timelapse**. Some slicer builds and headless / scripted upload paths **omit** these flags. Previously a queue item with a missing flag fell straight back to the printer model's built-in column default.
+When a slicer sends a print to a Queue-mode VP, it normally carries the per-job print-option toggles — **bed levelling**, **flow calibration**, **layer inspection**, and **timelapse**. Some slicer builds and headless / scripted upload paths **omit** these flags.
 
-A queue item now resolves each of those four flags with this precedence:
+A queue item resolves each of those four flags with this precedence:
 
 | Priority | Source | When it applies |
 |---|---|---|
@@ -763,7 +763,7 @@ A queue item now resolves each of those four flags with this precedence:
 
 ### Configuring a system default
 
-System defaults live alongside the per-user saved profiles under **Settings → Print → Saved Print Profiles**. The profiles table now offers a **"System (slicer fallback)"** pseudo-user in addition to the real users:
+System defaults live alongside the per-user saved profiles under **Settings → Print → Saved Print Profiles**. The profiles table offers a **"System (slicer fallback)"** pseudo-user in addition to the real users:
 
 1. Open the **Add / Edit** profile dialog.
 2. Pick **System (slicer fallback)** as the user.
@@ -776,7 +776,7 @@ There is **at most one system default per printer model** — picking the same m
     `use_ams` is **not** one of the saved-profile toggles, so it is intentionally excluded from the system default. AMS usage stays **slicer-sent-or-column-default** — set it in the slicer (or rely on the model's built-in default), not here.
 
 !!! tip "Example — always timelapse on a P1S fleet"
-    To force timelapse on every silent-slicer dispatch to your P1S printers — even from a slicer build that doesn't send the flag — add a **System (slicer fallback)** profile for the **P1S** model with timelapse on. Every queue item that lands on a P1S without an explicit timelapse choice now inherits it.
+    To force timelapse on every silent-slicer dispatch to your P1S printers — even from a slicer build that doesn't send the flag — add a **System (slicer fallback)** profile for the **P1S** model with timelapse on. Every queue item that lands on a P1S without an explicit timelapse choice inherits it.
 
 ---
 
@@ -913,8 +913,8 @@ Multi-NIC host (Tailscale, Docker bridges, dual LAN) — auto-detection picks th
 
 The slicer refuses to send because it reads the VP as mid-print. This is the VP's *preparing* state — it flips there the moment you start a send, and clears once the upload completes.
 
-- **Fixed in 0.4.5.** Before 0.4.5 an interrupted or failed upload (or a file that didn't arrive as a `.3mf`) could leave the VP stuck *preparing* until BamDude restarted, so every later send saw it as busy. The VP now always returns to ready when an upload ends — success or failure, any file type — and only reports *preparing* while an upload is genuinely in flight. If you hit this on **0.4.5+**, it should clear on its own within a status cycle.
-- **Workaround on older builds**: toggle the VP off→on (or re-save its config) to reset its state; restarting BamDude does the same.
+- The VP always returns to ready when an upload ends — success or failure, any file type — and only reports *preparing* while an upload is genuinely in flight, so this should clear on its own within a status cycle.
+- **If it stays stuck**: toggle the VP off→on (or re-save its config) to reset its state; restarting BamDude does the same.
 - Applies to all non-proxy modes (File Manager, Queue, Auto-Queue) and to both Bambu Studio and OrcaSlicer.
 
 ### Proxy mode: printer offline in slicer

@@ -50,7 +50,7 @@ For a sliced plate using the H2C rack, the print dialog shows **Rack position** 
 
 On the **H2D, H2D Pro, H2C and X2D**, the print dialog shows a **"Nozzle Offset Calibration"** toggle — **on by default**, matching Bambu Studio. It controls whether the printer runs its nozzle-offset calibration routine before the print starts.
 
-Previously this calibration was always skipped, with no way to enable it — and, just as importantly, no way to keep it *deliberately* off. That off case matters for diamond-nozzle setups, which must **not** run the routine.
+The toggle works both ways: the calibration can be enabled and — just as importantly — kept *deliberately* off. That off case matters for diamond-nozzle setups, which must **not** run the routine.
 
 The toggle **only appears on dual-nozzle printers**. Single-nozzle machines always skip the calibration regardless of any setting. Your choice is remembered per queue item and applied on every dispatch path (queue, drag-and-drop, re-print).
 
@@ -76,7 +76,7 @@ GET  /api/v1/printers/{id}/print/objects     → list objects with skip status
 POST /api/v1/printers/{id}/print/skip-objects → skip selected IDs
 ```
 
-The list comes from the active 3MF (`subtask_name`), read from the G-code's own `; model label id:` header where present — that is the list the firmware works from, and it names every copy on the plate. `slice_info.config` is only the last fallback: newer OrcaSlicer records just the original there when a plate holds several copies of one model. Since 0.5.3 the list is also filled when BamDude **joins a print already under way** — a restart mid-plate used to leave it empty, and the Skip button dark, until somebody opened this dialog. If it is still empty, pass `?reload=true` and BamDude pulls the 3MF off the printer's FTP and re-parses it — supports multiple filename variants (`{name}.3mf`, `{name}.gcode.3mf`, with-spaces and underscored).
+The list comes from the active 3MF (`subtask_name`), read from the G-code's own `; model label id:` header where present — that is the list the firmware works from, and it names every copy on the plate. `slice_info.config` is only the last fallback: newer OrcaSlicer records just the original there when a plate holds several copies of one model. The list is also filled when BamDude **joins a print already under way**, so a restart mid-plate does not leave it empty and the Skip button dark. If it is still empty, pass `?reload=true` and BamDude pulls the 3MF off the printer's FTP and re-parses it — supports multiple filename variants (`{name}.3mf`, `{name}.gcode.3mf`, with-spaces and underscored).
 
 !!! warning "Wait for layer 2"
     The printer firmware refuses skip commands until the first layer is laid down. The skip modal shows a yellow banner on layer 0/1.
@@ -146,7 +146,7 @@ Four tabs:
 | | Camera snapshot enable | On/Off | `ipcam_cap_pic_set` |
 | | Store sent files on external storage | On/Off | `system` (`print_cache_set`) |
 
-A few options are mutually exclusive (BS parity), so you only ever see one of each pair: the legacy **build-plate position** toggle vs the newer **marker + alignment** group; the legacy **nozzle-blob** on/off vs the smart **3-mode nozzle-clumping** switch; and the legacy **AI monitoring** toggle vs the newer per-type AI detections (spaghetti / pile-up / clumping / air-print). The `xcam_control_set` module names above are the firmware's own wire names — several differ from BamDude's internal keys, and are mapped on the way out so the toggles actually apply. **Open Door Detection** used to live here; it now sits in the **Safety** tab on X2D / P2S (and stays in Print Options for the X1 family) — see below.
+A few options are mutually exclusive (BS parity), so you only ever see one of each pair: the legacy **build-plate position** toggle vs the newer **marker + alignment** group; the legacy **nozzle-blob** on/off vs the smart **3-mode nozzle-clumping** switch; and the legacy **AI monitoring** toggle vs the newer per-type AI detections (spaghetti / pile-up / clumping / air-print). The `xcam_control_set` module names above are the firmware's own wire names — several differ from BamDude's internal keys, and are mapped on the way out so the toggles actually apply. **Open Door Detection** sits in the **Safety** tab on X2D / P2S (and in Print Options for the X1 family) — see below.
 
 ### Visibility — what shows up depends on the printer
 
@@ -246,7 +246,7 @@ Per-model rules — auto paths need lidar + firmware support flag; manual paths 
 | Auto Flow Rate (lidar) | yes | — | — | yes (Pro) |
 | Dual-extruder (per-extruder cali) | — | — | — | yes |
 
-### Slicer-sidecar gating *(0.4.5)*
+### Slicer-sidecar gating
 
 Bambu Studio's calibration wizard always runs full slicing — even modes that look "pre-sliced" (PA Pattern, Flow Rate, Auto PA) load geometry from `resources/calib/` as scaffolds, then BS applies the active printer / process / filament preset plus per-mode g-code injection through `Plater::calib_*` / `CalibUtils::*`. BamDude mirrors the same 12 BS files under `backend/app/data/calib_assets/` but reaches the same slicing step through our **server-side slicing** sidecar (OrcaSlicer / Bambu Studio API).
 
@@ -256,9 +256,9 @@ So every Filament Calibration mode needs a connected sidecar. To keep that visib
 - If a direct API call slips through, `POST /printers/{id}/calibration/sessions` returns `409 {detail: "slicer_sidecar_required"}` for any manual mode.
 - Auto modes (Auto PA / Auto Flow Rate on lidar-equipped X1 / X1E / H2D Pro) are printer-side only — they go through MQTT `extrusion_cali_start` / `flow_rate_cali_start` without any local slicing. But since the rest of the wizard depends on the sidecar, the entry points are gated together.
 
-PA Tower (Phase 1), PA Pattern (Phase 2), and PA Line (Phase 9) are wired end-to-end as of 0.4.5 — pick any of them in the wizard, the slicer sidecar bakes the pattern, BamDude FTPs the gcode to the printer, runs it, and surfaces the manual-save dialog when finished. The remaining manual modes (Temp / Retraction / VFA / Volumetric Speed Towers, Flow Rate) cycle through `verification` (downloads a sliced 3MF for desktop comparison) before flipping to `production` — that staged rollout is **Wave 2** of the calibration roadmap.
+PA Tower (Phase 1), PA Pattern (Phase 2), and PA Line (Phase 9) are wired end-to-end — pick any of them in the wizard, the slicer sidecar bakes the pattern, BamDude FTPs the gcode to the printer, runs it, and surfaces the manual-save dialog when finished. The remaining manual modes (Temp / Retraction / VFA / Volumetric Speed Towers, Flow Rate) cycle through `verification` (downloads a sliced 3MF for desktop comparison) before flipping to `production` — that staged rollout is **Wave 2** of the calibration roadmap.
 
-### Print options + swap macros *(0.4.5)*
+### Print options + swap macros
 
 The wizard's preset page includes the same `PrintOptionsPanel` + `SwapMacrosPanel` you get on the regular print dialog. It reads your saved per-printer-model preferences (`PrintModal` and the calibration wizard share the storage key), so settings tuned once for a model — e.g. always-on swap macros on A1 plate-change, or layer inspection on X1E — apply automatically to calibration prints too. Saved preferences upsert on each successful start. Calibration-tuned defaults: `bed_levelling=true`, `flow_cali=false` (otherwise the printer's pre-print flow-cali would overwrite the gcode's M900 K sweep and mask the test), swap macros opt-in. MQTT-action macros (P1S chamber light on/off) fire automatically through the standard `print_started` / `print_finished` event hooks — no per-job toggle.
 
@@ -276,7 +276,7 @@ The wizard's preset page includes the same `PrintOptionsPanel` + `SwapMacrosPane
 
 `background_dispatch` calls the unified `apply_active_calibration_to_slot` helper for every AMS slot the job will use. Resolution order: explicit spool→calibration link → active `filament_calibration` row by combo. The helper then re-matches the cached row against `client.state.kprofiles` by **stable identity** (`name` + `filament_id` + `pa_k_value`) to find the LIVE `cali_idx` — the printer reorders slots when you delete a neighbour, so the stored number is a hint only — and fires `extrusion_cali_sel(ams_id, slot_id, cali_idx)` before the print starts.
 
-The same helper now runs from the post-RFID-refresh path, the tray-tag drift detect, the auto-spool tagger, and both inventory + Spoolman slot-assign endpoints — six call sites collapsed onto one. Closes the silent-drift gap where the firmware was falling back to the default profile after RFID re-taps, slot reassignments, or restarts even though your `SpoolAssignment` row was intact.
+The same helper runs from the post-RFID-refresh path, the tray-tag drift detect, the auto-spool tagger, and both inventory + Spoolman slot-assign endpoints — one helper for all six call sites. It closes the silent-drift gap where the firmware would fall back to the default profile after RFID re-taps, slot reassignments, or restarts even though your `SpoolAssignment` row is intact.
 
 External-source prints (BS, printer screen) still benefit: the slot binding persists on the printer until explicitly changed, so the last `extrusion_cali_sel` BamDude fired stays in effect.
 
@@ -295,7 +295,7 @@ Two sections side by side:
 `printers:update` gates the wizard entry and all mutation routes. Every action writes a row to `calibration_audit` — `(printer_id, session_id, action, payload_json, sequence_id, result, error_message, created_at)`. Actions: `start_session / save_result / set_active / delete / cancel`, plus the legacy K-profiles UI page mutations from 0.4.5: `kprofile_add / kprofile_edit / kprofile_batch_add / kprofile_delete`. No in-UI viewer yet; query the table directly.
 
 !!! note "Edit-Save with no printer-relevant change skips the printer"
-    Since 0.4.5 the K-profiles edit dialog diffs `name` / `k_value` / `filament_id` / `nozzle_id` / `nozzle_diameter` against the loaded row before publishing. Identical → only the note (BamDude-local) is saved; no `extrusion_cali_set` fires. Stops the printer from regenerating `setting_id` on every Save click, which used to drift the cache row.
+    The K-profiles edit dialog diffs `name` / `k_value` / `filament_id` / `nozzle_id` / `nozzle_diameter` against the loaded row before publishing. Identical → only the note (BamDude-local) is saved; no `extrusion_cali_set` fires. Stops the printer from regenerating `setting_id` on every Save click, which would drift the cache row.
 
 ### What's intentionally NOT in BamDude (yet)
 
@@ -319,10 +319,10 @@ POST /api/v1/printers/{id}/bed-jog?distance=N
 
 `distance` is a **nozzle-bed gap**, with the same meaning on every model: positive opens the gap, negative closes it. On a CoreXY printer (X1, P1, H2, P2S, X2D) the bed drops away from the nozzle; on a bed-slinger (A1, A1 Mini, A2L) the toolhead rises off the bed. Positive is always the safe direction.
 
-!!! warning "Changed after 0.6.1"
-    Before this, `distance` followed Bambu Studio's *arrow* convention — negative moved whatever travels on Z upwards — which on a bed-slinger is the opposite of the gap: a script that sent `+5` for clearance on an A1 lowered the nozzle. The printer card's arrows now go through `POST /api/v1/printers/{id}/jog?axis=z`, which keeps Studio's arrow convention.
+!!! warning "Not Bambu Studio's arrow convention"
+    `distance` is a gap, not Bambu Studio's *arrow* value, where negative moves whatever travels on Z upwards — on a bed-slinger the two are opposite, so a script written for the arrow convention that sends `+5` for clearance on an A1 would lower the nozzle. The printer card's arrows go through `POST /api/v1/printers/{id}/jog?axis=z`, which keeps Studio's arrow convention.
 
-The `force` parameter was removed in 0.4.7. It wrapped the move in `M211 S0` … `M211 S1` — a command form that does not exist in Bambu's firmware dialect (there, bare `M211 S` means *push* the endstop state and `M211 R` means *pop* it), and the UI sent it on every jog, so every manual move ran without the soft endstops being explicitly enabled. A stray `?force=true` from an old client is ignored.
+There is no `force` parameter; a stray `?force=true` from an old client is ignored. A move is never wrapped in `M211 S0` … `M211 S1` — a command form that does not exist in Bambu's firmware dialect (there, bare `M211 S` means *push* the endstop state and `M211 R` means *pop* it) — so no manual move runs without the soft endstops being explicitly enabled.
 
 Step selector in the popover: `1 / 10 / 50 mm`. Only enabled when the printer is **not** running a print.
 
@@ -330,7 +330,7 @@ The same axis is also in the **Motion Control** window below, together with X, Y
 
 ### G-code sent
 
-What Bambu Studio's own jog sends over the same MQTT `gcode_line` channel (`DevAxis::Ctrl_Axis`). Until 0.5.2 the sequence matched but the feedrate did not — BamDude drove Z at 600 while Studio drives it at 900:
+What Bambu Studio's own jog sends over the same MQTT `gcode_line` channel (`DevAxis::Ctrl_Axis`), feedrate included:
 
 ```
 M211 S              ; remember the current soft-endstop state
@@ -353,9 +353,9 @@ After a print completes, the Z axis usually isn't referenced. Trying to jog show
 | **Auto Home** | Runs the printer's full auto-home sequence and dismisses the dialog |
 | **Cancel** | Closes the dialog, no command sent |
 
-Since 0.5.2 whether the printer is homed is read **from the printer** (`home_flag`), not remembered per browser session. The old note was wrong in both directions: homing from the machine's own screen still produced the warning, and a printer that lost its home after BamDude homed it did not.
+Whether the printer is homed is read **from the printer** (`home_flag`), not remembered per browser session: homing from the machine's own screen clears the warning, and a printer that lost its home after BamDude homed it gets it again.
 
-The **Move anyway** button was removed in 0.4.7 — it was the path that drove the plate with the soft endstops bypassed. BamDude now asks you to home first, then jog. This is deliberately stricter than Bambu Studio, which sends the move and only afterwards suggests recentering: Studio is a window in front of the machine, while this page can be open on a phone in another room.
+There is no **Move anyway** button — that would drive the plate with the soft endstops bypassed. BamDude asks you to home first, then jog. This is deliberately stricter than Bambu Studio, which sends the move and only afterwards suggests recentering: Studio is a window in front of the machine, while this page can be open on a phone in another room.
 
 !!! warning "Travel limits are not guaranteed"
     BamDude enables the soft endstops before every jog, but Bambu firmware has been observed running a move past the limit anyway, and it reports no axis position — so the move cannot be clamped client-side either. Keep distances small (≤10 mm) until the plate is in a known-safe position and watch the printer.
@@ -425,7 +425,7 @@ Both gated by `printers:control`.
 
 ### Timelapse: what BamDude checks before it promises one
 
-The timelapse tick used to be sent to any printer, including one with no card in it — the request went nowhere and the print finished with no video and no explanation. Two checks now stand where Bambu Studio puts them.
+A timelapse tick sent to a printer with no card in it would go nowhere — the print would finish with no video and no explanation. Two checks stand where Bambu Studio puts them.
 
 **When you choose printers**, a machine that cannot record is named in the dialog, with which of three problems it has: no SD card, an unreadable one, or a read-only one. Those are three different situations — a card sitting in the slot and refusing to be written is not an empty slot.
 
@@ -531,7 +531,7 @@ The badge in the controls row shows the current speed percentage and is dimmed w
 
 Live fan badges in the controls row, showing the speeds the printer reports — and, where the printer allows it, a control for each.
 
-**Every fan the printer reports appears, on every model.** Older machines (P1S, P1P, X1C, A1) do not describe an air duct at all, so BamDude builds the same picture from the speeds they do report — which is exactly what Bambu Studio does before drawing its own panel. Those printers used to show three read-only numbers; they now have working fan control.
+**Every fan the printer reports appears, on every model.** Older machines (P1S, P1P, X1C, A1) do not describe an air duct at all, so BamDude builds the same picture from the speeds they do report — which is exactly what Bambu Studio does before drawing its own panel. Those printers have working fan control too, not three read-only numbers.
 
 **A fan that does not exist does not appear.** Whether a machine has an auxiliary or chamber fan is answered by the printer's own capability flags, not by a list of model names — an A1 Mini has part cooling only, and reports a speed for the other two anyway, so the reported speed cannot be the evidence.
 

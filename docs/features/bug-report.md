@@ -7,7 +7,7 @@ description: Report bugs straight from the BamDude UI — debug log capture, scr
 
 Every page in BamDude carries a floating red **Bug** button at the bottom-right corner. Click it to file a bug report against [`kainpl/bamdude`](https://github.com/kainpl/bamdude/issues) without leaving the UI — BamDude collects sanitized debug logs + a screenshot + a structured support snapshot, posts them to the bamdude.top relay, and returns the freshly-created GitHub issue number on success.
 
-Shipped in BamDude **0.4.4**. Adapted from upstream [Bambuddy `058f74a7` + `dc4d77b9` + `57092822`](https://github.com/maziggy/bambuddy/commit/058f74a7).
+Adapted from upstream [Bambuddy `058f74a7` + `dc4d77b9` + `57092822`](https://github.com/maziggy/bambuddy/commit/058f74a7).
 
 !!! info "Why a relay?"
     BamDude itself never holds a GitHub PAT. The PAT is on the bamdude.top side, where the relay creates the issue against the upstream repo on your behalf. That asymmetry is the whole point — shipping a PAT in the BamDude image would mean every self-hoster gets one, with no way to revoke selectively.

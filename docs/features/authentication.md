@@ -118,13 +118,13 @@ Permissions follow a `resource:action` pattern -- e.g. `printers:control`, `arch
 Users in multiple groups inherit the **union** of all groups' permissions -- assignments are additive, not least-privilege-min.
 
 !!! info "Reads are ownership-split too"
-    The archive / queue / library **read** routes enforce a `read_own` / `read_all` split, not the flat `*:read` flag. Built-in **Operators** and **Viewers** carry the `*:read_all` variant, so they still see the whole farm's prints, queue, and library -- BamDude is a shared farm. A **custom** group that only holds the legacy flat `*:read` is backfilled to `*:read_own` (fail-closed): it has to be explicitly granted `*:read_all` to see other users' rows. The flat `archives:read` / `queue:read` / `library:read` flags are kept purely as the frontend's download / preview UI gate -- the API no longer honours them for row visibility.
+    The archive / queue / library **read** routes enforce a `read_own` / `read_all` split, not the flat `*:read` flag. Built-in **Operators** and **Viewers** carry the `*:read_all` variant, so they still see the whole farm's prints, queue, and library -- BamDude is a shared farm. A **custom** group that only holds the legacy flat `*:read` is backfilled to `*:read_own` (fail-closed): it has to be explicitly granted `*:read_all` to see other users' rows. The flat `archives:read` / `queue:read` / `library:read` flags are kept purely as the frontend's download / preview UI gate -- the API does not honour them for row visibility.
 
 ---
 
 ## :material-account-multiple-plus: User Management
 
-**Settings -> Users -> Users tab.** Visible to anyone with `users:read`. Mutating actions (create / update / delete) are **admin-only** -- holding the `users:create` / `users:update` / `users:delete` permission is no longer sufficient on its own. "Admin" here means `User.is_admin`: either the legacy `role == "admin"` **or** membership in the **Administrators** group. This admin gate stacks *on top of* the permission, so a non-admin operator who was merely granted `users:update` can't self-escalate by minting an admin account. API keys carry no user identity, so they never pass the admin gate -- user administration is unreachable via API key.
+**Settings -> Users -> Users tab.** Visible to anyone with `users:read`. Mutating actions (create / update / delete) are **admin-only** -- holding the `users:create` / `users:update` / `users:delete` permission is not sufficient on its own. "Admin" here means `User.is_admin`: either the legacy `role == "admin"` **or** membership in the **Administrators** group. This admin gate stacks *on top of* the permission, so a non-admin operator who was merely granted `users:update` can't self-escalate by minting an admin account. API keys carry no user identity, so they never pass the admin gate -- user administration is unreachable via API key.
 
 ### Creating users
 
@@ -167,7 +167,7 @@ Click **Add Group** (or pencil on an existing group) to open the **full-page gro
 
 Creating, editing, or deleting a group -- and adding or removing a group member -- is **admin-only**: it requires Administrators-group membership (or the legacy admin role) *on top of* the matching `groups:*` permission, so an operator with only `groups:update` can't privilege-escalate through the group editor.
 
-System groups (Administrators / Operators / Viewers) cannot be deleted, and their **name and permission set can no longer be edited** -- the API rejects any attempt to rename a system group or change its permissions (stripping the Administrators set would be a self-inflicted lockout). Their descriptions still edit freely. Custom groups can be created, edited, and deleted at any time; users left in only a deleted group end up group-less and lose all permissions until reassigned.
+System groups (Administrators / Operators / Viewers) cannot be deleted, and their **name and permission set cannot be edited** -- the API rejects any attempt to rename a system group or change its permissions (stripping the Administrators set would be a self-inflicted lockout). Their descriptions still edit freely. Custom groups can be created, edited, and deleted at any time; users left in only a deleted group end up group-less and lose all permissions until reassigned.
 
 ---
 
@@ -176,8 +176,7 @@ System groups (Administrators / Operators / Viewers) cannot be deleted, and thei
 Optional SMTP layer that enables passwordless onboarding, admin-triggered password resets, and per-user print notifications. Toggle independently of basic auth.
 
 !!! info "Self-service password reset does **not** need this toggle"
-    Recovery needs a mail server, and that is all it checks. Configuring SMTP is enough --- see [Self-service password reset](#self-service-password-reset). Until 0.5.6 recovery was tied to this switch, so an operator who set up SMTP, sent a test message and never guessed there was a second one got *"Advanced authentication is not enabled"* from a link the login page kept showing.
-
+    Recovery needs a mail server, and that is all it checks. Configuring SMTP is enough --- see [Self-service password reset](#self-service-password-reset).
 ### Configure SMTP
 
 **Settings -> Email tab.**
@@ -220,7 +219,7 @@ Templates are i18n-aware (en + uk); each template carries a subject line and a b
 5. On success the user is returned to the sign-in form and signs in with the new password. Every session that was signed in on the old one is signed out.
 
 !!! success "The account is untouched until the link is used"
-    Requesting a reset changes nothing. Before 0.5.6 the request itself generated a new password and mailed it, which meant anyone who knew your address could rotate your password and lock you out of a session you were happily using --- without you ever seeing the message that did it. Now the password changes only when somebody proves they read the mail.
+    Requesting a reset changes nothing, so somebody who merely knows your address cannot rotate your password or lock you out of a session you are using. The password changes only when somebody proves they read the mail.
 
     The link's token is stored as a hash only, so a copy of the database is not a set of working reset links.
 
@@ -339,7 +338,7 @@ BamDude uses a sliding-session model: short-lived access tokens, long-lived rota
 
 ### Access tokens
 
-- **TTL:** 1 hour (was 24 h pre-0.4.0).
+- **TTL:** 1 hour.
 - **Carry `jti` + `iat`.** Logout revokes the token's `jti` until natural expiry; password changes stamp `users.password_changed_at`, and tokens older than that timestamp are rejected as stale on every request.
 
 ### Refresh tokens
@@ -382,9 +381,9 @@ The frontend `request()` helper transparently retries 401s through `/auth/refres
 
 Two or more tabs open on BamDude share one session, and they coordinate rather than compete.
 
-Each tab schedules its own quiet renewal shortly before the access token expires. Left alone, every tab would compute the same instant from the same token and fire together -- and the server, which treats a second use of one refresh token as a stolen session, would collapse the family and log you out everywhere. With two tabs open this happened roughly once an hour and looked exactly like the session expiring for no reason.
+Each tab schedules its own quiet renewal shortly before the access token expires. Left alone, every tab would compute the same instant from the same token and fire together -- and the server, which treats a second use of one refresh token as a stolen session, would collapse the family and log you out everywhere. With two tabs open that would happen roughly once an hour and look exactly like the session expiring for no reason.
 
-Three things prevent it now:
+Three things prevent it:
 
 - **A cross-tab lock.** Whichever tab claims the Web Locks entry does the refresh; the others wait, then adopt the token it stored.
 - **Jitter.** Renewal times are spread by a few seconds so tabs that logged in together do not wake in lock-step.
@@ -439,7 +438,7 @@ For edge cases (e.g. TLS-terminating load balancer that doesn't set `X-Forwarded
 
 ### Encryption at rest
 
-TOTP secrets and OIDC client secrets are Fernet-encrypted in the database. Backup codes are pbkdf2-hashed regardless. **As of 0.4.4, encryption is on by default** -- BamDude bootstraps a key automatically on first start, so a fresh install never silently writes plaintext secrets.
+TOTP secrets and OIDC client secrets are Fernet-encrypted in the database. Backup codes are pbkdf2-hashed regardless. **Encryption is on by default** -- BamDude bootstraps a key automatically on first start, so a fresh install never silently writes plaintext secrets.
 
 **Key resolution order** (first hit wins):
 
@@ -625,7 +624,7 @@ Aligned with [NIST SP 800-63B](https://pages.nist.gov/800-63-3/sp800-63b.html). 
 - Minimum **8 characters**
 - Maximum **256 characters** (sane upper bound to cap pbkdf2 cost)
 
-No special-character requirement (dropped in 0.4.0.1 -- previously enforced, now considered noise that pushes users to predictable substitutions).
+No special-character requirement -- it is noise that pushes users to predictable substitutions.
 
 ### How the rules show up on the form
 
@@ -633,17 +632,7 @@ Every field where you set a **new** password --- first-boot setup, create user, 
 
 Every password field also has an eye at its right-hand end to reveal what you typed.
 
-!!! note "Fixed in 0.5.6"
-    Before this, the requirements were nowhere on screen: the forms disabled their submit button on the rules, while the message naming the unmet one was written to fire when you pressed the button that rule had just disabled. A password that was merely too short produced a grey button and no explanation anywhere. Two forms were also checking for **6** characters while the API has wanted 8 and a character mix for a long time, so they accepted passwords the server then refused --- and the API itself never applied the 8-character floor when an admin created or edited a user, only on setup and password change.
-
-### How the rules show up on the form
-
-Every field where you set a **new** password --- first-boot setup, create user, edit user, change your own password, and the reset-link page --- lists the four requirements underneath and ticks them off in green as you type. They appear the moment you click into the field, so you can see what is wanted before the password is refused rather than after.
-
-Every password field also has an eye at its right-hand end to reveal what you typed.
-
-!!! note "Fixed in 0.5.6"
-    Before this, the requirements were nowhere on screen: the forms disabled their submit button on the rules, while the message naming the unmet one was written to fire when you pressed the button that rule had just disabled. A password that was merely too short produced a grey button and no explanation anywhere. Two forms were also checking for **6** characters while the API has wanted 8 and a character mix for a long time, so they accepted passwords the server then refused --- and the API itself never applied the 8-character floor when an admin created or edited a user, only on setup and password change.
+The same rules apply everywhere a password is set, including when an admin creates or edits a user.
 
 Other length caps across auth endpoints: email **254** (RFC 5321), username **150**, forgot-password token **128**.
 

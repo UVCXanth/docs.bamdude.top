@@ -97,8 +97,8 @@ Sort dropdown above the file grid:
     the share and it moves to the top the next time you scan.
 
     **A folder's date is the newest thing anywhere inside it**, however deep — not
-    just one level down, which used to make a folder whose models all sit in
-    sub-folders look untouched for months. Hover a folder name to see the date it
+    just one level down, so a folder whose models all sit in
+    sub-folders does not look untouched for months. Hover a folder name to see the date it
     is sorted by.
 
 ### Not printed
@@ -122,7 +122,7 @@ Chips are AND-combined with the [tags](#tags) below — selecting `multiplate` +
 
 When nothing matches, the empty view offers **Clear filters**, and it clears all of them: search, file type, **Not printed**, the "filter by user" box, and the [tag filter](#tags).
 
-The tag filter matters here for a reason that is easy to miss. It is applied by the **server**, so a tag combination matching nothing makes the library itself come back empty — and the reset is offered for that case too, rather than a prompt to upload files, which used to be a dead end.
+The tag filter matters here for a reason that is easy to miss. It is applied by the **server**, so a tag combination matching nothing makes the library itself come back empty — and the reset is offered for that case too, rather than a prompt to upload files, which would be a dead end.
 
 ---
 
@@ -322,7 +322,7 @@ Every file in the library is a row in the `library_files` table. The row carries
 
 - **Hash dedup, on every path a file can arrive by** — the content is SHA-256'd and matched against the active rows before anything is written, so a file BamDude already holds is never stored twice. This covers uploading, the API, dropping a file on the file manager or on a printer, importing a project, slicing the same model again and Send-to-Printer from a slicer. Whatever you were doing carries on with the row that already exists, and you are told which of your files was used instead of the one you sent.
 
-    **Linked folders join in too.** External files used to be skipped for speed, which left a whole NAS outside deduplication. A scan now reads each file once and remembers its fingerprint next to the size and modification time it already stored, so later scans re-read only what actually changed.
+    **Linked folders join in too.** A scan reads each external file once and remembers its fingerprint next to the size and modification time it stores, so later scans re-read only what actually changed.
 
     **A row whose bytes went missing gets them back.** If the library still lists a file but the file is gone from disk, sending the same content again restores it in place — keeping the name, folder, notes, tags, projects and print history — rather than starting a fresh entry with none of that.
 
@@ -330,7 +330,7 @@ Every file in the library is a row in the `library_files` table. The row carries
 - **Thumbnails** — extracted from `Metadata/plate_*.png` inside the 3MF on upload (no on-the-fly extraction). Re-uploads or "reparse" trigger fresh extraction.
 - **STL thumbnail render** — STL uploads (`.stl`, `.zip` containing STL) get a thumbnail rendered on upload via the bundled rasteriser, so the card shows the actual part instead of a generic placeholder.
 - **`print_count` + `last_printed_at`** — usage counters maintained by dispatch. `print_count` counts **completed** prints only, so a file that was attempted and failed still reads as never printed; a reprint from the archive does advance it. The count appears on the card and in the list beside the file's other facts, and clicking it opens that file's print history. Nothing is shown at zero — the **Not printed** filter above answers that question instead. Backfilled retroactively on upgrade by migration `m014`.
-- **`file_metadata` JSON column** — stores parsed slicer metadata: filament weights per spool, object count, sliced-for printer model, plus the `gcode_label_objects` / `exclude_object` flags from the source 3MF's `Metadata/project_settings.config` (extracted in 0.4.1, backfilled by migration `m022`). The label-object flags gate the **skip-objects** button on the printer page during a print — both must be `true` for the button to light up. Bambu Studio has no *Label objects* setting at all and enables *Exclude objects* by default; OrcaSlicer exposes both, with *Label objects* on and ***Exclude objects* off** — so on an OrcaSlicer file that one switch is usually what needs turning on (see [Troubleshooting](../reference/troubleshooting.md) for the slicer-side checklist).
+- **`file_metadata` JSON column** — stores parsed slicer metadata: filament weights per spool, object count, sliced-for printer model, plus the `gcode_label_objects` / `exclude_object` flags from the source 3MF's `Metadata/project_settings.config` (backfilled for existing files by migration `m022`). The label-object flags gate the **skip-objects** button on the printer page during a print — both must be `true` for the button to light up. Bambu Studio has no *Label objects* setting at all and enables *Exclude objects* by default; OrcaSlicer exposes both, with *Label objects* on and ***Exclude objects* off** — so on an OrcaSlicer file that one switch is usually what needs turning on (see [Troubleshooting](../reference/troubleshooting.md) for the slicer-side checklist).
 - **`is_multi_plate` + `plates[]` per-plate cache (m023)** — for multi-plate sliced 3MFs (a single `.gcode.3mf` with several `Metadata/plate_N.gcode` entries) BamDude pre-extracts the full per-plate breakdown — thumbnail, print time, filament weight, object count, filament stack, label-object flags — into the same `file_metadata` JSON. The file list returns this without re-opening the 3MF on every query.
 - **`swap_compatible` flag** — the file's [declaration](swap-mode.md#a-files-own-swap-sequence) that it carries its own plate-swap sequence, read once from its **own file name** when it comes in (an upload, a ZIP member — the member's name, not the ZIP's —, an external folder scan, the Virtual Printer): a `.swap.` or `.swaps.` marker, e.g. `MyPart.swap.gcode.3mf` or `Tray.swaps.3mf`. The marker must be **dot-delimited**, not underscore-delimited — `MyPart_swap.gcode.3mf` will not be flagged, and neither will a marker in a folder name. Renaming the file later declares nothing; a scan reads the name again only when the file's content changed. A file without a content hash counts as **unknown** until a scan has read it. Swap-compatible files are surfaced separately in the swap-mode picker.
 - **Composite `file_tags` column (m036 / m037)** — an unordered JSON list of identity tags drives the badge row on each file. Since m128 the same vocabulary also exists as `is_system` rows in `library_tags`, which is what the tag filter and the tag catalog query; the column stays as a derived cache so the badges and the preview-tab logic read a column on the row they already have. Both are written by one function, `sync_system_tags`. Four semantic groups: **format** (`gcode` / `3mf` / `stl` / `obj` / `step` — sliced `.gcode.3mf` keeps the composite `gcode + 3mf` pair so the visual distinction survives `file_type` collapse), **readiness** (mutually exclusive: `sliced` for slicer-output, `project` for unsliced `.3mf` packages, `geometry` for raw mesh / CAD source — one toggle for "what still needs slicing?"), **modifiers** (`swap` / `multiplate`), **provenance** (`makerworld`). Frontend `sortTagsForDisplay` projects onto an explicit precedence so the row reads right-to-left format → readiness → modifiers → provenance.
@@ -368,14 +368,14 @@ Library files share the same `<ModelViewerModal>` as archives, with two library-
 
 - **Tab visibility from `file_tags` rather than file extension.** A sliced `.gcode.3mf` (which has both extensions) shows only the G-code tab — its embedded mesh is already rasterised into the gcode lines and re-rendering it under "3D Model" duplicates information. An unsliced `project` 3MF or raw `geometry` mesh shows only the 3D tab. Tabs are queried via `GET /library/files/{id}/capabilities` (mirrors the long-standing archive route).
 - **Per-plate G-code picker for multi-plate library files.** Library files are browseable, so the G-code tab gets a plate picker that re-keys the gcode-preview URL when you switch plates. Archives keep the single-plate behaviour because they record one specific print.
-- **Build-volume wireframe** — the 3D viewer draws a translucent box matching the printer the file was sliced for (read from `printer_settings`). G-code preview already painted a similar box; same visual cue across both tabs now.
+- **Build-volume wireframe** — the 3D viewer draws a translucent box matching the printer the file was sliced for (read from `printer_settings`). G-code preview paints a similar box, so both tabs carry the same visual cue.
 - **Shared modal features** — OBJ format support, wireframe / X-ray toggle, theme-synced canvas, dual-handle layer slider (Start + End), travel-moves toggle, layer-play with 1× / 2× / 4× / 8× speeds, streaming download progress, and Export-as-PNG. See [Archives → 3D + G-code Preview](archiving.md#3d-g-code-preview) for the full feature breakdown; library uses the same `<ModelViewerModal>` verbatim.
 
 ## :material-view-gallery: Per-plate browsing (multi-plate 3MFs)
 
 ### On the card
 
-A file with more than one plate is browsed **one plate at a time**. The card carries arrows and a plate counter, and everything on it belongs to the plate on screen: the picture, the print time, the weight, the object count, and the filament types that plate prints with (`PETG+PLA` for a two-material plate). Those types are shown on single-plate cards too — the card never used to say what a file prints with.
+A file with more than one plate is browsed **one plate at a time**. The card carries arrows and a plate counter, and everything on it belongs to the plate on screen: the picture, the print time, the weight, the object count, and the filament types that plate prints with (`PETG+PLA` for a two-material plate). Those types are shown on single-plate cards too.
 
 There is deliberately no whole-file total. A file is printed plate by plate, so a sum of every plate's time beside a picture of plate 1 described a print nobody makes; the card answers *what does this plate cost* instead. Nothing is fetched to page through it — the figures ride in the file list itself.
 
@@ -403,7 +403,7 @@ Single-plate files don't render the gallery — one plate has nothing to page th
 - **What the link actually does** — the product gains a plate row for every plate of the file, and every object name on those plates resolves to a printed part of that product. Unlink the file and its plates go; the parts stay, because quantities belong to the product rather than to the file.
 - **Per-chip unlink** — the `×` on a chip removes that one association and leaves the rest alone.
 
-Files no longer link to a project. An order names its **products**, and a print is filed under an order when it is started or queued — see [Filing a print under its order](projects.md#filing-a-print-under-its-order).
+Files do not link to a project. An order names its **products**, and a print is filed under an order when it is started or queued — see [Filing a print under its order](projects.md#filing-a-print-under-its-order).
 
 ---
 
@@ -411,7 +411,7 @@ Files no longer link to a project. An order names its **products**, and a print 
 
 Deleted files don't disappear immediately — they move to **Trash** and stay there for a configurable retention window (default **30 days**) before a background sweeper hard-deletes them from disk. This gives you an undo window for accidental deletions and bulk operations.
 
-**Every route into deletion behaves the same way.** Deleting one file, deleting a selection, and deleting a folder all put the entries in the trash — the bulk paths used to destroy files outright, with nothing to restore. Files that were inside a deleted folder come back to the **top level** of the library when restored, since the folder they lived in no longer exists.
+**Every route into deletion behaves the same way.** Deleting one file, deleting a selection, and deleting a folder all put the entries in the trash. Files that were inside a deleted folder come back to the **top level** of the library when restored, since the folder they lived in no longer exists.
 
 !!! note "A file that could not be deleted is not reported as deleted"
     Bulk delete skips a file whose print is currently running. The result says what
@@ -507,7 +507,7 @@ It is gated exactly like Rename: a user holding only the `*_own` library permiss
 
 ### Deleting a folder
 
-Folders have no owner, so deleting one used to need the full "delete anything" permission (`library:delete_all`) — which meant a user could create a folder, delete their own files out of it, and then have to ask an administrator to clear the empty shell.
+Folders have no owner, so what deleting one needs depends on what it holds — a user who creates a folder and deletes their own files out of it does not have to ask an administrator to clear the empty shell.
 
 | Folder | Permission needed |
 |---|---|

@@ -7,7 +7,7 @@ description: Повідомляйте про баги прямо з UI BamDude �
 
 Кожна сторінка в BamDude несе плаваючу червону кнопку **Bug** в правому нижньому куті. Клацання відкриває панель, через яку можна подати звіт у [`kainpl/bamdude`](https://github.com/kainpl/bamdude/issues) не залишаючи UI — BamDude збирає санітизовані debug-логи + скріншот + структурований support-snapshot, постить на bamdude.top-релей, і повертає номер свіжо-створеного GitHub-issue.
 
-Шипається в BamDude **0.4.4**. Адаптовано з upstream [Bambuddy `058f74a7` + `dc4d77b9` + `57092822`](https://github.com/maziggy/bambuddy/commit/058f74a7).
+Адаптовано з upstream [Bambuddy `058f74a7` + `dc4d77b9` + `57092822`](https://github.com/maziggy/bambuddy/commit/058f74a7).
 
 !!! info "Чому через релей?"
     BamDude сам ніколи не тримає GitHub PAT. PAT — на стороні bamdude.top, де релей створює issue в апстрімовому репо від вашого імені. Ця асиметрія і є точкою — шипити PAT в Docker-образ означало б, що кожен self-hoster отримує копію без можливості селективного відкликання.

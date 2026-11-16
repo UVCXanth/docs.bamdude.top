@@ -177,9 +177,9 @@ file, and letting the third go as a group again is an ordinary run.
 
 !!! warning "A multi-plate file contributes every plate"
     Each plate is a unit in its own right, so a single 3-plate file opens with
-    all three of its plates ticked and queues three items where it used to queue
-    one. The ticks are on screen and you can untick the plates you do not want,
-    but the dialog no longer starts on the first plate alone.
+    all three of its plates ticked and queues three items, not one. The ticks
+    are on screen and you can untick the plates you do not want, but the dialog
+    does not start on the first plate alone.
 
 ### AMS Filament Mapping
 
@@ -195,7 +195,7 @@ On an **H2C**, every filament that prints from the rack gets a **rack position**
 
 Nothing has to be picked. The dialog pre-selects what the dispatcher would assign: a position already loaded with that colour first, otherwise the lowest one that fits. The nozzle currently on the carriage — which the printer leaves out of its rack report — is offered at its own position. The pick is stored with a queued job and sent with a print started straight away, a reprint and every copy of a quantity; it applies to the one printer it was made for.
 
-It is checked again when the print is sent, because the rack can be reloaded in the meantime. A position **you chose** that no longer fits stops the print with a message saying what the position holds now, and the uploaded file is removed from the printer. Positions that were **assigned automatically** and can no longer be placed are left to the printer to choose, as before.
+It is checked again when the print is sent, because the rack can be reloaded in the meantime. A position **you chose** that no longer fits stops the print with a message saying what the position holds now, and the uploaded file is removed from the printer. Positions that were **assigned automatically** and can no longer be placed are left to the printer to choose.
 
 The job retains its feed and color rules through schedule edits, repeats, and cloning. A manual mapping needs a new answer for another printer or plate. [Complete rules and waiting reasons](filament-routing.md#editing).
 
@@ -224,7 +224,7 @@ Plate index is preserved across restart-recovery + reprint flows. See [archiving
 
 ### Build-plate type on queue items + print dialog
 
-On a farm with many plates it's easy to lose track of which physical plate a queued job actually needs. Every pending queue item now carries a **build-plate icon** (hover for the plate name) — the same bed icon the archive card shows — so you can see the target plate at a glance before it dispatches. The print dialog also shows the selected plate's type right next to the plate picker.
+On a farm with many plates it's easy to lose track of which physical plate a queued job actually needs. Every pending queue item carries a **build-plate icon** (hover for the plate name) — the same bed icon the archive card shows — so you can see the target plate at a glance before it dispatches. The print dialog also shows the selected plate's type right next to the plate picker.
 
 Multi-plate 3MFs are resolved **per plate**: the value re-reads the file for the plate you actually picked rather than assuming every plate uses the first plate's bed, so a file mixing (say) Textured PEI and Engineering plates labels each one correctly.
 
@@ -248,7 +248,7 @@ When adding to queue, expand **Print options**:
     Choose feeds in the mapping panel or the Auto form's **Filament source** field. There is no separate switch in Print options. API and bulk-edit `use_ams` choices are reconciled with the saved routing rules; the actual start command follows the validated source mapping. A boolean does not override a physical slot selection or supply missing AMS hardware.
 
 !!! tip "Auto calibration (off / auto / on)"
-    On models whose firmware supports it — the **X2D** and the **H2** family (H2D, H2D Pro, H2C, H2S), plus the **P2S** and **A2L** for bed levelling + flow calibration — Bed levelling, Flow calibration and (on dual-nozzle machines) Nozzle-offset calibration are **three-position**: **Off**, **Auto** (the printer itself decides whether the step is needed for the job), or **On** (always run). Models without firmware support keep the plain **Off / On** toggle. The choice is remembered per printer model, and Off/On behave exactly as before — the new Auto position only reaches a printer that advertises it.
+    On models whose firmware supports it — the **X2D** and the **H2** family (H2D, H2D Pro, H2C, H2S), plus the **P2S** and **A2L** for bed levelling + flow calibration — Bed levelling, Flow calibration and (on dual-nozzle machines) Nozzle-offset calibration are **three-position**: **Off**, **Auto** (the printer itself decides whether the step is needed for the job), or **On** (always run). Models without firmware support keep the plain **Off / On** toggle. The choice is remembered per printer model, and Off/On behave the same on every model — the Auto position only reaches a printer that advertises it.
 
 Defaults are remembered **per operator and per printer model**: the toggles you set in the Print dialog can be saved as that pair's profile, and the dialog loads it next time you queue for that model. An admin sees every saved profile under **Settings → Printing → Saved Print Profiles**, can edit or delete any of them, can copy one operator's profile to another (handy when onboarding), and can set the per-model **System** row that applies to anyone with no profile of their own. Whatever you change in the dialog for one job trumps all of it, for that job only.
 
@@ -487,10 +487,10 @@ When you set quantity to **N**, **all N copies** are added to the queue at once.
 **With several printers picked, N is per printer by default.** Three printers at 4 make twelve prints — the dialog says so in a line under the field («4 × 3 printers = 12 in total»). Switch the toggle beside the field to **Total** and the number is dealt across the picked printers one copy at a time, in the order the picker lists them, so 13 on three printers becomes 5 / 4 / 4 and the line names who gets what; a printer dealt nothing is simply not asked. The choice is remembered in your browser. The auto-queue's quantity was always a total and has no toggle.
 
 - You can reorder, edit AMS, or cancel each copy individually before it starts.
-- The very first copy doesn't get "direct dispatched" any more — every copy goes through the same queue path. This eliminates the historical "first archive lands ahead of N-1 copies still in queue" inconsistency.
+- The very first copy is not "direct dispatched" — every copy goes through the same queue path, so the first archive never lands ahead of N-1 copies still in queue.
 - The endpoint response status is `"queued"` for the whole N-copy submission; `dispatch_job_id` and `dispatch_position` are nullable in this path.
 
-`quantity == 1` from a single archive is a **direct dispatch** — it goes straight out rather than waiting its turn. It still takes a queue row: since 0.5.4 *every* print holds one while it runs, a direct print claiming it at dispatch and a print started on the printer's own screen getting one made at print start. Before that a "print now" claimed nothing until the printer had already begun, so the queue saw an idle printer for the whole upload and could dispatch straight over the job. The row records where it came from (`origin`), which is how queue-completed notifications avoid firing for prints nobody scheduled.
+`quantity == 1` from a single archive is a **direct dispatch** — it goes straight out rather than waiting its turn. It still takes a queue row: *every* print holds one while it runs, a direct print claiming it at dispatch and a print started on the printer's own screen getting one made at print start. Without that claim the queue would see an idle printer for the whole upload and could dispatch straight over the job. The row records where it came from (`origin`), which is how queue-completed notifications avoid firing for prints nobody scheduled.
 
 ---
 
@@ -502,9 +502,6 @@ Background dispatch runs **in parallel across printers** — three idle printers
     The brief DB-write phase (`INSERT INTO print_archives`) sits behind a startup-lock so SQLite doesn't trip on `database is locked` from concurrent inserts. The lock is held only for the few milliseconds the row needs to commit; FTP upload, the `start_print` MQTT command, and any swap-mode macros run in parallel with whatever the next dispatcher does. PostgreSQL inherits the same lock for symmetry, even though it doesn't strictly need it.
 
 The active-job toast in the bottom-right tracks each dispatch independently — multiple FTP-upload progress bars can be on screen at once. Once a print is *running* on a printer, that dispatcher releases its slot; the dispatch tracker doesn't wait for the print to **finish**, only for the upload + start command to land.
-
-The earlier "one job at a time across the whole farm" gate that landed in mid-0.4.1 was scrapped once the startup-lock was in (`c485db1`).
-
 ### When a dispatch fails {#dispatch-failure}
 
 Once the start command has gone out, only the printer's own answer decides the attempt. A problem afterwards — saving the dispatched filament mapping, registering macros, cleaning up a temporary file — is logged, and the print keeps printing; it is never put back in the queue and printed a second time. If BamDude itself cannot read the printer's answer, it keeps looking for as long as a printer normally takes to answer, the job still holding the printer. When it still cannot tell, the job keeps the printer, the start is never sent again, and **Information → Print state diagnostics** offers to close the attempt once you have checked the printer — no restart needed.
@@ -553,10 +550,10 @@ The confirmed list is one server transaction: the scheduler sees the whole block
 
 ## :material-history: Queue history & archives
 
-In 0.4.0 the live queue and the durable history were split apart (migration `m019`).
+The live queue and the durable history are kept apart.
 
 - The **live queue** only shows unfinished items: `pending` and `printing`, plus failed / cancelled / skipped rows kept around so the "Issues" section retry / unskip / remove UI keeps working.
-- Completed queue items **auto-delete** the moment the print ends — unless that printer's plate-clear gate arms, in which case the row waits for your **Clear Plate** or **Repeat print** answer and goes then. Two code paths can close a print (the live completion handler and the reconciliation sweep), and the clean-up sits where both of them reach it, because when the sweep won the race the row used to be completed by one and cleaned by neither.
+- Completed queue items **auto-delete** the moment the print ends — unless that printer's plate-clear gate arms, in which case the row waits for your **Clear Plate** or **Repeat print** answer and goes then. Two code paths can close a print (the live completion handler and the reconciliation sweep), and the clean-up sits where both of them reach it.
 - Past queue items live on as **archives** — every archive row carries `queue_id` (which queue dispatched it) and optional `batch_id` (which N-of-M batch it belongs to). External / direct-dispatch / Print-Now archives fall back to the printer's default queue id so they're attributable too.
 
 The terminal counters in the printer queue header (Total / Completed / Failed / Cancelled) are **computed from `print_archives` on every read**, not stored on the queue, so they don't drift when the queue auto-cleans; only Pending and Skipped — which describe live rows nothing cleans up — stay cached on the queue itself.
@@ -567,7 +564,7 @@ To see archived queue items, open the **Archives** page and filter by printer. F
     After a restart or reconnect, the first fresh, inactive printer status can repair a queue row still marked `printing` when its own archive already records completion, failure or cancellation. This is separate from normal print completion: it does not reprint the job, replay accounting, run macros or send completion notifications. The repaired row is retained and the queue is paused for an operator to inspect the printer and plate before resuming; existing plate-clear requests are preserved. Active/offline printers, a dispatch or completion still in progress, and ambiguous archive links are left alone with a diagnostic in the server log. Deferred repairs are checked again at the next reconnect or restart, not on a polling timer.
 
 !!! tip "Dispatch-time archive starts as `printing`"
-    Library-file dispatches now create the archive row directly in `status='printing'` — no transient "Archived" badge flash during the FTP+MQTT window. If dispatch fails after the row commits (FTP error, start-print error), a fresh-session helper flips the archive to `failed` / `cancelled` with the verbose `error_message` set, so a zombie `'printing'` row never sits stuck in the UI.
+    Library-file dispatches create the archive row directly in `status='printing'` — no transient "Archived" badge flash during the FTP+MQTT window. If dispatch fails after the row commits (FTP error, start-print error), a fresh-session helper flips the archive to `failed` / `cancelled` with the verbose `error_message` set, so a zombie `'printing'` row never sits stuck in the UI.
 
 ---
 
@@ -588,10 +585,6 @@ Deleting a library file is itself a soft delete — the file goes to the trash a
 Archives keep their separate 3MF copy (the dispatch flow copies the bytes into the archive directory at print start) and survive — `print_archives.library_file_id` is set to NULL on delete instead of cascading.
 
 `POST /library/bulk-delete` applies the same logic per file: blocked-by-printing files are reported under `skipped_files` instead of failing the whole batch.
-
-!!! note "Pre-0.4.0 behaviour was different"
-    Earlier versions used a SET NULL FK with no in-app follow-up — deleting a library file left orphan queue items pointing at nothing, which the queue couldn't dispatch and nobody could explain. Those rows had to be cleaned by hand.
-
 ---
 
 ## :material-bell-ring: Queue Notifications
@@ -612,13 +605,13 @@ Every template is editable in both locales. Configure in **Settings → Notifica
 
 ## :material-shield-check: H2D false-reprint guard
 
-H2D Pro firmware (01.01.00.00 series) keeps `gcode_state=FINISH` for 48–55 seconds after accepting a new file before transitioning to `PREPARE`. The scheduler watchdog used to revert queue items to `pending` at 45 s if the state hadn't moved — and the next scheduler tick re-dispatched the job as a "reprint" the printer was already physically running.
+H2D Pro firmware (01.01.00.00 series) keeps `gcode_state=FINISH` for 48–55 seconds after accepting a new file before transitioning to `PREPARE`. A scheduler watchdog that gave up before that would revert the queue item to `pending` — and the next scheduler tick would re-dispatch the job as a "reprint" the printer is already physically running.
 
-The watchdog now waits up to **90 s** and exits early on **either** signal: `gcode_state` moving past its pre-dispatch value, or `subtask_id` advancing past it (the printer echoes the `submission_id` BamDude minted in its next `push_status`, and on slow firmware that lands long before `gcode_state` does).
+The watchdog therefore waits up to **90 s** and exits early on **either** signal: `gcode_state` moving past its pre-dispatch value, or `subtask_id` advancing past it (the printer echoes the `submission_id` BamDude minted in its next `push_status`, and on slow firmware that lands long before `gcode_state` does).
 
 If the window really does pass with neither signal, the item goes back to `pending` for another attempt rather than failing outright — and only after **three** such attempts is it failed, with a message naming what was actually observed (an AMS that was drying throughout gets said so, because that is a common reason a printer accepts a file and never starts). One exception: where a swap-mode start macro already ran on the physical machine the item is *left* in `printing` and the log asks for a human instead, because a retry would swap the plate a second time.
 
-You won't see "queue stuck" reports from this any more, including immediately after a print completes on H2D / H2C / H2S models.
+The same guard covers the moment immediately after a print completes on H2D / H2C / H2S models.
 
 ---
 

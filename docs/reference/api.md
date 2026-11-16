@@ -9,9 +9,9 @@ BamDude exposes a versioned REST API at `/api/v1` plus a WebSocket channel for r
 
 ---
 
-## Workshop API change in 0.7.0
+## Workshop API: a product from a file
 
-`POST /api/v1/products/from-file/{id}` returns `{product, notes}`, rather than the product alone. Read the new product's fields under `product`; `notes` describes what the file supplied. The source must be visible through the caller's library permissions. Review custom groups for the separate Orders, Products, Customers and Stock rights after upgrading.
+`POST /api/v1/products/from-file/{id}` returns `{product, notes}`. Read the new product's fields under `product`; `notes` describes what the file supplied. The source must be visible through the caller's library permissions. Orders, Products, Customers and Stock each have their own rights, so a custom group needs the ones for the sections it works in.
 
 ## :material-rocket-launch: Quick start
 
@@ -264,7 +264,7 @@ curl -X POST -H "X-API-Key: $KEY" https://<host>/api/v1/webhook/printer/3/start
 ```
 
 !!! note "There is no add-to-queue endpoint here"
-    Queueing goes through `POST /api/v1/queue/` with an `archive_id`, a `library_file_id`, or a readable existing queue row as `source_queue_item_id` when copying a saved job. The webhook group used to carry its own version; it built the queue row by hand and so skipped the paused-queue check, the printer-model compatibility gate and the queue counters. One way in is the point.
+    Queueing goes through `POST /api/v1/queue/` with an `archive_id`, a `library_file_id`, or a readable existing queue row as `source_queue_item_id` when copying a saved job. The webhook group has no version of its own: a queue row built by hand would skip the paused-queue check, the printer-model compatibility gate and the queue counters. One way in is the point.
 
 
 ---

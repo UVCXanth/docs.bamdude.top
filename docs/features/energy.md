@@ -63,7 +63,7 @@ Captured on `PrintArchive`:
 
 ## :material-alert-decagram: When a Plug's Counter Stops
 
-Some plugs keep reporting their watts while their lifetime energy counter stands still. Every print on such a plug used to read **0 kWh** — a frozen counter makes the start and end readings equal. BamDude now compares the counter with the plug's own power history.
+Some plugs keep reporting their watts while their lifetime energy counter stands still. Read naively, every print on such a plug would be **0 kWh** — a frozen counter makes the start and end readings equal — so BamDude compares the counter with the plug's own power history.
 
 **What counts as a suspected stall.** The counter held one value for at least **30 minutes** while the power history of the same plug covers that stretch (at least 95 %) and adds up to at least the plug's **missed-energy threshold** — 100 Wh unless you raise it on the plug. It is a suspicion, not a verdict about the device: a counter that only moves in coarse steps, or a stale cache, looks the same from here. A short or light print whose counter did not step (3 minutes at 120 W is 6 Wh) is not a stall and keeps its measured zero.
 

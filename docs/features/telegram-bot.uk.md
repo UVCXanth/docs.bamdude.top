@@ -46,7 +46,7 @@ Telegram-бот забезпечує:
 5. Бот почне автоматичний полінг
 
 !!! note "Конфіг на рівні бота навмисно мінімальний (m045)"
-    Telegram-провайдер тримає лише `name`, токен бота, `enabled` і опційний **розклад щоденного дайджесту** (`daily_digest_enabled` + `daily_digest_time`). Per-event opt-in, тихий час і per-chat digest opt-in живуть у кожному `TelegramChat` — див. **Per-Chat Notification Preferences** нижче. 24 поля `on_*` і `quiet_hours_*`, які shared з email / ntfy / pushover / discord / webhook / homeassistant / callmebot, для telegram нормалізовані до dispatch-transparent значень (`on_*=True`, `quiet_hours_enabled=False`) — на поведінку бота вони більше не впливають.
+    Telegram-провайдер тримає лише `name`, токен бота, `enabled` і опційний **розклад щоденного дайджесту** (`daily_digest_enabled` + `daily_digest_time`). Per-event opt-in, тихий час і per-chat digest opt-in живуть у кожному `TelegramChat` — див. **Per-Chat Notification Preferences** нижче. 24 поля `on_*` і `quiet_hours_*`, які shared з email / ntfy / pushover / discord / webhook / homeassistant / callmebot, для telegram нормалізовані до dispatch-transparent значень (`on_*=True`, `quiet_hours_enabled=False`) — на поведінку бота вони не впливають.
 
 ### Крок 3: Авторизація чату
 
@@ -243,7 +243,7 @@ pending setup) нічого не читає і нічого не робить, �
 
 ### Фільтр подій
 
-Виберіть, які з 23 типів подій (`backend/app/models/telegram_chat.py::ALL_NOTIFY_EVENTS`) цей чат має отримувати. Після m045 це **єдина** authority для per-event фільтра в telegram — provider-row на рівні бота більше не гейтує події. Дефолти відображають те, що цікавить більшість операторів:
+Виберіть, які з 23 типів подій (`backend/app/models/telegram_chat.py::ALL_NOTIFY_EVENTS`) цей чат має отримувати. Це **єдина** authority для per-event фільтра в telegram — provider-row на рівні бота не гейтує події. Дефолти відображають те, що цікавить більшість операторів:
 
 | Дефолтно увімкнено |
 |---|

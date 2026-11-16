@@ -26,7 +26,7 @@ Automatic source does not mean that an empty AMS slot or an unknown configuratio
 
 An explicit physical slot selection stays tied to that printer and source. BamDude does not silently replace it with another tray or external spool.
 
-An ordinary add to a printer is not a hand pin. A pin is a slot the operator chose, or a mapping stored with the job — a Bambu Studio *Send to printer* job with *save AMS mapping* on, for example. With base-material matching on, such a job is no longer sent back for review merely because the spool in that slot was re-tagged with another profile; its material, colour, nozzle binding and slot identity are checked exactly as before.
+An ordinary add to a printer is not a hand pin. A pin is a slot the operator chose, or a mapping stored with the job — a Bambu Studio *Send to printer* job with *save AMS mapping* on, for example. With base-material matching on, such a job is not sent back for review merely because the spool in that slot was re-tagged with another profile; its material, colour, nozzle binding and slot identity are still checked.
 
 ## Match by base material {#material}
 
@@ -38,15 +38,7 @@ The catalogue may supply display information, but never replaces the declared ma
 
 Bundled profiles are available offline; optional cloud sync only adds the connected account's presets. Profiles from other people's computers may remain unknown, which is a normal farm workflow.
 
-!!! warning "Until 0.6.0.1 an unresolvable profile was read as if you had switched this off"
-    Worse than losing the relaxation: switching off also re-arms the id
-    comparison the option exists to suppress. A preset id from somebody's
-    slicer never equals the id a spool reports, so the refusal was permanent.
-    Such a plate was turned away by every printer that had the right material
-    loaded, and the refusal named the filament type — the one thing that did
-    match. Update to 0.6.0.1; nothing needs to be re-queued.
-
-When the switch is off, the profile becomes a condition of its own: wherever both the file and the loaded source name one (`tray_info_idx`), they must name the same one. This now reads identically in the dialog and on the printer's own routing — until 0.6.0.1 the dialog applied the rule only where the profile could be resolved to a family, so it could report a printer as *ready* for a plate that printer then refused. An explicit per-channel material override still applies instead of the material the file declares for that channel.
+When the switch is off, the profile becomes a condition of its own: wherever both the file and the loaded source name one (`tray_info_idx`), they must name the same one. The rule reads identically in the dialog and on the printer's own routing, whether or not the profile can be resolved to a family. An explicit per-channel material override still applies instead of the material the file declares for that channel.
 
 Material names are compared case-insensitively through the small compatibility table shared by routing paths (currently `PA-CF`, `PA12-CF`, and `PAHT-CF` form one group). Other product variants are not made interchangeable merely because exact colour matching is off.
 

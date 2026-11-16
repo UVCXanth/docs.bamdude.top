@@ -78,10 +78,9 @@ All topics are prefixed with your configured prefix. **The default prefix is `ba
 | `bambuddy/maintenance/reset` | A maintenance counter was reset (task marked done) |
 
 !!! note "There is no `maintenance/acknowledged`"
-    It described an action BamDude does not have: an alert is **raised**, and then
-    **reset** when the work is done. There is no separate acknowledgement step, so
-    the topic was removed rather than given a meaning it never had. Nothing else
-    changed — `alert` and `reset` are the whole lifecycle.
+    It would describe an action BamDude does not have: an alert is **raised**, and then
+    **reset** when the work is done. There is no separate acknowledgement step —
+    `alert` and `reset` are the whole lifecycle.
 
 ### Smart plug events
 

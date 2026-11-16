@@ -65,9 +65,9 @@ The snapshot table is bounded — old rows are pruned after a configurable reten
 
 A **Records** panel picks out the extremes of the selected range: **Longest Print**, **Heaviest Print**, **Most Expensive**, **Busiest Day** and the current **Success Streak**.
 
-**Most Expensive counts the electricity, not just the filament.** It ranks prints on filament **plus** the power the print actually drew, and shows the split (`filament` / `power`) so the figure can be checked against the print's own page. A long print that ran a printer for ten hours no longer loses the podium to a short one on pricier filament while having cost more to run.
+**Most Expensive counts the electricity, not just the filament.** It ranks prints on filament **plus** the power the print actually drew, and shows the split (`filament` / `power`) so the figure can be checked against the print's own page. A long print that ran a printer for ten hours does not lose the podium to a short one on pricier filament while having cost more to run.
 
-!!! info "A print with no smart plug is ranked on its filament, as before"
+!!! info "A print with no smart plug is ranked on its filament alone"
     Its power was never measured, and putting a made-up number on the podium would
     be worse than leaving it out. Prints measured at **zero** and prints **never
     measured** stay distinguishable.
@@ -87,10 +87,9 @@ A **Records** panel picks out the extremes of the selected range: **Longest Prin
     costed — a print with no rate carries **no cost** at all, rather than a cost of
     zero, which reads as free.
 
-    BamDude used to quietly assume **25 per kg** here, in the initial archive
-    estimate, in the cost recalculation and in project print plans — pricing prints
-    with a number nobody had entered, and disagreeing with itself between paths, so
-    one print could carry two different totals depending on which wrote last.
+    The same rule holds in the initial archive estimate, in the cost
+    recalculation and in project print plans — no path prices a print with a
+    number nobody entered, so one print never carries two different totals.
 
     Nothing changes if you *have* set a price: a spool's own cost per kg still wins
     over the default, and the default still covers filament from spools that are
