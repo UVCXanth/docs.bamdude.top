@@ -215,7 +215,7 @@ A recovered file must be the plate that was printed: a candidate whose sliced pl
 
 Concurrent triggers don't race: a per-archive `asyncio.Lock` returns `"in_progress"` immediately if another retry is already running. Five distinct return statuses (`recovered`, `already_has_file`, `in_progress`, `failed`, `error`) map to clean toasts in the UI. The print-start download takes the same lock even though it doesn't come from this service — a printer reconnect part-way through it would otherwise open a second FTP session for a file already on its way, and attach a second copy on top of the first. So does the download for a print BamDude adopts at start-up (below).
 
-One attempt fetches a file at most once. When a download starts and then fails, the attempt ends there instead of trying the other candidate names over a connection that has just failed; the next trigger asks again. From built-in storage the file is checked as it arrives — every frame, and the whole file against the printer's own checksum when the printer sends one — and is written straight to disk rather than held in memory.
+One attempt fetches a file at most once. When a download starts and then fails, BamDude stops trying the other candidate names over that connection, which has just failed. The rest of the attempt — a search for a close name over a fresh connection, then built-in storage — can still go ahead, but never fetches that same file again; the next trigger asks again. From built-in storage the file is checked as it arrives — every frame, and the whole file against the printer's own checksum when the printer sends one — and is written straight to disk rather than held in memory.
 
 While the row has no file yet:
 
