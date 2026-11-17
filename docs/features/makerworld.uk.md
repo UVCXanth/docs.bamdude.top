@@ -9,7 +9,9 @@ description: Встав посилання на модель MakerWorld → BamD
 
 Інтеграція **paste-driven**, не search-driven: публічний `design/search` повертає порожні результати з server-side запитів, тож дублювати каталог MakerWorld усередині BamDude нереально. Реальний шлях, як юзери знаходять моделі — Reddit, YouTube, чати — лягає на paste-flow без цієї обмеженості.
 
-Сторінка MakerWorld розділена на дві underline-style вкладки:
+MakerWorld — це вкладка сторінки **Джерела моделей**: відкрий **Джерела моделей** у бічній панелі й обери вкладку **MakerWorld**. Смужка вкладок показується, коли тобі доступно більше одного джерела; якщо лише MakerWorld — сторінка одразу відкривається на ньому. Посилання й закладки на `/makerworld` відкривають цю вкладку. Інша вкладка, **Manyfold**, показує бібліотеку моделей на власному сервері — див. [Бібліотека Manyfold](manyfold.md).
+
+Вкладка MakerWorld розділена на дві власні underline-style вкладки:
 
 - **Import** — встав URL, розв'яжи дизайн, переглянь усі плити з бейджем сумісності та per-variant статусом імпорту, тисни Import на ту (чи всі), яка потрібна.
 - **History** — server-paginated 4-колоночна сітка всього, що ти вже імпортував — пошук по filename / title / author, сортування по даті / назві / автору, локально-кешовані обкладинки.
@@ -54,7 +56,7 @@ BamDude перевикористовує вже збережений вхід у
 - **Анонімні дзвінки** (парсинг URL, метадані, перелік плит) працюють без токена.
 - **Скачування** (`/design-service/instance/{instanceId}/f3mf`, а коли він не дає посилання — `/iot-service/api/user/profile/{profileId}`) потребує твій збережений Bambu Cloud bearer.
 
-Якщо токена нема — сторінка MakerWorld показує банер **Для завантаження потрібен Bambu Cloud**, а кнопки Import і Print вимкнені. Спершу увійди в Bambu Cloud на сторінці **Профілі**.
+Якщо токена нема — вкладка MakerWorld показує банер **Для завантаження потрібен Bambu Cloud**, а кнопки Import і Print вимкнені. Спершу увійди в Bambu Cloud на сторінці **Профілі**.
 
 Збережений токен, термін якого минув, поновлюється збереженим refresh-токеном, і імпорт просто проходить (див. [Час життя токена](cloud-profiles.uk.md#token-lifetime)). Якщо для цього поновлення не вдається зв'язатися з Bambu Cloud, імпорт відповідає *Не вдалося зв'язатися з Bambu Cloud, щоб поновити вхід, термін якого минув. Спробуйте трохи згодом.*, а збережений вхід лишається.
 
@@ -69,7 +71,7 @@ BamDude перевикористовує вже збережений вхід у
 
 | Permission | Що дозволяє |
 |------------|--------------|
-| `makerworld:view` | Заходити на сторінку MakerWorld, парсити URL, бачити метадані, бачити вкладку History. |
+| `makerworld:view` | Заходити на вкладку MakerWorld, парсити URL, бачити метадані, бачити вкладку History. |
 | `makerworld:import` | Власне тригерити завантаження в бібліотеку. Те саме потрібно і для Re-download. |
 
 Дефолтні групи: **Operators** отримують обидва, **Viewers** — тільки `makerworld:view`. Адміни — обидва.
@@ -203,7 +205,7 @@ Re-download оновлює обидва файли обкладинок поря
 - **3MF size cap: 200 МБ.** Більше — fail з ясною помилкою.
 
 !!! warning "Bambu Cloud токен живе ~90 днів"
-    Bambu Cloud bearer-и експайряться приблизно через 90 днів. BamDude поновлює протермінований токен збереженим refresh-токеном, і імпорт триває. Коли в поновленні відмовлено — або токен вставлено вручну і refresh-токена в нього немає — сторінка MakerWorld показує **Вхід у Bambu Cloud протермінувався**: увійди в Bambu Cloud знову на сторінці **Профілі**. Хмарні профілі й перевірка прошивок користуються тим самим входом, тож один вхід відновлює всі три.
+    Bambu Cloud bearer-и експайряться приблизно через 90 днів. BamDude поновлює протермінований токен збереженим refresh-токеном, і імпорт триває. Коли в поновленні відмовлено — або токен вставлено вручну і refresh-токена в нього немає — вкладка MakerWorld показує **Вхід у Bambu Cloud протермінувався**: увійди в Bambu Cloud знову на сторінці **Профілі**. Хмарні профілі й перевірка прошивок користуються тим самим входом, тож один вхід відновлює всі три.
 
 ---
 
@@ -222,7 +224,7 @@ Re-download оновлює обидва файли обкладинок поря
 
 Розділу MakerWorld у Settings нема:
 
-- **Стан входу** — банер на сторінці MakerWorld, коли завантаження вимкнені (токена нема або він протермінувався); те саме повертає `GET /api/v1/makerworld/status`.
+- **Стан входу** — банер на вкладці MakerWorld, коли завантаження вимкнені (токена нема або він протермінувався); те саме повертає `GET /api/v1/makerworld/status`.
 - **Default folder** — auto-created top-level `MakerWorld`. Можна перевизначити через folder-picker на кнопці Import.
 
 Облікові дані живуть на сторінці **Профілі** (вхід у Bambu Cloud); allowlist хостів CDN зафіксовано задля безпеки.
@@ -237,7 +239,7 @@ Re-download оновлює обидва файли обкладинок поря
 |---|---|---|---|
 | `/api/v1/makerworld/status` | GET | `makerworld:view` | `has_cloud_token`, `can_download` і `sign_in_expired` — збережений токен, який Bambu відхилив (`can_download` тоді `false`). |
 | `/api/v1/makerworld/resolve` | POST | `makerworld:view` | URL → дизайн + список плит + плоский already-imported ID-список + per-variant dedupe-мапа (`already_imported_by_profile_id`). |
-| `/api/v1/makerworld/import` | POST | `makerworld:import` | Завантажити конкретну плиту (`profile_id`) у бібліотеку. Записує рядок meta + обкладинки поряд з 3MF. Непридатна відповідь MakerWorld — це `502` з [її повідомленням](#unusable-answer), і нічого не записується. Необов'язковий `source_type` називає постачальника моделей (типове і єдине зареєстроване значення — `makerworld`); невідомий — `400` ще до будь-якого запису. |
+| `/api/v1/makerworld/import` | POST | `makerworld:import` | Завантажити конкретну плиту (`profile_id`) у бібліотеку. Записує рядок meta + обкладинки поряд з 3MF. Непридатна відповідь MakerWorld — це `502` з [її повідомленням](#unusable-answer), і нічого не записується. Необов'язковий `source_type` називає постачальника моделей (типове значення — `makerworld`, і лише його цей маршрут приймає: Manyfold має [власні маршрути](manyfold.md#developer-reference)); будь-яке інше — `400` ще до будь-якого запису. |
 | `/api/v1/makerworld/imports` | GET | `makerworld:view` | Server-paginated сітка для вкладки History. Query-параметри: `page`, `per_page` (1–200, типово 24), `search` (ім'я файла, назва або автор з meta), `sort_by` (`date-desc` / `date-asc` / `name-asc` / `name-desc`). Повертає стандартний envelope `{data, meta:{total, current_page, per_page, last_page}}`. |
 | `/api/v1/makerworld/imports/{id}/meta` | GET | `makerworld:view` + файл бібліотеки видимий для того, хто питає | Зафіксований рядок meta-таблиці (title / author / license / sliced-for / compatibility / materials). `404` для файла, якого той, хто питає, не бачить, файла в кошику або файла без метаданих MakerWorld. |
 | `/api/v1/makerworld/imports/{id}/cover` | GET | медіатокен, `library:read_all` / `library:read_own` | Локально-кешована model-обкладинка. Токен їде в `?token=`, бо `<img src>` не може слати auth-хедер. |
@@ -272,5 +274,6 @@ Re-download оновлює обидва файли обкладинок поря
 ## :material-link-variant: Дивись також
 
 - [File Manager](file-manager.md) — куди MakerWorld-імпорти потрапляють. Колонка з provenance-бейджем описана там.
+- [Бібліотека Manyfold](manyfold.md) — інша вкладка сторінки **Джерела моделей**: перегляд Manyfold на власному сервері та імпорт його файлів.
 - [Slicer API](slicer-api.md) — поєднай MakerWorld-імпорти зі server-side слайсингом, якщо плита не пресляйснута під твою модель.
 - [Bambu Cloud setup](authentication.md) — потрібно зробити перед першим імпортом.

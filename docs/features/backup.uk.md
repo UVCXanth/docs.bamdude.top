@@ -208,7 +208,7 @@ sudo systemctl restart bamdude
 | **Cloud profiles** | Filament, printer, process профілі з Bambu Cloud. | :material-check: On |
 | **Spools** | Повний дамп інвентаря: повний запис кожної котушки, архівні теж, і вся історія використання разом із друком, якому належить кожен запис, — вбудованого інвентаря і [режиму Spoolman](spoolman.md#spoolman-usage-history). | :material-check: On |
 | **Archives (метадані)** | Метадані історії друку — філамент, температури, час, вартість, енергія (без 3MF / без мініатюр). | :material-check: On |
-| **App settings** | Таблиця application settings. Токени входу Bambu Cloud і Orca Cloud — access- і refresh-токени та ще не завершений вхід в Orca Cloud — ніколи не експортуються. Credentials підключених сервісів (MQTT, Home Assistant, Prometheus) є частиною налаштувань і експортуються — саме тому репозиторій має бути приватним. | :material-close: Off |
+| **App settings** | Таблиця application settings. Токени входу Bambu Cloud і Orca Cloud — access- і refresh-токени та ще не завершений вхід в Orca Cloud — ніколи не експортуються. Не експортується й секрет клієнта [підключення Manyfold](manyfold.md#client-secret); його адреса та ідентифікатор клієнта експортуються. Credentials підключених сервісів (MQTT, Home Assistant, Prometheus) є частиною налаштувань і експортуються — саме тому репозиторій має бути приватним. | :material-close: Off |
 | **Archives (3MF + мініатюри)** | Bulk 3MF + thumbnail-вміст — додає ~50–500 МБ репо на 100 друків. | :material-close: Off |
 
 Тільки змінені файли генерують комміти — no-op запуск пишеться як `skipped`.

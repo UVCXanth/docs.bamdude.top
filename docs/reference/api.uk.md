@@ -170,6 +170,7 @@ BamDude обмежує частоту запитів на endpoint-ах авте
 | `/archives/*` | Історія друку | список, отримання, передрук, видалення, **`retry-download`**, **`cleanup/preview`**, **`cleanup/run`**, **`cleanup/status`** |
 | `/queue/*`, `/background-dispatch/*` | Керування чергою + dispatch | додавання, перевпорядкування, скасування, set-status, стан dispatch-у |
 | `/library/*` | Файловий менеджер | завантаження, список, видалення, теги, нотатки (`files/{id}/notes`, `notes/{id}`), фото (`files/{id}/photos`), власне посилання файла (`files/{id}/external-url`), перейменування й переміщення папок (`PUT folders/{id}`), зовнішні папки та їхні скани (`folders/external`, `folders/{id}/scan`, `scan-jobs/{id}`) — і водночас інбокс для аплоадів з віртуального принтера. Права кожного маршруту: [Файловий менеджер → API-ендпоінти](../features/file-manager.uk.md#api-endpoints) |
+| `/model-sources/manyfold/*` | Джерело моделей Manyfold | стан, список і пошук моделей (`models`), модель з її файлами (`models/{model_id}`), її зображення, імпорт одного файла (`import`) та підключення (`connection`, `connection/test`). Права для кожного маршруту: [Бібліотека Manyfold → Довідка для розробників](../features/manyfold.md#developer-reference) |
 | `/projects/*` | Групування за проєктами | CRUD, план друку, архіви проєкту |
 | `/macros/*` | G-code- та MQTT-action-макроси | CRUD, виконання |
 | `/notifications/*`, `/notification-templates/*`, `/user-notifications/*`, `/telegram/*` | Вихідні канали | CRUD провайдерів, перевизначення шаблонів, тестове надсилання, конфіг Telegram-бота |
@@ -223,6 +224,7 @@ Endpoint-и за stream-токен-шлюзом (щоб його отримат�
 | `GET /products/{id}/attachment-image/{file}` · `/cover-image` · `GET /projects/{id}/cover-image` | `products:read` для зображень виробу, `orders:read` для обкладинки замовлення |
 | `GET /printers/{id}/camera-cover` | `printers:read` — обкладинка поточного завдання з локального архіву (ніколи не ініціює FTP-вибірку) |
 | `GET /makerworld/thumbnail?url=...` | `makerworld:view` |
+| `GET /model-sources/manyfold/models/{model_id}/preview` | `manyfold:view` |
 
 Публічні, без токена: `GET /archives/{id}/photos/{file}` (сповіщення посилаються на фото завершеного друку для сервісів, що тягнуть без облікових даних), `GET /external-links/{id}/icon` і `GET /auth/oidc/providers/{id}/icon` (сторінка входу). Токен Cam Wall, оверлею чи кіоску не відкриває жодного медіа-endpoint-а.
 

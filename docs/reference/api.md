@@ -170,6 +170,7 @@ The 43 route modules under `backend/app/api/routes/` are registered under the `/
 | `/archives/*` | Print history | list, get, reprint, delete, **`retry-download`**, **`cleanup/preview`**, **`cleanup/run`**, **`cleanup/status`** |
 | `/queue/*`, `/background-dispatch/*` | Queue management + dispatch | add, reorder, cancel, set-status, dispatch state |
 | `/library/*` | File manager | upload, list, delete, tags, notes (`files/{id}/notes`, `notes/{id}`), photos (`files/{id}/photos`), a file's own link (`files/{id}/external-url`), folder rename and move (`PUT folders/{id}`), external folders and their scans (`folders/external`, `folders/{id}/scan`, `scan-jobs/{id}`) — also the inbox for virtual-printer uploads. Per-route rights: [File Manager → API endpoints](../features/file-manager.md#api-endpoints) |
+| `/model-sources/manyfold/*` | Manyfold model source | status, model list and search (`models`), a model with its files (`models/{model_id}`), its preview, the import of one file (`import`), and the connection (`connection`, `connection/test`). Per-route rights: [Manyfold library → Developer reference](../features/manyfold.md#developer-reference) |
 | `/projects/*` | Project grouping | CRUD, print plan, archives by project |
 | `/macros/*` | G-code + MQTT-action macros | CRUD, execute |
 | `/notifications/*`, `/notification-templates/*`, `/user-notifications/*`, `/telegram/*` | Outbound channels | provider CRUD, template overrides, test send, Telegram bot config |
@@ -223,6 +224,7 @@ The **media token** is minted by any signed-in user with `POST /auth/media-token
 | `GET /products/{id}/attachment-image/{file}` · `/cover-image` · `GET /projects/{id}/cover-image` | `products:read` for a product's pictures, `orders:read` for an order's cover |
 | `GET /printers/{id}/camera-cover` | `printers:read` — the current job's cover, served from the local archive (never triggers an FTP fetch) |
 | `GET /makerworld/thumbnail?url=...` | `makerworld:view` |
+| `GET /model-sources/manyfold/models/{model_id}/preview` | `manyfold:view` |
 
 Public, no token: `GET /archives/{id}/photos/{file}` (notifications link finished-print photos for services that fetch without credentials), `GET /external-links/{id}/icon` and `GET /auth/oidc/providers/{id}/icon` (the sign-in page). A Cam Wall, overlay or kiosk token opens no media endpoint.
 

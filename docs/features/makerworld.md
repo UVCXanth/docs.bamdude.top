@@ -9,7 +9,9 @@ Paste a [MakerWorld](https://makerworld.com/) model URL into BamDude, pick a pla
 
 The integration is **paste-driven**, not search-driven: the public `design/search` endpoint returns empty results from server-originated requests, so duplicating MakerWorld's catalog inside BamDude isn't viable. The actual discovery pattern users already follow — Reddit links, YouTube descriptions, shared chats — fits a paste-first flow cleanly without that limitation.
 
-The MakerWorld page splits into two underline-style tabs:
+MakerWorld is a tab of the **Model sources** page: open **Model sources** in the sidebar and pick the **MakerWorld** tab. The tab strip is shown when you can use more than one source; with MakerWorld alone the page opens straight on it. Links and bookmarks to `/makerworld` open this tab. The other tab, **Manyfold**, browses a self-hosted model library — see [Manyfold library](manyfold.md).
+
+The MakerWorld tab splits into two underline-style tabs of its own:
 
 - **Import** — paste a URL, resolve the design, preview every plate with its compatibility badge and per-variant import state, then click Import on the one (or all) you want.
 - **History** — paginated 4-column grid of everything you've already imported, search across filename / title / author, sort by date / title / author, locally-cached cover thumbnails.
@@ -54,7 +56,7 @@ BamDude reuses your existing **Bambu Cloud** sign-in for downloads — there's n
 - **Anonymous calls** (URL parsing, design metadata, plate enumeration) work without a token.
 - **Download calls** (`/design-service/instance/{instanceId}/f3mf`, and `/iot-service/api/user/profile/{profileId}` when the first gives no link) require your stored Bambu Cloud bearer.
 
-If no token is stored, the MakerWorld page shows a **Bambu Cloud sign-in required to download** banner and the Import and Print buttons stay disabled — sign in to Bambu Cloud on the **Profiles** page first.
+If no token is stored, the MakerWorld tab shows a **Bambu Cloud sign-in required to download** banner and the Import and Print buttons stay disabled — sign in to Bambu Cloud on the **Profiles** page first.
 
 A stored token that has expired is renewed with the stored refresh token, and the import simply goes through (see [Token lifetime](cloud-profiles.md#token-lifetime)). If Bambu Cloud cannot be reached for that renewal, the import answers *Bambu Cloud could not be reached to renew the expired sign-in. Try again shortly.* and the stored sign-in is kept.
 
@@ -69,7 +71,7 @@ If a token is stored but Bambu has stopped accepting it and refuses the renewal,
 
 | Permission | Grants |
 |------------|--------|
-| `makerworld:view` | Browse the MakerWorld page, paste URLs, see resolved metadata, see Recent imports. |
+| `makerworld:view` | Browse the MakerWorld tab, paste URLs, see resolved metadata, see Recent imports. |
 | `makerworld:import` | Actually trigger a download into the library. |
 
 The default groups grant both to **Operators** and only `makerworld:view` to **Viewers**. Admins get both.
@@ -203,7 +205,7 @@ For thumbnails on the **Import** tab (the resolve preview shows MakerWorld's hos
 - **3MF size cap: 200 MB.** Larger plates fail the SSRF-guarded download with a clear error.
 
 !!! warning "Bambu Cloud token has ~90-day lifetime"
-    Bambu Cloud bearers expire after roughly 90 days. BamDude renews an expired one with the stored refresh token and the import goes on. When the renewal is refused — or the token was pasted by hand and has no refresh token — the MakerWorld page shows **Bambu Cloud sign-in expired**: sign in to Bambu Cloud again on the **Profiles** page. Cloud profiles and firmware checks use the same sign-in, so one sign-in restores all three.
+    Bambu Cloud bearers expire after roughly 90 days. BamDude renews an expired one with the stored refresh token and the import goes on. When the renewal is refused — or the token was pasted by hand and has no refresh token — the MakerWorld tab shows **Bambu Cloud sign-in expired**: sign in to Bambu Cloud again on the **Profiles** page. Cloud profiles and firmware checks use the same sign-in, so one sign-in restores all three.
 
 ---
 
@@ -222,7 +224,7 @@ For thumbnails on the **Import** tab (the resolve preview shows MakerWorld's hos
 
 There is no MakerWorld section in Settings:
 
-- **Sign-in state** — shown on the MakerWorld page as a banner when downloads are off (no token, or an expired one); `GET /api/v1/makerworld/status` returns the same.
+- **Sign-in state** — shown on the MakerWorld tab as a banner when downloads are off (no token, or an expired one); `GET /api/v1/makerworld/status` returns the same.
 - **Default folder** — the auto-created top-level `MakerWorld` folder. Override per import via the folder picker on the import button.
 
 Credentials live on the **Profiles** page (Bambu Cloud sign-in); the CDN host allowlist is fixed for security.
@@ -237,7 +239,7 @@ Credentials live on the **Profiles** page (Bambu Cloud sign-in); the CDN host al
 |---|---|---|---|
 | `/api/v1/makerworld/status` | GET | `makerworld:view` | `has_cloud_token`, `can_download`, and `sign_in_expired` — a stored token Bambu has rejected (`can_download` is then `false`). |
 | `/api/v1/makerworld/resolve` | POST | `makerworld:view` | Resolve URL → design + plate list + flat already-imported IDs + per-variant dedupe map (`already_imported_by_profile_id`). |
-| `/api/v1/makerworld/import` | POST | `makerworld:import` | Download a specific plate (`profile_id`) into the library. Writes the meta row + cover images alongside the 3MF. An unusable answer from MakerWorld is a `502` with [its message](#unusable-answer) and writes nothing. Optional `source_type` names the model provider (default and only registered value: `makerworld`); an unknown one is a `400` before anything is written. |
+| `/api/v1/makerworld/import` | POST | `makerworld:import` | Download a specific plate (`profile_id`) into the library. Writes the meta row + cover images alongside the 3MF. An unusable answer from MakerWorld is a `502` with [its message](#unusable-answer) and writes nothing. Optional `source_type` names the model provider (default `makerworld`, the only value this route accepts — Manyfold has [its own routes](manyfold.md#developer-reference)); any other value is a `400` before anything is written. |
 | `/api/v1/makerworld/imports` | GET | `makerworld:view` | Server-paginated grid for the History tab. Query params: `page`, `per_page` (1–200, default 24), `search` (filename, meta title or author), `sort_by` (`date-desc` / `date-asc` / `name-asc` / `name-desc`). Returns the standard `{data, meta:{total, current_page, per_page, last_page}}` envelope. |
 | `/api/v1/makerworld/imports/{id}/meta` | GET | `makerworld:view` + the library file is visible to the caller | The captured meta-table row (title / author / license / sliced-for / compatibility / materials). `404` for a file the caller cannot see, a file in the trash, or one without MakerWorld metadata. |
 | `/api/v1/makerworld/imports/{id}/cover` | GET | media token, `library:read_all` / `library:read_own` | Locally-cached model cover image. The token rides in `?token=` because `<img src>` can't send auth headers. |
@@ -272,5 +274,6 @@ The same `…/design-service/instance/{id}/f3mf` path on the `makerworld.com` ho
 ## :material-link-variant: Related
 
 - [File Manager](file-manager.md) — where MakerWorld imports land. The provenance badge column is documented there.
+- [Manyfold library](manyfold.md) — the other tab of **Model sources**: browse a self-hosted Manyfold and import its files.
 - [Slicer API](slicer-api.md) — pair MakerWorld imports with server-side slicing if a plate isn't pre-sliced for your printer model.
 - [Bambu Cloud setup](authentication.md) — required once before the first download.

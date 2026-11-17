@@ -515,6 +515,8 @@ The **Tags** dialog lists both kinds, automatic ones in a locked section with th
 
 It shows the file's facts, read-only: **Name**, **Type**, **Size**, **Folder**, **Added by**, **Added**, **Updated**, **Hash** (shortened; hover it for the full value), **Source** when the file came with one — a MakerWorld import, for instance — and the number of **Notes**.
 
+A file imported from [Manyfold](manyfold.md) also shows where it came from, as it was at the import: **Model**, **Creator** and **Licence**. Its **Source** is the address of the model's page in Manyfold, and **Open in Manyfold** in the file's menu opens that page.
+
 ### Your own link {#file-link}
 
 Below the facts is **Link**: one web address of your choice for the file — a model page, a datasheet. It is kept beside **Source** and never replaces it.

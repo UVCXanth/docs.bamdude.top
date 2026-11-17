@@ -208,7 +208,7 @@ Toggle each independently. Defaults are tuned for "back up the things most opera
 | **Cloud profiles** | Filament, printer, and process profiles from Bambu Cloud. | :material-check: On |
 | **Spools** | Full inventory dump: every spool's full record, archived spools included, plus the complete usage history with the print each record belongs to — of the built-in inventory and of [Spoolman mode](spoolman.md#spoolman-usage-history). | :material-check: On |
 | **Archives (metadata)** | Print history metadata — filament, temperatures, times, costs, energy (no 3MF / no thumbnails). | :material-check: On |
-| **App settings** | Application settings table. The sign-in tokens of Bambu Cloud and Orca Cloud — access and refresh tokens, and a pending Orca Cloud sign-in — are never exported. Credentials of connected services (MQTT, Home Assistant, Prometheus) are part of the settings and are exported, which is why the repository must be private. | :material-close: Off |
+| **App settings** | Application settings table. The sign-in tokens of Bambu Cloud and Orca Cloud — access and refresh tokens, and a pending Orca Cloud sign-in — are never exported. Neither is the client secret of the [Manyfold connection](manyfold.md#client-secret); its address and client ID are. Credentials of connected services (MQTT, Home Assistant, Prometheus) are part of the settings and are exported, which is why the repository must be private. | :material-close: Off |
 | **Archives (3MF + thumbnails)** | Bulk 3MF + thumbnail file content — bumps repo size by ~50–500 MB per 100 prints. | :material-close: Off |
 
 Only changed files generate commits — a no-op run is recorded as `skipped`.

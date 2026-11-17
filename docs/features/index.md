@@ -79,6 +79,11 @@ Browse, upload, and manage your local library of print files. Print directly or 
 Lay STL, OBJ and STEP models out densely — small parts inside larger ones — and save ready project 3MF files for several printers at once.
 </div>
 
+<div class="feature-card" markdown>
+### [:material-bookshelf: Manyfold library](manyfold.md)
+Browse and search a self-hosted Manyfold model library and import its files into the File Manager.
+</div>
+
 </div>
 
 ---
