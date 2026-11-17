@@ -21,7 +21,7 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | `time_format` | `system` | `system` (browser locale), `12h`, or `24h`. ETA / timestamp display in cards, notifications, and emails. |
 | `date_format` | `system` | `system` (browser locale), `us` (`MM/DD/YYYY`), `eu` (`DD/MM/YYYY`), `iso` (`YYYY-MM-DD`). Controls every user-visible date. |
 | `currency` | `USD` | Currency code for cost tracking display. |
-| `external_url` | empty | Public-facing URL of BamDude. Wins over the `APP_URL` env var. Used in password-reset / MFA email links, OIDC callback construction, the Obico cached-frame URL, and the photo links in notifications. Set this when you front BamDude with a reverse proxy. |
+| `external_url` | empty | Public-facing URL of BamDude. Wins over the `APP_URL` env var. Used in password-reset / MFA email links, OIDC callback construction, the Obico cached-frame URL (unless `obico_snapshot_base_url` is set), and the photo links in notifications. Set this when you front BamDude with a reverse proxy. |
 | `default_printer_id` | unset | Default printer for new queue items / Print Now from the file manager. |
 | `default_sidebar_order` | empty | Admin-set default sidebar item order — JSON `{"order": [...ids]}` or a JSON array. Empty = use built-in order. |
 | `check_updates` | `true` | Periodically check the BamDude release feed for new versions. |
@@ -227,10 +227,11 @@ See [Obico AI Failure Detection](../features/obico.md) for context on each.
 |---|---|---|
 | `obico_enabled` | `false` | Master toggle. |
 | `obico_ml_url` | empty | ML API endpoint URL (e.g. `http://192.168.1.10:3333`). |
-| `obico_sensitivity` | `medium` | `low`, `medium`, or `high`. |
-| `obico_action` | `notify` | `notify`, `pause`, or `pause_and_off`. |
+| `obico_snapshot_base_url` | empty | **BamDude address for the ML API (optional)** — the address the ML API fetches camera frames from: BamDude's LAN address or its Docker service name (e.g. `http://bamdude:8000`). A full `http://` or `https://` address without credentials, query parameters or a fragment. Empty = `external_url` is used. Only frame fetching uses it. Administrators only; saved with **Save connection**. |
+| `obico_sensitivity` | `medium` | `low`, `medium`, or `high`. Scales the Low / High thresholds, and the Pause level (1.75 × High) with them. |
+| `obico_action` | `notify` | `notify`, `pause`, or `pause_and_off`. A notification is sent once per print at the alert level whatever the action; `pause` and `pause_and_off` act at the stronger Pause level, also once per print. |
 | `obico_poll_interval` | `10` | Seconds between detection checks while a print is running. Range 5 – 120. |
-| `obico_enabled_printers` | empty | JSON array of printer IDs to monitor. Empty = monitor every connected printer. |
+| `obico_enabled_printers` | empty | JSON array of printer IDs to monitor. Empty = monitor every connected printer. A deleted printer is removed from the list. |
 
 ## :material-content-save: Local backups
 

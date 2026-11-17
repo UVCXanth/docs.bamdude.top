@@ -21,7 +21,7 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 | `time_format` | `system` | `system` (browser locale), `12h` або `24h`. ETA / timestamps у картках, нотифікаціях, листах. |
 | `date_format` | `system` | `system` (browser locale), `us` (`MM/DD/YYYY`), `eu` (`DD/MM/YYYY`), `iso` (`YYYY-MM-DD`). Контролює кожну видиму дату. |
 | `currency` | `USD` | Код валюти для відображення вартості. |
-| `external_url` | пусто | Публічний URL BamDude. Виграє над env-змінною `APP_URL`. Використовується в password-reset / MFA email-посиланнях, OIDC callback construction, Obico cached-frame URL і посиланнях на фото у сповіщеннях. Постав, коли BamDude за reverse proxy. |
+| `external_url` | пусто | Публічний URL BamDude. Виграє над env-змінною `APP_URL`. Використовується в password-reset / MFA email-посиланнях, OIDC callback construction, Obico cached-frame URL (якщо не задано `obico_snapshot_base_url`) і посиланнях на фото у сповіщеннях. Постав, коли BamDude за reverse proxy. |
 | `default_printer_id` | не задано | Default-принтер для нових queue-items / Print Now з file-manager. |
 | `default_sidebar_order` | пусто | Admin-задано дефолтне впорядкування sidebar — JSON `{"order": [...ids]}` або JSON-масив. Пусто = вбудоване впорядкування. |
 | `check_updates` | `true` | Періодично перевіряти release-feed BamDude на нові версії. |
@@ -227,10 +227,11 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 |---|---|---|
 | `obico_enabled` | `false` | Master-toggle. |
 | `obico_ml_url` | пусто | URL ML API (наприклад `http://192.168.1.10:3333`). |
-| `obico_sensitivity` | `medium` | `low`, `medium` або `high`. |
-| `obico_action` | `notify` | `notify`, `pause` або `pause_and_off`. |
+| `obico_snapshot_base_url` | пусто | **Адреса BamDude для ML API (необов’язково)** — адреса, з якої ML API забирає кадри камери: адреса BamDude в локальній мережі або ім’я його сервісу Docker (наприклад `http://bamdude:8000`). Повна адреса з `http://` або `https://`, без логіна й пароля, параметрів запиту та фрагмента. Пусто = береться `external_url`. Стосується лише кадрів. Лише для адміністраторів; зберігається кнопкою **Зберегти підключення**. |
+| `obico_sensitivity` | `medium` | `low`, `medium` або `high`. Зсуває пороги Low / High, а з ними й рівень паузи (1,75 × High). |
+| `obico_action` | `notify` | `notify`, `pause` або `pause_and_off`. Сповіщення надсилається один раз за друк на рівні сповіщення, хай яка дія; `pause` і `pause_and_off` спрацьовують на сильнішому рівні паузи, теж один раз за друк. |
 | `obico_poll_interval` | `10` | Секунди між detection-перевірками під час друку. Діапазон 5 – 120. |
-| `obico_enabled_printers` | пусто | JSON-масив printer-ID, на яких детекція активна. Пусто = всі підключені принтери. |
+| `obico_enabled_printers` | пусто | JSON-масив printer-ID, на яких детекція активна. Пусто = всі підключені принтери. Видалений принтер зі списку прибирається. |
 
 ## :material-content-save: Локальні бекапи
 

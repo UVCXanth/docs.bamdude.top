@@ -21,7 +21,7 @@ The installer builds the ML image from the official [Obico server `release` bran
     ```
 
 - Internet access for GitHub, the container registry and model downloads. Allow several GB of disk space for source, images and build cache; the model alone is hundreds of MB. Memory and CPU needs depend on the model and polling load.
-- Network access **in both directions**: BamDude → ML API, and the ML container → BamDude's External URL to retrieve camera frames.
+- Network access **in both directions**: BamDude → ML API, and the ML container → BamDude to retrieve camera frames (at the address you give in step 3 of [Connect BamDude](#connect-bamdude)).
 
 ## Download the script
 
@@ -79,8 +79,8 @@ Do not reuse a full Obico installation directory. This script neither migrates n
     ```
 
 2. Open **Settings → AI failure detection** in BamDude. Set **Obico ML API URL** to `http://10.0.0.20:3333` and paste the token into **ML API token**. Use the base URL, without `/p/`, `/hc/` or `/api/v1/octo/`.
-3. Set **Settings → Network → External URL** to the address of **BamDude**, reachable from the ML container. For example, `http://10.0.0.10:8000` if BamDude is served on that address and port. `localhost` inside the ML container means the container itself.
-4. Enable detection, choose the printers and use **Check**. Start with **Notify only** while assessing the camera view and sensitivity.
+3. Tell the ML container where to fetch camera frames from. On the same page, set **BamDude address for the ML API (optional)** to the address of **BamDude** as the ML container reaches it — for example, `http://10.0.0.10:8000` if BamDude is served on that address and port — and press **Save connection**. `localhost` inside the ML container means the container itself. The ML container this script creates runs in its own Compose project, so use BamDude's LAN address; a Docker service name such as `http://bamdude:8000` works only when you have put both containers on one Docker network. If you leave the field empty, **Settings → Network → External URL** is used instead, and then that address must be reachable from the ML container without a login page in front of it.
+4. Enable detection, choose the printers and use **Test**. Start with **Notify only** while assessing the camera view and sensitivity.
 5. During an active print, verify that the analysed-frame count increases. This confirms the camera → BamDude → ML path, beyond a successful health check.
 
 Do not share `.env` or the output of `token`. `/hc/` is public even when inference requires authentication, so a healthy endpoint alone does not prove the token is correct. The installer checks readiness, rejection without a token and acceptance of the configured token; it does not send a real camera frame.
@@ -115,7 +115,7 @@ The last command should print `ok`. A response body of `error`, even with HTTP 2
 | Port already in use / cannot bind address | The selected IP must belong to this host and the port must be free. Change `ML_BIND` or `ML_PORT` in `.env`, then run `update`. |
 | Build/download failure | Registry/GitHub/model-host connectivity, free disk space and the Docker build output. |
 | Healthy ML but BamDude reports 401 | Paste the value from `token` into BamDude's ML API token field. |
-| Healthy ML but no detections | Check an active print, selected printers, camera availability and the External URL reachable **from the ML container**. A login gateway in front of BamDude must allow the cached-frame callback. |
+| Healthy ML but no detections | Check an active print, selected printers, camera availability and whether the address in **BamDude address for the ML API** (or, with that field empty, the External URL) is reachable **from the ML container**. A login gateway in front of BamDude must allow the cached-frame callback — or give the ML API BamDude's LAN address in that field so it does not go through the gateway. |
 | Source checkout has local changes / non-fast-forward merge | Inspect `source/`; the updater deliberately does not discard local edits or reset Git history. |
 | Install failed before cloning finished | Inspect the partial directory. Retry in a new empty directory; do not delete an existing installation blindly. After cloning has completed, `update` can retry a failed build or startup. |
 | API responds but there are no saved frames | Saved detection history is a BamDude feature, not storage in the ML container. Check the recording setting and which events the installed BamDude version records; the live frame counter does not mean every frame was saved. |
