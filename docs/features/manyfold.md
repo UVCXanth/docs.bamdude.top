@@ -126,7 +126,7 @@ The test reads the instance's API description, signs in, and reads the first pag
 
 The address of the page holds the search words, the page number and the open model. A link to it can be shared, a reload returns to the same place, and the browser's **Back** returns from a model to the list it was opened from.
 
-Previews come through BamDude: the server fetches the picture from Manyfold and serves it only when it really is an image.
+Previews come through BamDude: the server fetches the picture from Manyfold and serves it only when it really is an image. The picture is the one Manyfold shows for the model — a photo, or the render of a 3D file when Manyfold made one; when Manyfold has no render, BamDude shows the model's first image file instead. A model with neither has a neutral tile; switching on model renders in Manyfold's settings gives such models a picture.
 
 ---
 
