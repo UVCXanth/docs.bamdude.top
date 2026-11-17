@@ -80,6 +80,11 @@ MJPEG потокове відео та знімки з вбудованої ка
 </div>
 
 <div class="feature-card" markdown>
+### [:material-cube-send: Імпорт із MakerWorld](makerworld.md)
+Вставте посилання на модель MakerWorld, виберіть плиту — і 3MF опиниться у файловому менеджері з посиланням на свою сторінку.
+</div>
+
+<div class="feature-card" markdown>
 ### [:material-bookshelf: Бібліотека Manyfold](manyfold.md)
 Перегляд і пошук у бібліотеці моделей Manyfold на власному сервері та імпорт її файлів до файлового менеджера.
 </div>

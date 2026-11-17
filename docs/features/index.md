@@ -80,6 +80,11 @@ Lay STL, OBJ and STEP models out densely — small parts inside larger ones — 
 </div>
 
 <div class="feature-card" markdown>
+### [:material-cube-send: MakerWorld import](makerworld.md)
+Paste a MakerWorld model link, pick a plate, and the 3MF lands in the File Manager with a link back to its page.
+</div>
+
+<div class="feature-card" markdown>
 ### [:material-bookshelf: Manyfold library](manyfold.md)
 Browse and search a self-hosted Manyfold model library and import its files into the File Manager.
 </div>
