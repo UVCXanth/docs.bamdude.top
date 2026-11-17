@@ -232,6 +232,27 @@ The web UI keeps both tokens cached per session and refreshes them before expiry
 
 ---
 
+## Download jobs
+
+A download of a printer's files, or of a print's videos, is a job: created once, prepared on the server's disk, polled, and then fetched. The older `GET /printers/{id}/files/download` and `POST /printers/{id}/files/download-zip` still answer with the file in one request; they are prepared the same way on disk, are subject to the same limits, and the ZIP one reports files it had to leave out in the `X-Download-Failed` header.
+
+| Endpoint | What it does |
+|----------|--------------|
+| `POST /printers/{id}/files/download-jobs` | Start a job. Body: `paths` (1–1000 absolute file paths), optional `storage`, `sizes` (path → bytes, as listed), `as_zip`, `filename`. Answers `202` with the job. Several files are always one ZIP. |
+| `GET /printers/{id}/files/download-jobs` | The caller's own jobs for this printer. |
+| `GET /printers/{id}/files/download-jobs/{job_id}` | The job: `phase`, counts, bytes received, `failures`, `error`. |
+| `DELETE /printers/{id}/files/download-jobs/{job_id}` | Cancel a job that is being prepared, or drop a finished one. A cancelled job reads `cancelling` until its transfer has really stopped, then `cancelled`. |
+| `GET /printers/{id}/files/download-jobs/{job_id}/artifact` | The finished file, for a client that sends headers (an API key). Add `?accept_partial=true` to take a partial result. |
+| `POST /printers/{id}/files/download-jobs/{job_id}/download-token` | Browser sessions only: a one-time URL the browser saves the file from. An API key is refused (`403`) and uses `/artifact`. |
+| `GET /archives/{id}/media-sources` | What can be downloaded for a print: `local`, `timelapse` and `camera`, each with its own `status`. Optional `offset_minutes` (the printer's clock ahead of UTC) and `margin_minutes`. |
+| `POST /archives/{id}/media-download-jobs` | Start a job over an archive: `assets` (ids from `local`) and/or `remote` (`printer_id`, `storage`, `path`, optional `size` — the archive's own printer only). The other job endpoints mirror the printer ones under `/archives/{id}/media-download-jobs/…`. |
+
+`phase` is one of `queued`, `preparing`, `cancelling`, `ready`, `failed`, `cancelled`, `expired`. A failed job carries an `error` code: `authority_lost`, `limit_exceeded`, `insufficient_storage`, `time_limit`, `nothing_downloaded`, `interrupted`, `cleanup_incomplete` or `internal`. A `ready` job with `partial: true` holds only the files that could be read; `failures` names the rest.
+
+A job belongs to the credential that created it: another user's job, another key's job and a job that does not exist are the same `404`. Printer jobs need `printers:files`; archive jobs need the right to read the archive, and `printers:files` only when they read the printer. Refusals at creation carry a code in `detail.error`: `download_queue_full` and `download_user_limit` (`429`, with `Retry-After`), `insufficient_storage` (`507`), `limit_exceeded` and `too_many_files` (`413`), `downloads_unavailable` (`503`, during a restore).
+
+The finished file is always sent whole — `200` with `Accept-Ranges: none`; a `Range` header is ignored. Jobs live in memory: a restart forgets them, and a result that nobody fetched is removed after an hour.
+
 ## :material-bell-ring: Webhooks and realtime events
 
 BamDude does **not** expose outbound webhooks for application events. Use a [notification provider](../features/notifications.md) (Telegram, Discord, ntfy, Pushover, Email, Home Assistant) when you need a one-way push.

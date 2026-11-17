@@ -232,6 +232,27 @@ Endpoint-и за stream-токен-шлюзом (щоб його отримат�
 
 ---
 
+## Завдання завантаження
+
+Завантаження файлів принтера або відео друку — це завдання: воно створюється один раз, готується на диску сервера, опитується, а потім забирається. Старіші `GET /printers/{id}/files/download` і `POST /printers/{id}/files/download-zip` і далі відповідають файлом за один запит; вони так само готуються на диску, мають ті самі межі, а ZIP-варіант повідомляє про пропущені файли в заголовку `X-Download-Failed`.
+
+| Endpoint | Що робить |
+|----------|-----------|
+| `POST /printers/{id}/files/download-jobs` | Почати завдання. Тіло: `paths` (1–1000 абсолютних шляхів файлів), необов'язкові `storage`, `sizes` (шлях → байти, як у переліку), `as_zip`, `filename`. Відповідає `202` із завданням. Кілька файлів — завжди один ZIP. |
+| `GET /printers/{id}/files/download-jobs` | Власні завдання запитувача для цього принтера. |
+| `GET /printers/{id}/files/download-jobs/{job_id}` | Завдання: `phase`, лічильники, отримані байти, `failures`, `error`. |
+| `DELETE /printers/{id}/files/download-jobs/{job_id}` | Скасувати завдання, що готується, або відкинути готове. Скасоване завдання має `cancelling`, доки передавання справді не зупиниться, потім `cancelled`. |
+| `GET /printers/{id}/files/download-jobs/{job_id}/artifact` | Готовий файл для клієнта, що надсилає заголовки (API-ключ). Додайте `?accept_partial=true`, щоб забрати частковий результат. |
+| `POST /printers/{id}/files/download-jobs/{job_id}/download-token` | Лише для сесій браузера: одноразова адреса, з якої браузер зберігає файл. API-ключ отримує відмову (`403`) і користується `/artifact`. |
+| `GET /archives/{id}/media-sources` | Що можна завантажити для друку: `local`, `timelapse` і `camera`, кожен зі своїм `status`. Необов'язкові `offset_minutes` (на скільки годинник принтера випереджає UTC) і `margin_minutes`. |
+| `POST /archives/{id}/media-download-jobs` | Почати завдання для архіву: `assets` (ідентифікатори з `local`) та/або `remote` (`printer_id`, `storage`, `path`, необов'язковий `size` — лише принтер самого архіву). Решта endpoint-ів завдання повторює принтерні під `/archives/{id}/media-download-jobs/…`. |
+
+`phase` — одне з `queued`, `preparing`, `cancelling`, `ready`, `failed`, `cancelled`, `expired`. Завдання з помилкою має код `error`: `authority_lost`, `limit_exceeded`, `insufficient_storage`, `time_limit`, `nothing_downloaded`, `interrupted`, `cleanup_incomplete` або `internal`. Завдання `ready` з `partial: true` містить лише файли, які вдалося прочитати; решту названо у `failures`.
+
+Завдання належить обліковим даним, що його створили: завдання іншого користувача, іншого ключа й неіснуюче — це той самий `404`. Завданням принтера потрібен `printers:files`; завданням архіву — право читати архів, а `printers:files` лише тоді, коли вони читають принтер. Відмови під час створення мають код у `detail.error`: `download_queue_full` і `download_user_limit` (`429`, з `Retry-After`), `insufficient_storage` (`507`), `limit_exceeded` і `too_many_files` (`413`), `downloads_unavailable` (`503`, під час відновлення).
+
+Готовий файл завжди надсилається цілим — `200` з `Accept-Ranges: none`; заголовок `Range` ігнорується. Завдання живуть у пам'яті: перезапуск їх забуває, а результат, який ніхто не забрав, видаляється за годину.
+
 ## :material-bell-ring: Webhook-и та події в реальному часі
 
 BamDude **не** надає вихідних webhook-ів для подій застосунку. Використовуйте [провайдер сповіщень](../features/notifications.md) (Telegram, Discord, ntfy, Pushover, Email, Home Assistant), коли потрібен односторонній push.
