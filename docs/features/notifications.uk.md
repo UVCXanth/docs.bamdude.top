@@ -445,6 +445,7 @@ ntfy підтримує рівні пріоритету від `1` (мін.) д�
 | **Print events** | 12 | `print_start/complete/failed/stopped/paused/resumed/progress`, `plate_not_empty`, `bed_cooled`, `first_layer_complete`, `pause_coming_up`, `print_missing_spool_assignment` |
 | **Printer status** | 4 | `printer_offline`, `printer_error`, `filament_low`, `maintenance_due` |
 | **AMS environmental** | 2 | `ams_humidity_high`, `ams_temperature_high` (також reuse-яться у runtime для AMS-HT-подій) |
+| **Sensor alerts** | 5 | `sensor_above_max`, `sensor_below_min`, `sensor_back_in_range`, `sensor_silent`, `sensor_speaking_again` — див. [Датчики середовища](sensors.md) |
 | **Print queue** | 7 | `queue_job_added/started/waiting/skipped/failed`, `queue_completed`, `printer_queue_completed` |
 | **Job owner emails** | 4 | `user_print_start/complete/failed/stopped` — SMTP-only, шлеться власнику задачі друку |
 | **System emails** | 2 | `user_created` (welcome), `password_reset` |
@@ -469,21 +470,21 @@ ntfy підтримує рівні пріоритету від `1` (мін.) д�
 Коли провайдер має `daily_digest_enabled` + `daily_digest_time` встановлене, кожна подія, яка спрацювала за день, кладеться в чергу і об'єднується в одне summary-повідомлення на digest-час:
 
 ```
-Daily Print Summary (Apr 14)
+Daily Digest - 5 Events
 
-3 prints completed
-1 print failed
-Total time: 8h 45m
-Filament used: 245g
+== Print Complete (3) ==
+  09:12 [P1S-01] Print complete: Benchy
+  11:40 [X1C-02] Print complete: Phone Stand
+  14:05 [P1S-01] Print complete: Cable Clip
 
-Details:
-- Benchy (2h 15m) - completed
-- Phone Stand (45m) - completed
-- Cable Clip (15m) - completed
-- Prototype v3 (3h 30m) - failed
+== Print Failed (1) ==
+  16:31 [X1C-02] Print failed: Prototype v3
+
+== Filament Low (1) ==
+  13.04 22:48 [P1S-01] Low filament
 ```
 
-Digest-повідомлення поважає той самий вибір мови шаблону, що й immediate-сповіщення — Telegram-чати, прив'язані до операторів з uk-мовою, отримують українське summary, а англомовний email-отримувач — англійське.
+Події згруповано за типом, у порядку, в якому вони сталися. Кожен рядок — це час, принтер у дужках, якщо подія його має, і заголовок, з яким подію було надіслано. Тому рядки йдуть мовою ваших шаблонів, а заголовок digest-у й назви груп незмінні.
 
 Digest, який не вдалося надіслати, зберігає свої події до наступної спроби; події, старші за 48 годин, відкидаються ненадісланими. Подія, перенесена з попереднього дня, показується з датою, а не лише з часом.
 

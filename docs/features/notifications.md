@@ -470,21 +470,21 @@ Templates are picked **per recipient language**: a Telegram chat owned by an ope
 When a provider has `daily_digest_enabled` + `daily_digest_time` set, every event that fires during the day is queued and bundled into one summary message at the digest time:
 
 ```
-Daily Print Summary (Apr 14)
+Daily Digest - 5 Events
 
-3 prints completed
-1 print failed
-Total time: 8h 45m
-Filament used: 245g
+== Print Complete (3) ==
+  09:12 [P1S-01] Print complete: Benchy
+  11:40 [X1C-02] Print complete: Phone Stand
+  14:05 [P1S-01] Print complete: Cable Clip
 
-Details:
-- Benchy (2h 15m) - completed
-- Phone Stand (45m) - completed
-- Cable Clip (15m) - completed
-- Prototype v3 (3h 30m) - failed
+== Print Failed (1) ==
+  16:31 [X1C-02] Print failed: Prototype v3
+
+== Filament Low (1) ==
+  13.04 22:48 [P1S-01] Low filament
 ```
 
-The digest message respects the same template language pick as immediate notifications — Telegram chats owned by uk-language operators get the Ukrainian summary, an English-language email recipient gets the English one.
+Events are grouped by type, in the order they happened. Each line is the time, the printer in brackets when the event has one, and the title the event was sent with — so the lines are in the language of your templates, while the heading and the group names are fixed.
 
 A digest that could not be sent keeps its events for the next attempt; events older than 48 hours are dropped unsent. An event carried over from an earlier day is listed with its date, not only its time.
 
