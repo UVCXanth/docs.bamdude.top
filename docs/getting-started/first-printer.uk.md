@@ -43,7 +43,10 @@ description: Підключення першого принтера Bambu Lab д
 
         SSDP працює, поки контейнер на `network_mode: host` (див.
         [Docker → Host-mode compose](docker.uk.md)). Той самий потік, що й
-        нативний інстал.
+        нативний інстал. Контейнер у мережі macvlan або ipvlan (L2) має
+        власну адресу в LAN і виявляє принтери так само; ipvlan у режимі
+        L3 не пропускає multicast — користуйся subnet picker, як у
+        bridge-мережі.
 
     === "Docker (bridge network)"
 

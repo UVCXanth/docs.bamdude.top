@@ -66,7 +66,7 @@ Archived printers resurface in exactly one place: **Settings → Printing → Ar
 | Action | Icon | What it does |
 |--------|------|--------------|
 | **Restore** | :material-restore: | Unarchive the printer (`POST /api/v1/printers/{id}/unarchive`). It reappears everywhere and reconnects to MQTT — **unless** it's also in Maintenance Mode (`is_active=False`), in which case it stays parked. |
-| **Delete forever** | :material-trash-can: | Permanently delete the printer (`DELETE /api/v1/printers/{id}`). This is irreversible and, by default, also removes the printer's archives. Confirmation is required. |
+| **Delete forever** | :material-trash-can: | Permanently delete the printer (`DELETE /api/v1/printers/{id}`). This is irreversible and, by default, also removes the printer's archives. Its plate-detection reference pictures go with it, so a printer added afterwards starts uncalibrated. Confirmation is required. |
 
 The panel only appears for users with `printers:delete`.
 

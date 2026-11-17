@@ -255,10 +255,12 @@ The `/webhook/*` group is the other direction: endpoints **your** automation cal
 | `GET /api/v1/webhook/queue` | `can_read_status` | Queue status for every printer, or one via `?printer_id=` |
 | `GET /api/v1/webhook/printer/{id}/status` | `can_read_status` | Connection, state, current print, progress, remaining time |
 | `POST /api/v1/webhook/printer/{id}/start` | `can_control_printer` | Start the **next queued** print on that printer |
-| `POST /api/v1/webhook/printer/{id}/stop` | `can_control_printer` | Stop the running print |
+| `POST /api/v1/webhook/printer/{id}/stop` | `can_control_printer` | Stop a running **or paused** print |
 | `POST /api/v1/webhook/printer/{id}/cancel` | `can_control_printer` | Cancel a running **or paused** print |
 
-A key scoped to specific printers (`printer_ids`) is refused with **403** on any other printer. A printer that is not connected answers **503**, not an error — retry when it comes back. `start` answers **404** when the queue is empty.
+A key scoped to specific printers (`printer_ids`) is refused with **403** on any other printer. A printer that is not connected answers **503**, not an error — retry when it comes back. `start` answers **404** when the queue is empty. `stop` and `cancel` answer **409** when no print is running or paused.
+
+A print ended through `stop` or `cancel` is recorded as stopped by a person, the same as a stop from the printer card: it ends as cancelled, not failed. No *print failed* notification goes out, the printer's queue is paused rather than put in error, and the job's owner gets the *stopped* e-mail.
 
 ```bash
 curl -H "X-API-Key: $KEY" https://<host>/api/v1/webhook/printer/3/status

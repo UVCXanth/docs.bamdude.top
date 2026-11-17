@@ -236,13 +236,15 @@ server {
 
 ### Network Mode Host
 
-Host network mode is **required** for printer discovery and camera streaming on Linux:
+Host network mode is the usual choice for printer discovery and camera streaming on Linux:
 
 ```yaml
 services:
   bamdude:
     network_mode: host
 ```
+
+A container on a **macvlan** or **ipvlan (L2)** network has its own address on the LAN, so printer discovery and the virtual printer work there too, and the connection check passes it. **ipvlan in L3 mode** routes instead: no broadcast or multicast gets through, so discovery and the virtual printer's discovery cannot work — the connection check warns and points to macvlan or ipvlan L2. When the container's link kind cannot be read, the check reports the network mode as unknown rather than calling it bridge.
 
 !!! note "macOS / Windows"
     Docker Desktop on macOS and Windows requires port mapping instead of host mode. Copy the [bridge-mode compose block above](#bridge-mode) — mapping just `ports: ["8000:8000"]` is enough for the web UI but breaks printer discovery, the virtual printer, and FTP archive downloads. Add physical printers manually by IP from the UI.
@@ -290,7 +292,7 @@ docker compose logs bamdude
 docker compose exec bamdude ping YOUR_PRINTER_IP
 ```
 
-If using bridge network mode, try `network_mode: host`.
+If using bridge network mode, try `network_mode: host` — or a macvlan / ipvlan L2 network, which also puts the container on the LAN.
 
 ---
 

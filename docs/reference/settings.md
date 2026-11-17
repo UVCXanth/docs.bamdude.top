@@ -25,7 +25,7 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | `default_printer_id` | unset | Default printer for new queue items / Print Now from the file manager. |
 | `default_sidebar_order` | empty | Admin-set default sidebar item order — JSON `{"order": [...ids]}` or a JSON array. Empty = use built-in order. |
 | `check_updates` | `true` | Periodically check the BamDude release feed for new versions. |
-| `check_printer_firmware` | `true` | Periodically check Bambu's firmware feed for printer updates. |
+| `check_printer_firmware` | `true` | Printer cards check Bambu Lab for firmware updates. Off: the cards make no automatic checks and the server does not contact Bambu Lab for a card's check; the Firmware page and an upload you start yourself still work. |
 | `include_beta_updates` | `false` | Surface beta releases in the update banner alongside stable releases. |
 
 ## :material-palette: Theme

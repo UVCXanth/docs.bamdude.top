@@ -691,6 +691,8 @@ Store up to **5 reference images** per printer for different plate types (textur
 4. Optionally add a label (e.g. `Textured PEI`, `Cool Plate`).
 5. Repeat for each plate type you swap between.
 
+Reference images belong to their printer: deleting a printer removes them, and a printer added afterwards starts with none.
+
 !!! tip "Multiple references"
     The system automatically selects the best-matching reference when checking. Calibrate every plate type you actually use for accurate detection.
 

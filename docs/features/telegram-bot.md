@@ -119,6 +119,11 @@ A chat with view-only access gets a plain photo, and so does an idle printer.
     sits right under a picture you have just glanced at. It asks for
     confirmation -- in the bot generally, not only under the photo.
 
+A print stopped from the bot is recorded as stopped by a person, like one
+stopped from the printer card. It ends as cancelled, not failed: no *print
+failed* notification goes out, the printer's queue is paused rather than put in
+error, and the job's owner gets the *stopped* e-mail.
+
 ---
 
 ## :material-content-cut: Skip Objects

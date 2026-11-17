@@ -144,6 +144,8 @@ A bundle never names a printer. Each one is a number from 1, given by its place 
 
 The number means something only inside its own bundle — printer 2 of today's bundle may be another machine in next week's. `support-info.json` says so in its `printer_index` key; bundles made before that key existed matched sections by position, which was not always the same machine.
 
+A printer's connection check that runs out of time is recorded as timed out together with the step it was in, how long it had run, and the checks that had finished before it.
+
 ### The BamDude process itself
 
 Beside the machine, the database, the printers and the settings, the bundle describes the process actually running. A report of *"memory climbs for days until it gets killed"* is otherwise nothing to act on: the numbers that identify the cause only exist **while it is happening**, and by the time anyone asks, the container has been restarted.

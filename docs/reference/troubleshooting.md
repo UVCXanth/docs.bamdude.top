@@ -343,6 +343,8 @@ Your browser renders it in **DevTools → Network → the request → Timing**, 
 
 BamDude can triage most setup problems for you. On the **System** page, the **Connection Diagnostic** section probes each printer (ports, LAN developer mode, Docker network mode, subnet, credentials) and the **System Health** section scans recent logs against the known-issue catalog below. The in-app bug reporter runs both when you open it, so a fixable problem is surfaced before you file a report. The "How to fix" links on each finding point at the matching section here.
 
+The network-mode step passes a container with host networking and one on a **macvlan** or **ipvlan (L2)** network, which sits on the LAN with its own address. **ipvlan in L3 mode** gets a warning — it passes no broadcast or multicast, so printer discovery and the Virtual Printer's discovery cannot work there; use macvlan or ipvlan L2. If the container's link kind cannot be read, the step reports the mode as unknown instead of assuming bridge.
+
 ### Wrong access code
 
 The printer rejected the file-transfer login. The access code is wrong, or it changed after Developer Mode was toggled. Re-copy the access code from the printer screen (LAN settings) and update it in the printer's settings in BamDude. Note that the serial number is case-sensitive — BamDude uppercases it for you on save.

@@ -302,6 +302,8 @@ The HMS error dialog surfaces the same remediation buttons the printer's own scr
 
 Click a button and BamDude sends the matching MQTT command, then waits for the printer to actually act on it before confirming — a QoS-1 publish is acked by the broker even when the firmware silently drops a malformed HMS command, so BamDude samples the printer state after ~2.5 s and reports a failure if nothing changed. Needs `printers:control`; a Viewer sees the errors but not the buttons.
 
+**Stop Printing** in this dialog is a person's stop like the one on the printer card: the print ends as cancelled, not failed — no *print failed* notification, and the queue is paused rather than put in error.
+
 !!! note "Refreshing the descriptions"
     The description catalogue ships as JSON under `backend/app/data/hms/`, one
     file per printer model. Re-import it from a fresh BambuStudio checkout with

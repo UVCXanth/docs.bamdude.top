@@ -25,7 +25,7 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 | `default_printer_id` | не задано | Default-принтер для нових queue-items / Print Now з file-manager. |
 | `default_sidebar_order` | пусто | Admin-задано дефолтне впорядкування sidebar — JSON `{"order": [...ids]}` або JSON-масив. Пусто = вбудоване впорядкування. |
 | `check_updates` | `true` | Періодично перевіряти release-feed BamDude на нові версії. |
-| `check_printer_firmware` | `true` | Періодично перевіряти firmware-feed Bambu на оновлення принтерів. |
+| `check_printer_firmware` | `true` | Картки принтерів перевіряють у Bambu Lab оновлення прошивки. Вимкнено: картки не роблять автоматичних перевірок, а сервер не звертається до Bambu Lab заради перевірки для картки; сторінка Firmware і завантаження, яке ви запускаєте самі, працюють далі. |
 | `include_beta_updates` | `false` | Показувати beta-релізи в update-banner поряд зі stable. |
 
 ## :material-palette: Тема

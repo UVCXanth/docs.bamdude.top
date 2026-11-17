@@ -43,7 +43,10 @@ You can add a printer two ways: let BamDude **auto-discover** it on the LAN
 
         SSDP works as long as the container is on `network_mode: host`
         (see [Docker → Host-mode compose](docker.md)). Same flow as
-        native install.
+        native install. A container on a macvlan or ipvlan (L2) network
+        has its own LAN address and discovers the same way; ipvlan in
+        L3 mode passes no multicast — use the subnet picker as on a
+        bridge network.
 
     === "Docker (bridge network)"
 

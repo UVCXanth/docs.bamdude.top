@@ -308,7 +308,7 @@ The pause-state is also visualised on the Printers page in real time — a pause
 
 | `print_complete` | Print finishes successfully |
 | `print_failed` | HMS error / hardware fault stopped the print |
-| `print_stopped` | User-initiated stop |
+| `print_stopped` | A person stopped the print — from the printer card, the queue, the Telegram bot, a webhook or the HMS dialog's **Stop Printing** |
 | `bed_cooled` | Bed cooled to threshold (post-print cleanup signal) |
 
 **AMS / filament:**

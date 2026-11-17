@@ -44,9 +44,11 @@ The badge is gated by the `firmware:read` permission. Default groups grant it to
 
 **Settings → General → Updates → Check printer firmware.** When off:
 
-- No requests go to `bambulab.com` or `wiki.bambulab.com`.
+- Printer cards make no automatic firmware checks, and the server does not contact Bambu Lab for a card's check.
 - The badge disappears from every printer card.
 - Notifications about new firmware stop firing.
+
+The **Firmware** page and an upload you start yourself still work with the setting off, and they still reach Bambu Lab for the version list and the firmware file.
 
 Useful for offline-only deployments, deployments behind strict outbound firewalls, or when you just want to manage firmware manually without seeing the orange dot.
 
@@ -98,6 +100,7 @@ Before upload, BamDude runs the prepare check (`GET /firmware/updates/{printer_i
 | **Free space** | Live FTP `STAT` (real bytes, not estimate) |
 | **Update available** | Wiki vs installed-version comparison |
 | **Target version is publishable** | Download page lookup |
+| **Printer is idle** | Live printer state — see [below](#idle-only) |
 
 The minimum free-space buffer is **100 MB** on top of the firmware size. A typical Bambu firmware is 50-150 MB; the prepare check estimates 100 MB and refuses if the SD card has less than ~200 MB free.
 
@@ -110,6 +113,12 @@ The minimum free-space buffer is **100 MB** on top of the firmware size. A typic
 3. Broadcasts progress via WebSocket (`firmware_upload_progress`) and a polling-fallback endpoint (`GET /firmware/updates/{printer_id}/upload/status`).
 
 The whole thing typically takes 2-5 minutes for ~300 MB on local Wi-Fi. Progress is real bytes transferred, not a fake animation.
+
+#### Only an idle printer gets the file {#idle-only}
+
+Firmware is written only to a printer BamDude positively sees idle: connected, reporting, and in **IDLE**, **FINISH** or **FAILED**. A printer that has not reported its state yet is refused rather than assumed idle, and so is one the queue is about to start a job on.
+
+The check runs at prepare, again after the firmware file was downloaded, and once more immediately before the upload starts — a job that begins while the file is being fetched never has firmware written to its SD card mid-print. The dialog follows the live state as well: **Upload Firmware** disappears as soon as a job appears. While the upload runs, the print queue starts nothing on that printer.
 
 ### 5. Trigger from the printer's screen
 
@@ -135,7 +144,7 @@ Sidebar → Firmware → pick a version per model → Upgrade
 - **Grouped by model.** Printers split into per-model tabs (`P1P/P1S (4)`, `A1 mini (2)`, …) — the firmware file and the on-screen apply step differ per model.
 - **One version per model, either direction.** Pick the version for each model — newer **or** older (rollback is first-class). The list shows every published version plus any you already hold in the store.
 - **Download once, push in parallel.** Each model's firmware is downloaded **once**, then FTP'd to every selected printer's SD card concurrently, capped by **Settings → General → File Manager → bulk concurrency** (default **2** — Bambu controllers don't love many simultaneous TLS handshakes).
-- **Mid-print printers are skipped**, flagged on their row, never touched. A failure on one printer **doesn't stop the rest** — every printer gets its own result.
+- **Mid-print printers are skipped**, flagged on their row, never touched. Each printer goes through the [same idle check](#idle-only) as a single upload, repeated immediately before its own upload starts — one that picked up a job after the run began gets a refusal on its row instead of the file. A failure on one printer **doesn't stop the rest** — every printer gets its own result.
 - **"Update all available"** preselects every printer with a pending update; you still confirm the per-model version before launching.
 - As with the single-printer flow, the final **apply** is a step on each printer's own screen — the run finishes by showing the model-specific instruction for the printers it uploaded to.
 
@@ -246,6 +255,9 @@ If your printer reports an SSDP model code that isn't in `MODEL_TO_API_KEY`, the
 ---
 
 ## :material-help-circle: Troubleshooting
+
+??? question "`… is unreachable` in the logs"
+    Bambu Lab's site could not be reached. The log says so **once per outage** — firmware checks keep retrying quietly and use what is cached — and says once more when the site answers again. Nothing to do unless the outage is on your side (DNS, outbound firewall).
 
 ??? question "Badge stuck on `Version unknown`"
     The printer hasn't sent its `firmware_version` over MQTT yet. Wait 30-60 seconds after the printer comes online, or refresh the printer card. If it stays unknown, the printer's MQTT report is missing the field — the firmware check service will treat it as "no current version" and offer the latest as an upgrade candidate.

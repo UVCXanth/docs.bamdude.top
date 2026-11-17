@@ -56,6 +56,11 @@ product's exact shade. Generic Cream in the quick palette is a different RGB.
 The catalog does not mix product series or guess a palette for an unrecognized
 custom family. Choosing a catalog color does not assign an inventory spool.
 
+**Reset Slot** in the same dialog clears the slot's filament setting on the
+printer; the slot reads as unconfigured until you set it again. It asks for
+confirmation first, and it is disabled while a job is on the printer (running,
+paused, preparing or slicing) — the API refuses it with **409** as well.
+
 The per-printer preset and its temperatures are resolved from the catalog for
 the printer and the **nozzle actually fitted** — with a 0.6 mm nozzle the tray
 gets the 0.6 mm preset, and on a dual-nozzle H2D each AMS resolves against the
