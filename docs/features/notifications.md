@@ -285,7 +285,7 @@ Generic-format webhooks send a standardised JSON envelope: `title`, `message`, `
     The `image` field is a standard base64-encoded JPEG. Home Assistant: pass it to `notify.mobile_app_*` as `image` data via a template. Node-RED: `Buffer.from(msg.payload.image, 'base64')`. The field is only present when a snapshot was actually captured — not all events include it.
 
 !!! info "Slack / Mattermost format compatibility"
-    With **format = slack**, only `{"text": "..."}` is sent — structured event fields are dropped. Use the generic format for any automation that needs to read structured data; use slack only for human-readable channel posts.
+    With **format = slack**, only `{"text": "..."}` is sent — structured event fields are dropped. An event that carries a picture adds it as a link (see [Photos in notifications](#photos-in-notifications)). Use the generic format for any automation that needs to read structured data; use slack only for human-readable channel posts.
 
 ---
 
@@ -300,7 +300,7 @@ Each provider subscribes independently. Toggling an event off on one provider do
 | `print_start` | Print starts on a printer |
 | `first_layer_complete` | Layer 1 finishes (catch first-layer fails fast) |
 | `pause_coming_up` | **Pause coming up** — a heads-up shortly before a pause added in the slicer. Off by default; see [below](#pause-coming-up). |
-| `print_progress` | At 25% / 50% / 75% progress. A **minimum duration** floor can mute these for prints estimated shorter than N minutes — and the value belongs to each recipient: every Telegram chat carries its own (beside the Progress Milestones checkbox in the chat's settings) and every other provider carries its own (on its card, beside the same toggle). Empty or `0` = always send; there is no shared global value. The duration is estimated from the printer's own remaining-time report at each milestone, and an unknown estimate sends rather than guesses away. |
+| `print_progress` | At 25% / 50% / 75% progress, counted from the first layer — nothing is sent while the printer is still heating or preparing, whatever percentage it reports — and every print starts over. A **minimum duration** floor can mute these for prints estimated shorter than N minutes — and the value belongs to each recipient: every Telegram chat carries its own (beside the Progress Milestones checkbox in the chat's settings) and every other provider carries its own (on its card, beside the same toggle). Empty or `0` = always send; there is no shared global value. The duration is estimated from the printer's own remaining-time report at each milestone, and an unknown estimate sends rather than guesses away. |
 | `print_paused` | Printer transitioned RUNNING→PAUSE — body carries a normalised `{reason}` (door open / filament runout / presence-check / file-pause-command / AI defect / plate-objects / paused by user / HMS-other) plus the underlying `{hms_code}` for forensics. Default ON for new providers + included in the default Telegram-chat event set. |
 | `print_resumed` | Printer transitioned PAUSE→RUNNING — body carries `{paused_for}` (mm:ss) computed from the matching pause edge. Default ON for new providers; opt-in for Telegram chats. |
 
@@ -316,7 +316,7 @@ The pause-state is also visualised on the Printers page in real time — a pause
 | Event | Fires when |
 |-------|------------|
 | `print_missing_spool_assignment` | Print started without complete spool→AMS mapping |
-| `filament_low` | Spool remaining below `low_stock_threshold` (or the spool's own override). A spool bound to your inventory is checked when a print's consumption lands, once per run-down; a Spoolman-bound slot is checked on every AMS change, once per spool in a slot. A slot with no inventory binding is never judged by the printer's own counter — a spool without an RFID tag reports 0 %, which is no answer — so an unbound slot stays silent. |
+| `filament_low` | Spool remaining below `low_stock_threshold` (or the spool's own override). A spool bound to your inventory is checked when a print's consumption lands, right when it is put into a slot already below the threshold (assigned by hand, matched by its RFID tag, or loaded from stock automatically), and when its weight, label weight or own threshold is edited by hand while it sits in a slot — once per run-down, and only for a spool in a slot; a Spoolman-bound slot is checked on every AMS change, once per spool in a slot. A slot with no inventory binding is never judged by the printer's own counter — a spool without an RFID tag reports 0 %, which is no answer — so an unbound slot stays silent. |
 | `ams_humidity_high` / `ams_temperature_high` | AMS exceeds its threshold |
 | `sensor_above_max` / `sensor_below_min` | A [sensor](sensors.md) reading left the limits set for it |
 | `sensor_back_in_range` | …and came back |
@@ -327,9 +327,9 @@ The pause-state is also visualised on the Printers page in real time — a pause
 | Event | Fires when |
 |-------|------------|
 | `printer_offline` | MQTT disconnect |
-| `printer_error` | HMS error code triggered (BamDude includes the human-readable translation) |
-| `ai_failure_detection` | AI failure detection (Obico) flags a likely print failure — **opt-in, off by default**. Split out of `printer_error` so you can be paged on AI alerts without every HMS hardware code. It has its own template, its own per-provider toggle, and its own per-chat Telegram item; the body carries the printer, job name, confidence score, and the action BamDude took (notify / pause / pause + power off). |
-| `plate_not_empty` | Bed-occupancy gate caught the next-print start (auto-pause) |
+| `printer_error` | An HMS fault of severity Fatal or Serious appeared (BamDude includes the human-readable translation). Each fault is announced once per appearance — see [HMS notifications](monitoring.md#hms-notifications). A smart plug's [power alert](smart-plugs.md#power-alerts) arrives through this event too. |
+| `ai_failure_detection` | AI failure detection (Obico) flags a likely print failure — **opt-in, off by default**. Split out of `printer_error` so you can be paged on AI alerts without every HMS hardware code. It has its own template, its own per-provider toggle, and its own per-chat Telegram item; the body carries the printer, job name, confidence score, and the action BamDude took (notify / pause / pause + power off), and the notification carries the frame the detector flagged. |
+| `plate_not_empty` | Bed-occupancy gate caught the next-print start (auto-pause). Carries the frame the check judged. |
 | `maintenance_due` | Scheduled maintenance interval reached |
 
 **Queue:**
@@ -428,7 +428,7 @@ Configuration shape varies by provider type — the Telegram bot is special.
 | Setting | Where | Effect |
 |---|---|---|
 | `quiet_hours_enabled` + `quiet_hours_start` / `quiet_hours_end` | Provider config | Events that fire inside the window are dropped (not queued — quiet hours is "shut up", not "delay"). |
-| `daily_digest_enabled` + `daily_digest_time` | Provider config | Events that fire any time in the day are queued in `notification_digest_queue`; the next time the wall clock crosses `daily_digest_time` BamDude flushes the queue as a single digest message. |
+| `daily_digest_enabled` + `daily_digest_time` | Provider config | Events that fire any time in the day are queued in `notification_digest_queue`; the next time the wall clock crosses `daily_digest_time` BamDude flushes the queue as a single digest message. The digest goes out at its time even inside the provider's quiet hours. |
 
 **Telegram (m045)** is structured differently: the bot/provider row keeps only the **schedule** (`daily_digest_enabled` + `daily_digest_time`), while the per-event opt-in, quiet hours, and digest opt-in all live on each `TelegramChat` row. So one chat can be in quiet hours while another stays loud, both fed by the same bot. See [Telegram Bot Setup](telegram-bot.md) for the per-chat fields.
 
@@ -436,7 +436,7 @@ Configuration shape varies by provider type — the Telegram bot is special.
 
 ## :material-file-document-edit: Template editor
 
-Every event has a default template in `data/notification_templates_{en,uk}.json`. The Templates tab under Settings → Notifications lets you override any of them — title + body — with a MarkdownV2 toolbar and live preview.
+Every event has a default template in `data/notification_templates_{en,uk}.json`. The Templates tab under Settings → Notifications lets you override any of them — title + body — with a MarkdownV2 toolbar and live preview. Every template lists its variables and has a preview.
 
 The Templates tab groups the default templates by purpose so a glance tells you which dispatch path each one feeds:
 
@@ -486,6 +486,8 @@ Details:
 
 The digest message respects the same template language pick as immediate notifications — Telegram chats owned by uk-language operators get the Ukrainian summary, an English-language email recipient gets the English one.
 
+A digest that could not be sent keeps its events for the next attempt; events older than 48 hours are dropped unsent. An event carried over from an earlier day is listed with its date, not only its time.
+
 ---
 
 ## :material-file-document-edit: Message Template variables
@@ -513,7 +515,7 @@ Templates substitute `{variable}` placeholders. The schema is locked per event, 
 | Variable | Meaning |
 |---|---|
 | `{printer_name}` | Printer display name |
-| `{error_code}` (alias `{error_type}`) | HMS error code |
+| `{error_code}` (alias `{error_type}`) | HMS error code — the full four-group code (`0500-0600-0002-0070`) for a fault from the printer's HMS list, the short `XXXX_XXXX` form for a `print_error` |
 | `{error_message}` (alias `{error_detail}`) | Human-readable description (BamDude translates the 853-code catalogue) |
 
 **AMS events** (`ams_humidity_high`, `ams_temperature_high`, `filament_low`, `print_missing_spool_assignment`):
@@ -551,9 +553,28 @@ Templates substitute `{variable}` placeholders. The schema is locked per event, 
 | `{days_left}` | Days of stock left |
 | `{lead_time_days}` | Lead time in days (`stock_break_alert` only) |
 
+**Job owner emails** (`user_print_start`, `user_print_complete`, `user_print_failed`, `user_print_stopped`):
+
+| Variable | Meaning |
+|---|---|
+| `{username}` | The print's owner |
+| `{printer}` | Printer display name |
+| `{filename}` | The printed file |
+| `{finish_photo_url}` | Link to the finish photo (completed / failed / stopped; see below) |
+
 **Common to every event:** `{timestamp}`, `{app_name}` (always `"BamDude"`).
 
 Click **Reset to default** in the editor to restore the original template from `notification_templates_{en,uk}.json`.
+
+### Photos in notifications
+
+Events that have a camera frame carry it: the finish photo on print completion and failure, the first-layer snapshot, the frame the detector flagged on **AI Failure Detection**, the frame the check judged on **Plate Not Empty**, and a snapshot with a printer error.
+
+- **Most channels receive the picture itself** — Telegram, Discord, Pushover, ntfy, Signal and generic-format webhooks. Email embeds the finish photo when its template uses `{finish_photo_url}` (see below).
+- **Home Assistant, Bark and Slack / Mattermost-format webhooks receive a link** to a copy of that one picture, because these services fetch it themselves. Home Assistant gets it only with a custom `notify.*` service, as `data.image` — unless your **Data (JSON)** field sets its own `image`. Bark shows it as the notification's icon. This needs the **External URL** setting; without it these channels get text only.
+- **Attach photos** — every channel has this switch, on by default. Off, that channel gets text only.
+
+The copy a link points to has an unguessable address, needs nothing but the link to open, and stops working after 3 days. It opens that one picture only — not the archive and not a camera.
 
 ### Finish Photo URL
 
@@ -567,7 +588,7 @@ The `{finish_photo_url}` placeholder puts a camera snapshot of the finished plat
     For **email** providers, when the rendered body contains the substituted `{finish_photo_url}` **and** a finish photo was actually captured, BamDude sends the message as a `multipart/related` email with the JPEG embedded inline (via a `Content-ID` referenced from the HTML part) — the photo shows in the mail body itself, not as a bare link. The plain-text alternative still carries the clickable URL for text-only clients. When the template doesn't reference `{finish_photo_url}` (or no photo exists), the original single-part text email is used — no surprise attachment. Non-email channels (WhatsApp / webhook / …) still receive the link, which is why the External URL below has to be reachable.
 
 !!! note "External URL prerequisite"
-    Without a configured External URL the placeholder renders empty. Saved archive photos linked in notifications are public URLs, so delivery services can fetch them without signing in. They are distinct from a live camera snapshot, which requires camera authorization. Keep notification links private if the finished plate contains sensitive work.
+    Without a configured External URL the link has no address an outside service could reach. The link does not lead to the archive's own photo — that one needs sign-in like every other archive picture — but to a separate copy of that one photo, with an unguessable address, that stops working after 3 days. Whoever has the link can open the picture until then, so keep notification links private if the finished plate contains sensitive work.
 
 !!! info "Start and completion delivery"
     A queued dispatch sends its start notification once per run, and finish-photo capture and completion delivery finish after the live print state is cleared. A camera failure can still leave a message without a photo. Starting a new print cancels the previous run's permission to capture the printer or perform delayed post-print actions.
@@ -679,6 +700,8 @@ Separate from the provider system above, BamDude can email the **owner** of a pr
 | `user_print_failed` | Their print errored |
 | `user_print_stopped` | They cancelled their own print |
 
+The print-finished e-mail shows the finish photo when one was taken, and the completed / failed / stopped templates can place it with `{finish_photo_url}`.
+
 Each user opts in and out of the four events individually on the **Email** tab of their own [notification centre](#the-notification-centre) — the Bell in the sidebar. Operators / admins control the global **User Notifications** master switch under **Settings** → **Notifications**.
 
 ---
@@ -696,7 +719,7 @@ Some events stall the farm until somebody acts on them:
 
     Route it instead: give the action-required events **their own provider** with quiet hours off, and leave the chatty ones (progress, print started) on the provider that does sleep. On iOS a [Bark](#bark-ios) provider at **Critical** is the strongest version of this — it comes through Silent mode and Focus as well.
 
-The **daily digest** is a separate opt-in channel and never delays anything: every notification is sent when it happens, and the digest is an extra summary on top.
+The **daily digest** is a separate opt-in channel and never delays anything: every notification is sent when it happens, and the digest is an extra summary on top. It is sent at its configured time even inside the provider's quiet hours.
 
 ---
 

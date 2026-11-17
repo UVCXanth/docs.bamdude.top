@@ -21,7 +21,7 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | `time_format` | `system` | `system` (browser locale), `12h`, or `24h`. ETA / timestamp display in cards, notifications, and emails. |
 | `date_format` | `system` | `system` (browser locale), `us` (`MM/DD/YYYY`), `eu` (`DD/MM/YYYY`), `iso` (`YYYY-MM-DD`). Controls every user-visible date. |
 | `currency` | `USD` | Currency code for cost tracking display. |
-| `external_url` | empty | Public-facing URL of BamDude. Wins over the `APP_URL` env var. Used in password-reset / MFA email links, OIDC callback construction, and the Obico cached-frame URL. Set this when you front BamDude with a reverse proxy. |
+| `external_url` | empty | Public-facing URL of BamDude. Wins over the `APP_URL` env var. Used in password-reset / MFA email links, OIDC callback construction, the Obico cached-frame URL, and the photo links in notifications. Set this when you front BamDude with a reverse proxy. |
 | `default_printer_id` | unset | Default printer for new queue items / Print Now from the file manager. |
 | `default_sidebar_order` | empty | Admin-set default sidebar item order — JSON `{"order": [...ids]}` or a JSON array. Empty = use built-in order. |
 | `check_updates` | `true` | Periodically check the BamDude release feed for new versions. |
@@ -116,7 +116,7 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | `ams_temp_good` | `28.0` | Green-zone temperature threshold (°C) on AMS cards. |
 | `ams_temp_fair` | `35.0` | Yellow-zone temperature threshold. Above is red. |
 | `ams_temp_alarm` | unset | Temperature (°C) above which the AMS temperature alarm is sent. Unset (or 0 and below) falls back to `ams_temp_fair`. No alarm while the AMS is drying or cooling down after it. |
-| `ams_history_retention_days` | `30` | How many days of AMS history to keep before pruning. |
+| `ams_history_retention_days` | `30` | How many days of AMS history to keep before pruning. Minimum 1; 0 is refused. |
 | `inbox_retention_days` | `30` | How many days of in-app notification-centre history each person keeps. Range 1-365. Swept once a day, read or not. |
 | `log_retention_days` | `7` | Retention limit for daily `bamdude-YYYY-MM-DD.log` archives. Range 1–365. Excess archives are removed at the next successful rotation. See [System info → Log rotation](../features/system-info.md#log-rotation-retention). |
 | `bed_cooled_threshold` | `35.0` | Bed temperature (°C) at which the `bed_cooled` notification fires. |

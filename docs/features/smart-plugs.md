@@ -471,6 +471,18 @@ It honours the same guards as the print-finish auto-off:
 !!! note "Trigger granularity is per-printer, not per-AMS"
     The plug model is plug→printer, so per-AMS routing (a dedicated plug for just one AMS unit) isn't supported. The toggle fires when *any* AMS on the linked printer finishes drying — not a specific unit.
 
+### Power Alerts
+
+The **Power Alerts** toggle in the plug form adds two limits: **Alert if above (W)** and **Alert if below (W)**. Leave one empty to switch that direction off.
+
+- **Checked in the background, for every plug type.** The alert is judged from the plug's recorded power readings, so it does not depend on anyone having the page open.
+- **Once per excursion.** An alert is sent when the reading leaves its range, and the next one only after the reading has come back inside — not repeatedly while it stays out. One plug sends at most one alert in 5 minutes.
+- **A plug that is off is never "low".** The lower limit applies only to a plug known to be switched on; a plug that is off, or whose switch state is unknown, is not reported.
+- **Only fresh readings count.** A reading older than 20 minutes says nothing about now and raises nothing.
+- **Delivered as Printer Error.** The alert goes through the `printer_error` notification event — to every provider, Telegram chat and inbox subscribed to it. See [Notifications](notifications.md).
+
+After a restart of BamDude a plug that is still outside its range is announced once more.
+
 ### Safety considerations
 
 - Auto-off **never fires** while bed temp is above the cooldown threshold (default 50 °C, configurable per-plug). Stops you from yanking power off a still-hot bed.

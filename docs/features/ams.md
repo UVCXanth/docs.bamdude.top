@@ -651,7 +651,7 @@ AMS humidity / temperature samples are persisted to the local DB for the histori
 |---|---|---|
 | AMS data retention | **30 days** | 1–365 days |
 
-Configure under **Settings → General → History retention → AMS humidity and temperature (days)**, or under **Settings → Filament → General → AMS Display Thresholds → History Retention** — both edit the same value. Older samples are pruned by the daily cleanup tick.
+Configure under **Settings → General → History retention → AMS humidity and temperature (days)**, or under **Settings → Filament → General → AMS Display Thresholds → History Retention** — both edit the same value. Older samples are pruned by the daily cleanup tick. The minimum is one day — 0 is refused, and the same holds for **Printer temperatures (days)** in the same list.
 
 !!! warning "Storage impact"
     Longer retention means more rows in `ams_history` and a bigger DB. On a busy farm with 4× printers × 4× AMS × 4 slots updating every 30 s, 90 days is roughly 90 × 86400 / 30 × 64 = ~16 M rows — fine on SQLite WAL with the default page size, but worth keeping in mind if you bump the window way up.

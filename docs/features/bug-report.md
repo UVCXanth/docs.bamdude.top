@@ -34,7 +34,7 @@ stateDiagram-v2
 Three inputs:
 
 - **Description** *(required)* — what went wrong. Plain text, free-form.
-- **Email** *(optional)* — your email. If you fill this in, it gets included in a collapsed section of the GitHub issue body so the maintainer can follow up directly. Otherwise, GitHub-issue replies don't reach you.
+- **Email** *(optional)* — your email. If you fill this in, it gets included in a collapsed section of the GitHub issue body so the maintainer can follow up directly. Otherwise, GitHub-issue replies don't reach you. The address is sent with the report and is not stored on your server.
 - **Screenshot** *(optional)* — paste from clipboard, drag-and-drop, or click to file-pick. The image is canvas-compressed to 1920px max dimension at JPEG quality 0.7 *before* upload, so even a 4K screenshot ends up well under 1 MB.
 
 A `<details>` block below the inputs shows exactly what data the report includes — and what it never includes (printer names, serials, IPs, access codes, passwords, IPs, emails, API keys, tokens, webhook URLs, hostnames, usernames). Read it before submitting if privacy is a concern.
@@ -139,7 +139,7 @@ Every submission attempt — successful or failed — writes one row to the `bug
 |--------|-------|
 | `id` | PK. |
 | `description` | What the operator typed. |
-| `reporter_email` | Optional. |
+| `reporter_email` | Always empty — the address is sent with the report and not kept on the server. |
 | `github_issue_number` / `github_issue_url` | Set on success. |
 | `status` | `submitted` / `failed` locally; refreshed from the GitHub issue to `open`, `closed` (fixed) or `not_planned` whenever the **My reports** list is opened. |
 | `error_message` | Set on `failed` — relay error code, network exception, etc. |

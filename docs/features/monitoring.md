@@ -272,6 +272,15 @@ Click the HMS indicator to see error descriptions, codes, and recommended action
 
 A **Clear Errors** button sends a `clean_print_error` command to dismiss stale errors without power-cycling.
 
+### HMS notifications
+
+A fault of severity *Fatal* or *Serious* is sent through the `printer_error` notification event:
+
+- **Once per appearance.** Each fault is announced on its own — two faults on the same part of the printer are two notifications.
+- **A flicker is not repeated.** A fault that disappears and comes back within 10 minutes is not announced again — unless the print state changed in between (the print was resumed, for example), or the fault was gone for 10 minutes or longer.
+- **After a restart of BamDude** the faults still standing are announced again.
+- **The code is the one on the printer's screen.** A fault from the printer's HMS list is named by its full four-group code — `0500-0600-0002-0070` — in the notification title and in a queue job's failure reason. A `print_error` keeps its short `XXXX_XXXX` form.
+
 ### Where the descriptions come from
 
 Descriptions are Bambu's own — the whole catalogue, around 5 000 codes, not a
@@ -476,7 +485,7 @@ Wire any of these state changes to your notification channels:
 | Event | Fires when |
 |-------|------------|
 | **Printer offline** | MQTT connection drops past the offline threshold |
-| **Printer error** | New HMS entry, severity ≥ Error |
+| **Printer error** | A new HMS fault of severity Fatal or Serious — once per appearance, see [HMS notifications](#hms-notifications) |
 | **Print complete** | Job finishes (printed-percentage = 100) |
 | **Print failed** | Job ends with a non-success status |
 | **First layer complete** | First layer finishes (early-fail catch) |

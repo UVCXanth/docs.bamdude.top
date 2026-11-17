@@ -219,14 +219,14 @@ The **media token** is minted by any signed-in user with `POST /auth/media-token
 
 | Endpoint | Permission |
 |----------|------------|
-| `GET /archives/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/plate-preview` · `/project-image/{path}` · `/qrcode` · `/timelapse` | `archives:read_all` / `archives:read_own` |
+| `GET /archives/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/plate-preview` · `/project-image/{path}` · `/qrcode` · `/timelapse` · `/photos/{file}` | `archives:read_all` / `archives:read_own` |
 | `GET /library/files/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/card-file/{path}` · `/image` · `/photos/{photo_id}/image` · `/photos/{photo_id}/thumbnail` · `GET /makerworld/imports/{id}/cover` · `/cover-variant` | `library:read_all` / `library:read_own` |
 | `GET /products/{id}/attachment-image/{file}` · `/cover-image` · `GET /projects/{id}/cover-image` | `products:read` for a product's pictures, `orders:read` for an order's cover |
 | `GET /printers/{id}/camera-cover` | `printers:read` — the current job's cover, served from the local archive (never triggers an FTP fetch) |
 | `GET /makerworld/thumbnail?url=...` | `makerworld:view` |
 | `GET /model-sources/manyfold/models/{model_id}/preview` | `manyfold:view` |
 
-Public, no token: `GET /archives/{id}/photos/{file}` (notifications link finished-print photos for services that fetch without credentials), `GET /external-links/{id}/icon` and `GET /auth/oidc/providers/{id}/icon` (the sign-in page). A Cam Wall, overlay or kiosk token opens no media endpoint.
+Public, no token: `GET /notifications/photos/{file}` (the copy of one photo that a notification links to, for services that fetch without credentials — the address is unguessable and stops working after 3 days), `GET /external-links/{id}/icon` and `GET /auth/oidc/providers/{id}/icon` (the sign-in page). A Cam Wall, overlay or kiosk token opens no media endpoint.
 
 The web UI keeps both tokens cached per session and refreshes them before expiry.
 

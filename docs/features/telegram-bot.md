@@ -307,6 +307,11 @@ opt in, or an amber `digest off` badge when the chat opted in but the
 bot has digest disabled (the chat-side toggle is then a no-op until
 the bot is on).
 
+The digest is sent at its configured time even when the chat is inside
+its quiet hours. If sending fails, its events are kept for the next
+attempt and dropped after 48 hours; events carried over from an earlier
+day show their date.
+
 Two safety rails on the dispatch path:
 
 - **Skip-on-empty queue**: when a non-digest event fires with provider

@@ -412,6 +412,8 @@ Attach pictures to an archive — useful for documenting failures, showing finis
 - **Manual upload** — drag-and-drop image files onto the archive detail page, or use the **+ Add Photo** button in the photo strip. Multiple photos per archive are supported.
 - **Failure documentation** — attaching a photo of a failed print pairs nicely with the archive's `failure_reason` + `error_message` fields, so the post-mortem is all in one place.
 
+An archive's photos are served like its other pictures: they need a signed-in session, a media token or an API key, under the archive's own read permission. The photo a notification links to is a separate short-lived copy — see [Notifications → Finish Photo URL](notifications.md#finish-photo-url).
+
 ---
 
 ## :material-movie-edit: Timelapse Editor

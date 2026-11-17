@@ -21,7 +21,7 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 | `time_format` | `system` | `system` (browser locale), `12h` або `24h`. ETA / timestamps у картках, нотифікаціях, листах. |
 | `date_format` | `system` | `system` (browser locale), `us` (`MM/DD/YYYY`), `eu` (`DD/MM/YYYY`), `iso` (`YYYY-MM-DD`). Контролює кожну видиму дату. |
 | `currency` | `USD` | Код валюти для відображення вартості. |
-| `external_url` | пусто | Публічний URL BamDude. Виграє над env-змінною `APP_URL`. Використовується в password-reset / MFA email-посиланнях, OIDC callback construction і Obico cached-frame URL. Постав, коли BamDude за reverse proxy. |
+| `external_url` | пусто | Публічний URL BamDude. Виграє над env-змінною `APP_URL`. Використовується в password-reset / MFA email-посиланнях, OIDC callback construction, Obico cached-frame URL і посиланнях на фото у сповіщеннях. Постав, коли BamDude за reverse proxy. |
 | `default_printer_id` | не задано | Default-принтер для нових queue-items / Print Now з file-manager. |
 | `default_sidebar_order` | пусто | Admin-задано дефолтне впорядкування sidebar — JSON `{"order": [...ids]}` або JSON-масив. Пусто = вбудоване впорядкування. |
 | `check_updates` | `true` | Періодично перевіряти release-feed BamDude на нові версії. |
@@ -116,7 +116,7 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 | `ams_temp_good` | `28.0` | Зелена-зона temp-поріг (°C) на AMS-картках. |
 | `ams_temp_fair` | `35.0` | Жовта-зона temp. Вище — червоне. |
 | `ams_temp_alarm` | не задано | Температура (°C), вище якої надсилається тривога температури AMS. Не задано (або 0 і менше) — діє `ams_temp_fair`. Поки AMS сушить або остигає після сушіння, тривога не надсилається. |
-| `ams_history_retention_days` | `30` | Скільки днів історії AMS тримати до prune. |
+| `ams_history_retention_days` | `30` | Скільки днів історії AMS тримати до prune. Мінімум 1; 0 відхиляється. |
 | `inbox_retention_days` | `30` | Скільки днів історії центру сповіщень зберігається в кожного користувача. Діапазон 1-365. Прибирається раз на добу, незалежно від прочитаності. |
 | `log_retention_days` | `7` | Ліміт зберігання добових архівів `bamdude-YYYY-MM-DD.log`. Діапазон 1–365. Зайві архіви видаляються під час наступної успішної ротації. Див. [System info → Ротація логів](../features/system-info.uk.md#ротація-retention-логів). |
 | `bed_cooled_threshold` | `35.0` | Температура столу (°C), при якій стріляє нотифікація `bed_cooled`. |

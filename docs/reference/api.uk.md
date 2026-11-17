@@ -219,14 +219,14 @@ Endpoint-и за stream-токен-шлюзом (щоб його отримат�
 
 | Endpoint | Дозвіл |
 |----------|--------|
-| `GET /archives/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/plate-preview` · `/project-image/{path}` · `/qrcode` · `/timelapse` | `archives:read_all` / `archives:read_own` |
+| `GET /archives/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/plate-preview` · `/project-image/{path}` · `/qrcode` · `/timelapse` · `/photos/{file}` | `archives:read_all` / `archives:read_own` |
 | `GET /library/files/{id}/thumbnail` · `/plate-thumbnail/{n}` · `/card-file/{path}` · `/image` · `/photos/{photo_id}/image` · `/photos/{photo_id}/thumbnail` · `GET /makerworld/imports/{id}/cover` · `/cover-variant` | `library:read_all` / `library:read_own` |
 | `GET /products/{id}/attachment-image/{file}` · `/cover-image` · `GET /projects/{id}/cover-image` | `products:read` для зображень виробу, `orders:read` для обкладинки замовлення |
 | `GET /printers/{id}/camera-cover` | `printers:read` — обкладинка поточного завдання з локального архіву (ніколи не ініціює FTP-вибірку) |
 | `GET /makerworld/thumbnail?url=...` | `makerworld:view` |
 | `GET /model-sources/manyfold/models/{model_id}/preview` | `manyfold:view` |
 
-Публічні, без токена: `GET /archives/{id}/photos/{file}` (сповіщення посилаються на фото завершеного друку для сервісів, що тягнуть без облікових даних), `GET /external-links/{id}/icon` і `GET /auth/oidc/providers/{id}/icon` (сторінка входу). Токен Cam Wall, оверлею чи кіоску не відкриває жодного медіа-endpoint-а.
+Публічні, без токена: `GET /notifications/photos/{file}` (копія одного фото, на яку посилається сповіщення, для сервісів, що тягнуть без облікових даних, — адресу неможливо вгадати, і вона перестає працювати через 3 дні), `GET /external-links/{id}/icon` і `GET /auth/oidc/providers/{id}/icon` (сторінка входу). Токен Cam Wall, оверлею чи кіоску не відкриває жодного медіа-endpoint-а.
 
 Веб-інтерфейс кешує обидва токени в межах сесії та оновлює їх перед закінченням терміну.
 
