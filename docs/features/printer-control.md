@@ -31,6 +31,17 @@ The preview names the printers and explains skips. Homing and calibration requir
 
 For maintenance, select the completed tasks and optionally enter a common note. Each printer keeps its own maintenance history and lifetime hours. The same permissions as the individual actions apply.
 
+### Location and tags for several printers
+
+**Actions → Location and tags** places the selected printers in one step. The dialog shows where they stand now, and for every tag how many of the selected printers carry it.
+
+- Tick **Change the location** and pick a place to move them all there; pick **Ungrouped** to take them out of their location. Left unticked, each printer stays where it is.
+- For each tag choose **Leave**, **Add** or **Remove**. A printer's other tags are not touched.
+
+The change is applied to all the selected printers or to none: if one of them cannot be changed, the dialog says why and nothing moves. It needs the right to edit printers, and archived printers are not placed.
+
+To place the printers that have no location yet, open **By Location** in the selection bar and choose **Ungrouped** — it selects exactly those.
+
 ## :material-printer: Print Actions
 
 ### Start a print from the card
