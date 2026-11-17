@@ -439,7 +439,9 @@ If the printer's storage did not answer completely when the print started — a 
 
 The list of what was on the printer before the print started is kept with the print, so restarting BamDude during a print does not lose it. A print BamDude finds already running gets its list at that moment: what exists then is not treated as new. A print with no such list at all gets nothing attached automatically. The automatic scan never attaches a recording because its name resembles the print's — that would pick up the video of an earlier print of the same model — and it stops as soon as the next print starts on that printer.
 
-One recording belongs to one archive. Attaching a recording that another archive already holds is refused with a message, whether the scan or you chose it.
+One recording belongs to one archive. Attaching a recording that another archive already holds is refused with a message, whether the scan or you chose it. The recording stays that archive's when its video is later converted or replaced by another one; removing the video from the archive releases the recording, so it can be attached where it belongs.
+
+Work that takes a while does not win over what happened meanwhile. An upload, a scan or a pick that was started before somebody else replaced or removed the archive's video is refused with a message instead of overwriting the newer state — reload and try again. The same goes for an account that lost its rights while its video was still being read: nothing is published. A scan for a finished print attaches nothing once the next print has started on that printer, even if it had already downloaded the recording.
 
 A recording is downloaded for as long as it keeps arriving; only a connection that has gone quiet is dropped. When a printer's file service refuses the connection, the automatic scan leaves that printer alone for a short while that grows with each refusal and starts over once the printer answers. **Scan for timelapse** is never held back.
 
@@ -450,7 +452,7 @@ A recording is downloaded for as long as it keeps arriving; only a connection th
 
 **Settings → General → Remove timelapses from the printer once saved.** Off by default. With it on, a recording is deleted from the printer as soon as it has been attached to its archive — from the SD card or from built-in storage, whichever it was read from.
 
-Only ever after the copy is safely saved. If the attach fails, or the printer cannot be reached, the recording stays where it is.
+Only ever after the copy is safely saved, and only the very recording that was copied: BamDude reads the file on the printer again and deletes it when it is still the same video. A different recording that has taken the same name stays on the printer, and so does everything when the printer cannot be read, when another print has started on it, or when the attach failed. The second read is the price of the option — the recording is transferred twice.
 
 !!! warning "Why this is not on by default"
     Having a copy in BamDude is not the same as nobody needing the file on the machine — it can still be watched from the printer's own screen, or carried away on the card.
