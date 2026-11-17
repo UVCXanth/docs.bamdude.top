@@ -102,7 +102,7 @@ The test reads the instance's API description, signs in, and reads the first pag
     - **Cloud-metadata, link-local and similar special addresses are never contacted**, whatever is entered or whatever a name resolves to.
 
 !!! info "A library on S3 or other object storage"
-    When Manyfold keeps its files in object storage, it answers a download with a redirect to that storage. BamDude follows it — to storage on the local network or on the internet, over `http://` or `https://` (a MinIO beside Manyfold, for instance) — and fetches the file there without the sign-in. Only addresses that are never file storage are refused: cloud-metadata and link-local addresses.
+    When Manyfold keeps its files in object storage, it answers a download with a redirect to that storage. BamDude follows it — to storage on the local network or on the internet, over `http://` or `https://` (a MinIO beside Manyfold, for instance) — and fetches the file there without the sign-in. Only addresses that are never file storage are refused: cloud-metadata and link-local addresses. The storage address has to be reachable from the BamDude server, not only from Manyfold.
 
 !!! warning "A reverse proxy must not compress the answers"
     BamDude asks Manyfold for uncompressed answers and refuses a compressed one unread — the size limits are counted on the bytes that arrive. A reverse proxy in front of Manyfold that compresses regardless makes every request fail with:
@@ -229,6 +229,7 @@ For [API keys](api-keys.md), `manyfold:view` belongs to the **Can read status** 
 | *Manyfold would not show this. The application's owner may not have access to it.* | Manyfold sent a redirect instead of an answer, as it does for something its user may not see. | Check the access of the application's owner in Manyfold. |
 | *Manyfold cannot find this model or file, or the application's owner cannot see it.* | The model or file is gone, or hidden from that user. | Reload the list; check it in Manyfold. |
 | *The file storage Manyfold redirected to has an address BamDude does not connect to.* | Manyfold redirected the download to a cloud-metadata or link-local address, to an address with a user name in it, or redirected too many times. | Check where Manyfold's storage is configured to live; see [Network and security rules](#network-rules). |
+| *BamDude cannot reach the file storage Manyfold redirected to. The storage address must be reachable from the BamDude server, not only from Manyfold.* | Manyfold's storage endpoint is an address only Manyfold can open — a Docker service name such as `http://minio:9000`, for instance. | Set the storage endpoint in Manyfold to an address the BamDude server can open too. |
 | *The file storage behind Manyfold refused the download.* | The storage answered the download with an error. | Try again; check the storage behind Manyfold. |
 | *Only 3MF, STL, STEP and OBJ files can be imported.* | The file is of another type. | — |
 | *The file is larger than 1 GB.* | Over the size limit. | Download it in Manyfold and upload it to the File Manager by hand. |
