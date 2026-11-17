@@ -431,11 +431,15 @@ The timelapse is available in the archive viewer the moment the print finishes; 
 
 The SD card first. When the card has nothing — which is where recordings go on a printer with **built-in storage** and no card inserted — BamDude looks in the printer's internal timelapse catalogue instead, and downloads from wherever the file actually is. Both the automatic scan after a print and the **Scan for timelapse** button do this.
 
-That catalogue names the print each recording belongs to, so the video is matched to the right archive outright. The card carries no such information, which is why the SD path still has to match on timing and filename and can ask you when two are ambiguous.
+That catalogue names the print each recording belongs to, so the video is matched to the right archive outright. The card carries no such information, so there the automatic scan goes only by what appeared after the print started, and **Scan for timelapse** — which also looks at file names — asks you when several recordings fit.
 
 On both media the printer also reports the full path of the recording it has just finished writing, and the automatic scan takes **that** file by name instead of assuming the one new recording is the right one. It is still only accepted if it appeared after this print started — otherwise a video recorded from the printer's own screen mid-print, which the printer would honestly report as its most recent, could be attached to the wrong job.
 
-If the printer's storage did not answer completely when the print started — a folder it did not list, or a reply with a line BamDude could not read — BamDude could not see what was already there, so "new since this print started" tells it nothing. A folder the card simply does not have still counts as an answer. A single new recording, or the one the printer names, is still attached. Between several others it will not guess — they stay on the printer for **Scan for timelapse**, rather than an arbitrary one being attached (and, with the clean-up below on, deleted from the printer).
+If the printer's storage did not answer completely when the print started — a folder it did not list, or a reply with a line BamDude could not read — BamDude could not see what was already there, so "new since this print started" tells it nothing. A folder the card simply does not have still counts as an answer. In that case nothing is attached automatically — not even a single recording, because an unread card is not an empty one. The recordings stay on the printer for **Scan for timelapse**, rather than an old one being attached (and, with the clean-up below on, deleted from the printer).
+
+The list of what was on the printer before the print started is kept with the print, so restarting BamDude during a print does not lose it. A print BamDude finds already running gets its list at that moment: what exists then is not treated as new. A print with no such list at all gets nothing attached automatically. The automatic scan never attaches a recording because its name resembles the print's — that would pick up the video of an earlier print of the same model — and it stops as soon as the next print starts on that printer.
+
+One recording belongs to one archive. Attaching a recording that another archive already holds is refused with a message, whether the scan or you chose it.
 
 A recording is downloaded for as long as it keeps arriving; only a connection that has gone quiet is dropped. When a printer's file service refuses the connection, the automatic scan leaves that printer alone for a short while that grows with each refusal and starts over once the printer answers. **Scan for timelapse** is never held back.
 
@@ -471,6 +475,8 @@ For LAN-only printers or when the auto-attach picks the wrong timelapse:
 |---|---|---|
 | **Upload Timelapse** | No timelapse attached | Drag-drop or pick `.mp4`, `.avi`, or `.mkv` — AVI/MKV auto-convert to MP4 in the background |
 | **Remove Timelapse** | Timelapse attached | Detach the file and clear the reference (file is deleted from disk) |
+
+A new video replaces the old one only once it is complete: until then the archive keeps showing the previous one. A background conversion that finishes after you replaced or removed the video does not bring the old one back.
 
 ---
 
