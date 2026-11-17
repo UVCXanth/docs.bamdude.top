@@ -101,12 +101,8 @@ The test reads the instance's API description, signs in, and reads the first pag
     - **Your browser never contacts Manyfold.** Previews and files are fetched by the BamDude server and handed to the browser by BamDude. The only link that leaves BamDude is **Open in Manyfold**, which you click yourself.
     - **Cloud-metadata, link-local and similar special addresses are never contacted**, whatever is entered or whatever a name resolves to.
 
-!!! warning "A library on S3 or other object storage"
-    When Manyfold keeps its files in object storage, it answers a download with a redirect to that storage. BamDude follows that one redirect only to a **public `https://` address**, and without the sign-in. Storage on a private address or over plain `http://` — a MinIO on the LAN, for instance — is refused:
-
-    *The storage of the Manyfold library is on a private address or uses plain http. BamDude follows a storage redirect only to a public https address.*
-
-    A library on Manyfold's own disk has no such redirect and works on any network.
+!!! info "A library on S3 or other object storage"
+    When Manyfold keeps its files in object storage, it answers a download with a redirect to that storage. BamDude follows it — to storage on the local network or on the internet, over `http://` or `https://` (a MinIO beside Manyfold, for instance) — and fetches the file there without the sign-in. Only addresses that are never file storage are refused: cloud-metadata and link-local addresses.
 
 !!! warning "A reverse proxy must not compress the answers"
     BamDude asks Manyfold for uncompressed answers and refuses a compressed one unread — the size limits are counted on the bytes that arrive. A reverse proxy in front of Manyfold that compresses regardless makes every request fail with:
@@ -232,7 +228,7 @@ For [API keys](api-keys.md), `manyfold:view` belongs to the **Can read status** 
 | *Manyfold answered in a form BamDude does not understand. Its version may be too old or too new, or a proxy in front of it changes its answers.* | An answer BamDude cannot read — most often a proxy that compresses it. | Switch compression off for BamDude on the proxy; see [Network and security rules](#network-rules). |
 | *Manyfold would not show this. The application's owner may not have access to it.* | Manyfold sent a redirect instead of an answer, as it does for something its user may not see. | Check the access of the application's owner in Manyfold. |
 | *Manyfold cannot find this model or file, or the application's owner cannot see it.* | The model or file is gone, or hidden from that user. | Reload the list; check it in Manyfold. |
-| *The storage of the Manyfold library is on a private address or uses plain http. BamDude follows a storage redirect only to a public https address.* | The library's object storage is not a public `https://` address. | Files and previews of such a library cannot be fetched; see [Network and security rules](#network-rules). |
+| *The file storage Manyfold redirected to has an address BamDude does not connect to.* | Manyfold redirected the download to a cloud-metadata or link-local address, to an address with a user name in it, or redirected too many times. | Check where Manyfold's storage is configured to live; see [Network and security rules](#network-rules). |
 | *The file storage behind Manyfold refused the download.* | The storage answered the download with an error. | Try again; check the storage behind Manyfold. |
 | *Only 3MF, STL, STEP and OBJ files can be imported.* | The file is of another type. | — |
 | *The file is larger than 1 GB.* | Over the size limit. | Download it in Manyfold and upload it to the File Manager by hand. |
