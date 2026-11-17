@@ -53,7 +53,7 @@ prefix              random body
 | **Can queue** | Дозволити цьому ключу додавати завдання в чергу (`POST /queue`) |
 | **Can control printer** | Дозволити команди start / pause / stop / cancel |
 | **Can read status** | Дозволити live-стан принтера, списки архівів, статистику — read-поверхню |
-| **Manage Library** | Опціонально. Завантаження / перейменування / переміщення / видалення файлів бібліотеки — **будь-якого власника**, не лише творця ключа — плюс нотатки й імпорт з MakerWorld (`can_manage_library`). Read-only доступ до бібліотеки лишається під **Can read status** |
+| **Manage Library** | Опціонально. Завантаження / перейменування / переміщення / видалення файлів бібліотеки — **будь-якого власника**, не лише творця ключа — плюс нотатки й імпорт з MakerWorld і Manyfold (`can_manage_library`). Read-only доступ до бібліотеки лишається під **Can read status** |
 | **Manage Inventory** | Опціонально. Створення / редагування / видалення котушок, записів каталогу й налаштувань прогнозу (`can_manage_inventory`). Read-only інвентар лишається під **Can read status** |
 | **Manage Projects** | Опціонально. Усі записи Майстерні — замовлення, вироби, замовники, склад — прив'язка друків до замовлень і читання контактів замовників (`can_manage_projects`). Читання замовлень, виробів і складу лишається під **Can read status** |
 | **Manage Archives** | Опціонально. Створення / редагування / видалення архівів друку (`can_manage_archives`) — **окрім** деструктивного purge, який лишається admin-only. Read-only доступ до архівів лишається під **Can read status** |
@@ -98,7 +98,7 @@ curl -H "Authorization: Bearer bd_..." http://localhost:8000/api/v1/printers/
     - `can_queue` — потрібен для `POST /queue` і queue-mutation ендпоінтів (+ archive reprint, який енкʼюїть наявний архів)
     - `can_control_printer` — для start / pause / stop / cancel (+ smart-plug control)
     - `can_read_status` — для printer-state, archive, stats, monitoring (і read-only бібліотека / інвентар / settings-language)
-    - `can_manage_library` — для library upload / rename / move / delete + notes + імпорт з MakerWorld. Ключ їде на **all-ownership** варіантах (`library:update_all` / `library:delete_all`): API-ключі не несуть per-row ідентичності власника, тож Manage-Library ключ може курувати **будь-який** файл незалежно від власника. Лише `library:purge` (hard-delete поза вікном trash) лишається admin-only
+    - `can_manage_library` — для library upload / rename / move / delete + notes + імпорт з MakerWorld і Manyfold. Ключ їде на **all-ownership** варіантах (`library:update_all` / `library:delete_all`): API-ключі не несуть per-row ідентичності власника, тож Manage-Library ключ може курувати **будь-який** файл незалежно від власника. Лише `library:purge` (hard-delete поза вікном trash) лишається admin-only
     - `can_manage_inventory` — для spool / catalog / forecast **writes** (read-only інвентар лишається під `can_read_status`)
     - `can_manage_projects` — для всіх записів Майстерні (замовлення, вироби, замовники, склад), прив'язки друків до замовлень і читання замовників (читання замовлень, виробів і складу лишається під `can_read_status`)
     - `can_manage_archives` — для create / edit / delete архівів друку. `archives:purge` — деструктивний hard-delete, що оминає recycle bin — **лишається admin-only** і ніколи не видається цим scope-ом

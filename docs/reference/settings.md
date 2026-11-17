@@ -208,6 +208,17 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | `zigbee_sensor_reporting` | empty | JSON blob of per-measurement reporting defaults (`{"temperature": {"min_interval": …, "max_interval": …, "reportable_change": …}, …}`) applied to devices with no override of their own. Empty, or any missing field, falls back to the registry defaults. |
 | `zigbee_sensor_stale_multiplier` | `2` | A reporting sensor's value older than this multiple of its `max_interval` counts as stale ("sensor went silent"). Per-device staleness override wins; polled devices keep a fixed 120 s window. |
 
+### Manyfold
+
+The connection to a self-hosted [Manyfold](../features/manyfold.md) library. It is edited on its own card under *Settings → Network*, by an administrator only, and saved with **Save connection** — not with the rest of the settings.
+
+| Key | Default | Effect |
+|---|---|---|
+| `manyfold_enabled` | `false` | **Use Manyfold** — switches the Manyfold tab of *Model sources* on. Needs the three values below. |
+| `manyfold_url` | empty | **Manyfold URL** — `http://` or `https://`, an address on your own network is fine. |
+| `manyfold_client_id` | empty | **Client ID** of the OAuth application created in Manyfold with the scopes `public` and `read`. |
+| `manyfold_client_secret` | empty | **Client secret** of that application. Never shown again after saving, left out of Git backups, and asked for again when the URL or the client ID changes. |
+
 ## :material-robot-confused: Obico AI
 
 See [Obico AI Failure Detection](../features/obico.md) for context on each.

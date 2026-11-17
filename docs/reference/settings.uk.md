@@ -208,6 +208,17 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 | `zigbee_sensor_reporting` | пусто | JSON per-measurement дефолтів звітування (`{"temperature": {"min_interval": …, "max_interval": …, "reportable_change": …}, …}`) для пристроїв без власного override. Пусто чи відсутнє поле = дефолти реєстру. |
 | `zigbee_sensor_stale_multiplier` | `2` | Показ reporting-датчика, старший за це кратне його `max_interval`, вважається застарілим («датчик замовк»). Per-device override виграє; полюваних пристроїв не стосується (фіксовані 120 с). |
 
+### Manyfold
+
+Зʼєднання з бібліотекою [Manyfold](../features/manyfold.md) на власному сервері. Редагується на окремій картці в *Settings → Network*, лише адміністратором, і зберігається кнопкою **Save connection** — не разом з рештою налаштувань.
+
+| Ключ | Типово | Дія |
+|---|---|---|
+| `manyfold_enabled` | `false` | **Use Manyfold** — вмикає вкладку Manyfold на сторінці *Model sources*. Потребує трьох значень нижче. |
+| `manyfold_url` | порожньо | **Manyfold URL** — `http://` або `https://`, адреса у власній мережі підходить. |
+| `manyfold_client_id` | порожньо | **Client ID** OAuth-застосунку, створеного в Manyfold з областями `public` і `read`. |
+| `manyfold_client_secret` | порожньо | **Client secret** цього застосунку. Після збереження більше не показується, не потрапляє в Git-бекапи й запитується знову, коли змінюється адреса чи client ID. |
+
 ## :material-robot-confused: Obico AI
 
 Контекст на кожне — на сторінці [AI-детекція фейлів Obico](../features/obico.uk.md).
