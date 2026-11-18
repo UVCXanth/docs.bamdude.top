@@ -516,15 +516,17 @@ If BamDude stopped while it was starting a job, a job whose start command was pr
 
 ## :material-cancel: Cancel during dispatch — what happens to the queue
 
-Cancelling a print **while the dispatcher is still uploading the 3MF or sending `start_print`** (the brief window between you clicking Print Now / queue dispatch firing and the printer reporting `RUNNING`) is treated as an explicit operator action — not a dispatch failure.
+Cancelling a print **while the dispatcher is still uploading the 3MF or preparing the start** (the window between you clicking Print Now / queue dispatch firing and the start command going out to the printer) is treated as an explicit operator action — not a dispatch failure.
+
+The **Cancel** button of the dispatch window belongs to that window only. During the upload it stops the transfer and removes the partial file from the printer. Once the start command has been sent, the button is gone and the window says so: from then on it is a print, and a print is stopped from the printer card.
 
 This is the one place a **queue** ends up `paused` on its own — the two columns below are the two state sets from [Queue states](#queue-states), not one status seen twice.
 
 | Slice | Item status | Queue status | Archive status |
 |---|---|---|---|
-| Cancel arrives during FTP upload / MQTT start | `cancelled` | `paused` | `cancelled` |
+| Cancel arrives during the upload or before the start command is sent | `cancelled` | `paused` | `cancelled` |
 | Dispatcher hits an actual error (FTP timeout, start-print refused) | `failed` | `error` | `failed` |
-| Cancel arrives after print is `RUNNING` on the printer | n/a (handled by stop-print path) | `printing` | per stop-print outcome |
+| The start command has been sent | n/a — no Cancel; **Stop** on the printer card | `printing` | per stop-print outcome |
 
 The semantic distinction matters: the queue moving to `paused` (not `error`) tells the operator that **nothing failed** — the rest of the queue is fine, they decided to abort one item. They can inspect the remaining items and resume the queue when ready. Before this distinction was wired in, a cancel during the dispatch window left the queue in `error` with the just-cancelled row marked `failed`, which was misleading.
 
