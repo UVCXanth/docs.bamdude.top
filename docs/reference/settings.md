@@ -22,7 +22,7 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | `date_format` | `system` | `system` (browser locale), `us` (`MM/DD/YYYY`), `eu` (`DD/MM/YYYY`), `iso` (`YYYY-MM-DD`). Controls every user-visible date. |
 | `currency` | `USD` | Currency code for cost tracking display. |
 | `external_url` | empty | Public-facing URL of BamDude. Wins over the `APP_URL` env var. Used in password-reset / MFA email links, OIDC callback construction, the Obico cached-frame URL (unless `obico_snapshot_base_url` is set), and the photo links in notifications. Set this when you front BamDude with a reverse proxy. |
-| `default_printer_id` | unset | Default printer for new queue items / Print Now from the file manager. |
+| `default_printer_id` | unset | Accepted and stored for API compatibility; nothing reads it and the Settings page has no control for it. |
 | `default_sidebar_order` | empty | Admin-set default sidebar item order — JSON `{"order": [...ids]}` or a JSON array. Empty = use built-in order. |
 | `check_updates` | `true` | Periodically check the BamDude release feed for new versions. |
 | `check_printer_firmware` | `true` | Printer cards check Bambu Lab for firmware updates. Off: the cards make no automatic checks and the server does not contact Bambu Lab for a card's check; the Firmware page and an upload you start yourself still work. |
@@ -45,7 +45,7 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 |---|---|---|
 | `archive_3mf_retention_enabled` | `false` | Enable nightly auto-cleanup of `.3mf` files that haven't printed in N days. Metadata + thumbnails stay; only the `.3mf` is dropped. |
 | `archive_3mf_retention_days` | `30` | The N. Minimum 1. |
-| `save_thumbnails` | `true` | Extract preview images from 3MF files for archive cards. |
+| `save_thumbnails` | `true` | Accepted and stored for API compatibility; nothing reads it (previews are always extracted) and the Settings page has no control for it. |
 | `capture_finish_photo` | `true` | Capture a completion photo from the printer camera and attach it to `print_complete` notifications. |
 | `library_disk_warning_gb` | `5.0` | Show a banner warning when the data partition has less than this much free space. |
 
@@ -63,6 +63,7 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | `stagger_concurrent` | `2` | Maximum concurrent printers heating. |
 | `stagger_interval_minutes` | `5` | Wait time after a slot frees before the next start. |
 | `stagger_wait_for_bed` | `true` | Slot frees when the bed reaches target temp (±1 °C). When off, the slot frees immediately after print start. |
+| `stagger_strict_for_direct_dispatch` | `false` | Print Now and Re-print are refused while the printer's stagger group has no free slot, instead of waiting for one. Queued prints always wait. |
 | `per_printer_mapping_expanded` | `false` | Expand the custom filament mapping section by default in the print modal. |
 | `auto_queue_compatible_models` | `false` | Let Auto Queue use a Bambu Studio compatible printer when no exact-model printer is ready. Manual compatible targets remain available when off. |
 

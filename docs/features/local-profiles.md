@@ -168,7 +168,8 @@ Use **refresh** after a major OrcaSlicer release — Bambu sometimes silently fi
 
 | Permission | Grants |
 |---|---|
-| `settings:read` | List presets, inspect a preset's full JSON, read base-cache status |
+| `settings:read` or `inventory:read` | List presets, inspect a preset's full JSON (the spool forms offer them) |
+| `settings:read` | Read base-cache status |
 | `settings:update` | Import, manual-create, edit, delete, reclassify, refresh base cache |
 
 Default groups: **Administrators** get both, **Operators** get both, **Viewers** get only `settings:read` (they can browse but not import).

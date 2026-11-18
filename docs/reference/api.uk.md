@@ -325,6 +325,24 @@ curl -H "X-API-Key: bd_..." \
   "https://bamdude.example.com/api/v1/printers/2/status"
 ```
 
+### Прочитати те саме для кількох принтерів одразу
+
+Сторінка з багатьма принтерами питає один раз, а не по разу на принтер. Кожен маршрут приймає повторюваний `ids` (до 100) і відповідає об'єктом з ключами — id принтерів, а значення такі самі, як відповідає маршрут одного принтера. Принтер поза списком принтерів ключа пропускається.
+
+```bash
+curl -H "X-API-Key: bd_..." \
+  "https://bamdude.example.com/api/v1/printers/status/batch?ids=1&ids=2&ids=3"
+```
+
+| Маршрут | На принтер |
+|---|---|
+| `GET /printers/status/batch` | Живий статус |
+| `GET /printers/ams-labels/batch` | Мітки AMS за id AMS |
+| `GET /archives/last-by-printer` | Найновіший архів (`id`, `print_name`, `filename`, `status`, `completed_at`); принтер без архіву пропускається |
+| `GET /smart-plugs/by-printer/batch` | `main` — розетка, яку картка показує як живлення принтера, — і `scripts` |
+| `GET /ha-sensors/readings/batch` | Показники сенсорів Home Assistant, видимих на картці |
+| `GET /firmware/updates/batch` | Автоматична перевірка прошивки |
+
 ### Пропустити окремі об'єкти посеред друку
 
 Тіло запиту — JSON-масив ID об'єктів, що їх повідомив slicer.
@@ -387,6 +405,7 @@ curl -b cookies.txt -c cookies.txt -X POST \
 
 - Версійний префікс API — `/api/v1`. Зміни, що ламають сумісність, поставлятимуться під `/api/v2`, а не мутацією v1.
 - Адитивні зміни (нові endpoint-и, нові опціональні поля) приходять у patch- / minor-релізах без попередження. Якщо ви залежите від стабільності форми відповіді, фіксуйте версію контейнера BamDude.
+- У тілі `PATCH` / `PUT` пропущене поле не змінюється. `null` очищає поле, яке може бути порожнім; для поля, яке порожнім бути не може, `null` вважається пропущеним.
 - Депрекації оголошуються в [changelog](https://github.com/kainpl/bamdude/blob/main/CHANGELOG.md) щонайменше за один minor-реліз до видалення.
 
 > Початково базується на [Bambuddy](https://github.com/maziggy/bambuddy).

@@ -22,7 +22,7 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 | `date_format` | `system` | `system` (browser locale), `us` (`MM/DD/YYYY`), `eu` (`DD/MM/YYYY`), `iso` (`YYYY-MM-DD`). Контролює кожну видиму дату. |
 | `currency` | `USD` | Код валюти для відображення вартості. |
 | `external_url` | пусто | Публічний URL BamDude. Виграє над env-змінною `APP_URL`. Використовується в password-reset / MFA email-посиланнях, OIDC callback construction, Obico cached-frame URL (якщо не задано `obico_snapshot_base_url`) і посиланнях на фото у сповіщеннях. Постав, коли BamDude за reverse proxy. |
-| `default_printer_id` | не задано | Default-принтер для нових queue-items / Print Now з file-manager. |
+| `default_printer_id` | не задано | Приймається й зберігається заради сумісності API; ніхто його не читає, контролу на сторінці налаштувань немає. |
 | `default_sidebar_order` | пусто | Admin-задано дефолтне впорядкування sidebar — JSON `{"order": [...ids]}` або JSON-масив. Пусто = вбудоване впорядкування. |
 | `check_updates` | `true` | Періодично перевіряти release-feed BamDude на нові версії. |
 | `check_printer_firmware` | `true` | Картки принтерів перевіряють у Bambu Lab оновлення прошивки. Вимкнено: картки не роблять автоматичних перевірок, а сервер не звертається до Bambu Lab заради перевірки для картки; сторінка Firmware і завантаження, яке ви запускаєте самі, працюють далі. |
@@ -45,7 +45,7 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 |---|---|---|
 | `archive_3mf_retention_enabled` | `false` | Увімкнути нічне auto-cleanup `.3mf` файлів, що не друкувались N днів. Метадані + thumbnails лишаються; видаляється тільки `.3mf`. |
 | `archive_3mf_retention_days` | `30` | Те N. Мінімум 1. |
-| `save_thumbnails` | `true` | Витягати preview-картинки з 3MF для карток архіву. |
+| `save_thumbnails` | `true` | Приймається й зберігається заради сумісності API; ніхто його не читає (прев'ю витягуються завжди), контролу на сторінці налаштувань немає. |
 | `capture_finish_photo` | `true` | Робити фото на завершенні друку з камери і прикріплювати до `print_complete`-нотифікацій. |
 | `library_disk_warning_gb` | `5.0` | Показувати banner-warning, коли вільне місце на data-партиції менше за цей поріг. |
 
@@ -63,6 +63,7 @@ description: Кожен ключ під Settings → System / Print / Archive / 
 | `stagger_concurrent` | `2` | Максимум одночасних принтерів, що нагріваються. |
 | `stagger_interval_minutes` | `5` | Хвилини очікування після того, як слот звільниться, до старту наступного. |
 | `stagger_wait_for_bed` | `true` | Слот звільняється, коли стіл досяг target-temp ±1 °C. Якщо вимкнено, слот звільняється одразу після старту друку. |
+| `stagger_strict_for_direct_dispatch` | `false` | Print Now і Re-print отримують відмову, поки в stagger-групі принтера немає вільного слота, замість чекати. Друки з черги завжди чекають. |
 | `per_printer_mapping_expanded` | `false` | Розгортати секцію custom filament mapping у print-modal за замовчуванням. |
 | `auto_queue_compatible_models` | `false` | Дозволити Auto Queue вибрати сумісний за Bambu Studio принтер, коли точна модель не готова. Ручний вибір сумісної цілі доступний і без цього. |
 

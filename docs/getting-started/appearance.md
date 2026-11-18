@@ -43,7 +43,7 @@ Your dark and light selections are remembered separately and re-applied whenever
 
 ## :material-tab: Print progress in the browser tab
 
-**Off by default.** Turn on **Show print progress in the browser tab** and the tab title carries the percentage of the print finishing soonest, while the tab icon becomes a matching progress ring in your accent colour.
+**Off by default.** Turn on **Show print progress in the browser tab** and the tab title carries the print finishing soonest, while the tab icon becomes a matching progress ring in your accent colour. **Show in the tab title** chooses what the title says of that print: its **Percentage** or the **Time remaining** (the percentage is shown until the printer has an estimate).
 
 A browser window parked on another screen then tells you how the farm is doing without switching to it — useful on a wall display, less so on the laptop you actually work in. That is why it is a **per-browser** preference rather than a per-account one, like everything else on this page.
 

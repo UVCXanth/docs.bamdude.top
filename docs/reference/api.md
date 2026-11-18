@@ -325,6 +325,24 @@ curl -H "X-API-Key: bd_..." \
   "https://bamdude.example.com/api/v1/printers/2/status"
 ```
 
+### Read the same thing for several printers at once
+
+A page that shows many printers asks once instead of once per printer. Each route takes repeated `ids` (up to 100) and answers an object keyed by printer id, whose values are what the single-printer route answers. A printer outside the key's printer list is left out.
+
+```bash
+curl -H "X-API-Key: bd_..." \
+  "https://bamdude.example.com/api/v1/printers/status/batch?ids=1&ids=2&ids=3"
+```
+
+| Route | Per printer |
+|---|---|
+| `GET /printers/status/batch` | Live status |
+| `GET /printers/ams-labels/batch` | AMS labels by AMS id |
+| `GET /archives/last-by-printer` | The newest archive (`id`, `print_name`, `filename`, `status`, `completed_at`); a printer without one is left out |
+| `GET /smart-plugs/by-printer/batch` | `main` — the plug the card shows as the printer's power — and `scripts` |
+| `GET /ha-sensors/readings/batch` | Card-visible Home Assistant sensor readings |
+| `GET /firmware/updates/batch` | The automatic firmware check |
+
 ### Skip specific objects mid-print
 
 The body is a JSON array of object IDs reported by the slicer.
@@ -387,6 +405,7 @@ The refresh response returns a new access token and rotates the refresh cookie i
 
 - The API version prefix is `/api/v1`. Breaking changes will ship under `/api/v2` rather than mutating v1.
 - Additive changes (new endpoints, new optional fields) land in patch / minor releases without notice. Pin the BamDude container version if you depend on response shape stability.
+- In a `PATCH` / `PUT` body, a field left out is unchanged. `null` clears a field that may be empty; for a field that cannot be empty, `null` is treated as left out.
 - Deprecations are announced in the [changelog](https://github.com/kainpl/bamdude/blob/main/CHANGELOG.md) at least one minor release before removal.
 
 > Originally based on [Bambuddy](https://github.com/maziggy/bambuddy).

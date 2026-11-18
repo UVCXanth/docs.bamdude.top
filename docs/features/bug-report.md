@@ -14,17 +14,19 @@ Adapted from upstream [Bambuddy `058f74a7` + `dc4d77b9` + `57092822`](https://gi
 
 ## :material-bug: The flow
 
-The bubble is a small floating action button — `Bug` icon, red circle, `bottom-right`. It does not block any page content. Clicking opens a slide-in panel that walks through five states:
+The bubble is a small floating action button — `Bug` icon, red circle, `bottom-right`. It does not block any page content. Clicking opens a slide-in panel that walks through six states:
 
 ```mermaid
 stateDiagram-v2
     [*] --> form
     form --> logging: Start Debug Logging
-    logging --> stopping: Stop & Submit (or 5-min auto-stop)
-    stopping --> submitting
+    logging --> stopping: Stop Logging (or 5-min auto-stop)
+    stopping --> review
+    review --> submitting: Send report
+    review --> form: Discard
     submitting --> success
     submitting --> error
-    error --> form: Retry
+    error --> review: Back to the report
     success --> [*]
     form --> [*]: Cancel
 ```
@@ -47,17 +49,19 @@ Click **Start Debug Logging** and BamDude:
 2. Sends a fresh status push to every connected printer over MQTT, so the logs catch a current snapshot of every printer's state right at the start.
 3. Renders a 3-step progress indicator + a `MM:SS` mono lap timer.
 
-Now reproduce the bug in another tab. Detailed logs are captured continuously. The session **auto-stops at 5 minutes** as a safety cap — you can also click **Stop & Submit** earlier when you've reproduced what you need.
+Now reproduce the bug in another tab. Detailed logs are captured continuously. The session **auto-stops at 5 minutes** as a safety cap — you can also click **Stop Logging** earlier when you've reproduced what you need. Neither sends anything: both lead to the review step.
 
-You can also **close the panel** and reproduce the bug in the same tab — recording keeps running. While it does, the bug button turns amber (in the compact layout the header button pulses, and the debug-logging banner offers **Resume report**); opening it brings you back to this step with your description intact. A page reload does not lose the run either: BamDude picks it up again while the server is still logging. If the 5-minute cap fires while the panel is closed, the panel opens first so the report is submitted in front of you. A run left unattended past the cap (the browser was closed) is not filed on the next visit — the log level is simply put back.
+You can also **close the panel** and reproduce the bug in the same tab — recording keeps running. While it does, the bug button turns amber (in the compact layout the header button pulses, and the debug-logging banner offers **Resume report**); opening it brings you back to this step with your description intact. A page reload does not lose the run either: BamDude picks it up again while the server is still logging. If the 5-minute cap fires while the panel is closed, the recording stops and the panel opens on the review step — nothing is sent until you click **Send report**. A run left unattended past the cap (the browser was closed) is not filed on the next visit — the log level is simply put back.
 
-### :material-stop-circle: Step 3 — Stop & Submit
+### :material-stop-circle: Step 3 — Stop, review, send
 
-Hitting Stop:
+Hitting **Stop Logging**:
 
 1. Pulls the last 200 sanitized log lines (printer names / serials / IPs / access codes / cloud emails / usernames are redacted on the server before they leave your install).
 2. Restores the previous log level (so DEBUG mode doesn't stick around if you didn't have it on).
-3. Hands the sanitized logs + form fields + screenshot off to `POST /bug-report/submit`, which calls the configured relay.
+3. Shows the review: your description, how many log lines were collected, and the words **Nothing has been sent yet**.
+
+The report goes to a public issue tracker, so it leaves only on its own click. **Send report** hands the sanitized logs + form fields + screenshot off to `POST /bug-report/submit`, which calls the configured relay. **Discard** drops the recording and the form. Closing the panel keeps the review; a page reload loses it, because the collected logs are held in the page's memory only.
 
 ### :material-check-circle: Step 4 — Success
 
@@ -65,7 +69,7 @@ The relay creates a GitHub issue and returns the issue number + URL. The panel s
 
 ### :material-alert-circle: Step 5 — Error
 
-If the relay is unreachable, returns 5xx, or rejects the payload, the panel surfaces a generic error message with a **Retry** button (which goes back to the form so you can adjust description/screenshot and try again). Every failed attempt is also logged in BamDude's `bug_reports` audit table for diagnosis.
+If the relay is unreachable, returns 5xx, or rejects the payload, the panel shows the error with a **Back to the report** button: the collected logs are kept, so the same report can be sent again without recording a second time. Every failed attempt is also logged in BamDude's `bug_reports` audit table for diagnosis.
 
 ## :material-shield-lock: What's sanitized
 

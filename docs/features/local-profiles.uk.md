@@ -168,7 +168,8 @@ Deletes **миттєві** — без trash, без undo. On-disk файл пі�
 
 | Permission | Дозволяє |
 |---|---|
-| `settings:read` | List presets, inspect повний JSON, read base-cache status |
+| `settings:read` або `inventory:read` | List presets, inspect повний JSON (їх пропонують форми котушок) |
+| `settings:read` | Read base-cache status |
 | `settings:update` | Import, manual-create, edit, delete, reclassify, refresh base cache |
 
 Дефолтні групи: **Administrators** обидва, **Operators** обидва, **Viewers** — тільки `settings:read` (можуть переглядати, але не імпортувати).
