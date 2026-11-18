@@ -81,6 +81,8 @@ For an unbound VP, choose **Nozzle diameter** (0.2, 0.4, 0.6 or 0.8 mm) and **Fl
 
 For dual-nozzle or rack printing, bind a real printer. One manual pair does not describe the left nozzle or rack positions; the existing Bambu Studio restriction on left-nozzle printing through an unbound VP remains.
 
+The hotend positions the slicer picks on a rack printer (H2C) belong to the printer it read them from. BamDude keeps them only when the job prints on the printer this VP is bound to. A job that goes elsewhere — an automatic-queue VP, another printer taken because the bound one was unavailable, a job you move to another queue — gets its positions from the rack of the printer that prints it.
+
 When a target is present, the card names that printer and offers **Unbind printer**, even when its target selector is hidden in File Manager or automatic mode. Changing mode keeps the binding. Unbinding restores the last saved manual pair; for a fixed-printer queue it also turns off auto-dispatch, since there is no fixed destination. Deleting the real printer clears its VP bindings; a proxy without a target stops.
 
 !!! warning "Restart the slicer after changing the nozzle source"

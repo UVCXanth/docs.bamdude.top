@@ -45,7 +45,7 @@ BamDude може публікувати події до зовнішнього M
 
 | Топік | Опис | Retained |
 |-------|------|----------|
-| `bambuddy/status` | LWT-based статус сервісу. Payload `online` коли BamDude крутиться, `offline` публікується як Last-Will коли брокер втратив зв'язок. | Так |
+| `bambuddy/status` | Статус сервісу, JSON-об'єкт: `{"status": "online", "timestamp": …}`, поки BamDude підключений, `"offline"` при зупинці — і, як last-will повідомлення брокера, коли з'єднання втрачено без неї. | Так |
 
 ### Події принтера
 
@@ -56,9 +56,10 @@ BamDude може публікувати події до зовнішнього M
 | `bambuddy/printers/{serial}/online` | Принтер щойно зайшов у мережу. Спрацьовує на **межі з'єднання**, тобто це перехід, а не heartbeat. |
 | `bambuddy/printers/{serial}/offline` | Принтер щойно вийшов із мережі — та сама межа, в інший бік. |
 | `bambuddy/printers/{serial}/print/started` | Друк розпочато |
-| `bambuddy/printers/{serial}/print/completed` | Друк завершено (status=`completed`) |
-| `bambuddy/printers/{serial}/print/failed` | Друк не вдався (status=`failed`) |
+| `bambuddy/printers/{serial}/print/completed` | Друк завершено (status=`completed`). Публікується й після наступного старту для друку, що закінчився, поки BamDude був зупинений. |
+| `bambuddy/printers/{serial}/print/failed` | Друк закінчився будь-як інакше; `status` каже як (`failed`, `cancelled`, …) |
 | `bambuddy/printers/{serial}/ams/changed` | Зміна філаменту в AMS |
+| `bambuddy/printers/{serial}/filament/low` | Завантажена котушка перетнула поріг малого залишку — один раз на перетин. Payload: `slot`, `remaining_percent`, `color`, `spool_id` (власний облік BamDude; `null` зі Spoolman). |
 | `bambuddy/printers/{serial}/error` | HMS / firmware-помилка |
 
 ### Події черги
@@ -68,13 +69,13 @@ BamDude може публікувати події до зовнішнього M
 | `bambuddy/queue/job_added` | Завдання додано до черги |
 | `bambuddy/queue/job_started` | Завдання почало друкуватися |
 | `bambuddy/queue/job_completed` | Завдання завершено успішно |
-| `bambuddy/queue/job_failed` | Завдання завершилось зі status=`failed` (той самий publisher, що й `job_completed`, гілкується за статусом) |
+| `bambuddy/queue/job_failed` | Завдання закінчилось будь-як інакше; `status` каже як (`failed`, `cancelled`, …) |
 
 ### Події обслуговування
 
 | Топік | Опис |
 |-------|------|
-| `bambuddy/maintenance/alert` | Завдання обслуговування перетнуло поріг |
+| `bambuddy/maintenance/alert` | Завдання обслуговування настало або наближається. Payload: `maintenance_type`, `current_value` (скільки минуло від останнього виконання), `threshold` (інтервал) і `unit` (`hours` друку або `days`). |
 | `bambuddy/maintenance/reset` | Maintenance-counter скинуто (завдання позначено виконаним) |
 
 !!! note "Топіка `maintenance/acknowledged` немає"
@@ -86,16 +87,16 @@ BamDude може публікувати події до зовнішнього M
 
 | Топік | Опис |
 |-------|------|
-| `bambuddy/smart_plugs/on` | Розетка щойно увімкнулась (post-confirmation, не просто запит). Payload містить `plug_id`, `plug_name`, `bound_printer_id`. |
-| `bambuddy/smart_plugs/off` | Розетка щойно вимкнулась. |
-| `bambuddy/smart_plugs/energy` | **Щогодини**, разом зі знімком енергії, який BamDude і так записує. Payload: `plug_id`, `plug_name`, `power_watts`, `energy_today_kwh`, `energy_total_kwh`, `timestamp`. |
+| `bambuddy/smart_plugs/on` | BamDude увімкнув розетку, і пристрій прийняв команду — кнопкою, за розкладом, автоматикою навколо друку, чергою, що будить принтер. Payload: `plug_id`, `plug_name`, `state`, `printer_id`, `printer_name`. |
+| `bambuddy/smart_plugs/off` | Те саме для вимкнення, включно з відкладеним і температурним автовимкненням та виявленням збоїв. Розетка, перемкнута кнопкою на самому пристрої, не публікується. |
+| `bambuddy/smart_plugs/energy` | **Щогодини**, разом зі знімком енергії, який BamDude і так записує. Payload: `plug_id`, `plug_name`, `power_watts`, `energy_today_kwh`, `energy_total_kwh`, `timestamp`. Значення, якого розетка не повідомляє, — `null`, а не 0. |
 
 ### Події архіву
 
 | Топік | Опис |
 |-------|------|
-| `bambuddy/archive/created` | Створено новий рядок архіву (post-3MF parse). Payload: `archive_id`, `printer_id`, `task_name`, `effective_hash`, `created_at`. |
-| `bambuddy/archive/updated` | Архів-рядок змінено (статус flip-нувся, plate-metadata refilled, retry-download succeed-нуло, etc.). Payload містить змінені поля. |
+| `bambuddy/archive/created` | Створено рядок архіву — на старті друку. Payload: `archive_id`, `print_name`, `printer_name`, `status`. |
+| `bambuddy/archive/updated` | Статус архіву змінився, коли його друк закінчився. Payload: `archive_id`, `print_name`, `status`. |
 
 ---
 
@@ -171,6 +172,7 @@ mqtt:
   binary_sensor:
     - name: "BamDude Online"
       state_topic: "bambuddy/status"
+      value_template: "{{ value_json.status }}"
       payload_on: "online"
       payload_off: "offline"
       device_class: connectivity
@@ -214,11 +216,9 @@ mqtt:
 
 Коли **Use TLS** увімкнено:
 
-- BamDude відкриває з'єднання з брокером по TLS, використовуючи системний trust store.
-- **Self-signed broker-серти не верифікуються за замовчуванням** — з'єднання все одно зашифроване, але cert chain не валідується. Це робить home-lab сетапи з локальним Mosquitto + self-signed серт працюючими out of the box. Для production — підпиши broker-серт під CA, якій довіряє система (Let's Encrypt, internal PKI), і з'єднання стане повністю верифікованим.
+- BamDude відкриває з'єднання з брокером по TLS.
+- **Сертифікат брокера не перевіряється** — з'єднання зашифроване, але ні ланцюжок сертифікатів, ні ім'я хоста не звіряються. Саме тому локальний Mosquitto із самопідписаним сертифікатом працює одразу; це також означає, що шифрування не доводить, який саме брокер відповів. Тримайте брокер у мережі, якій довіряєте.
 - Username + password йдуть **всередині** TLS-тунелю — шифровані на дроті навіть з self-signed.
-
-Якщо потрібен strict cert verification, постав CA в host trust store (`/etc/ssl/certs/` + `update-ca-certificates`); MQTT-клієнт BamDude підбере його через системний bundle.
 
 ---
 

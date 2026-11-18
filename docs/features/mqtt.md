@@ -45,7 +45,7 @@ All topics are prefixed with your configured prefix. **The default prefix is `ba
 
 | Topic | Description | Retained |
 |-------|-------------|----------|
-| `bambuddy/status` | LWT-based service status. Payload `online` when BamDude is running, `offline` published as Last-Will when the broker loses the connection. | Yes |
+| `bambuddy/status` | Service status, a JSON object: `{"status": "online", "timestamp": …}` while BamDude is connected, `"offline"` on shutdown — and, as the broker's last-will message, when the connection is lost without one. | Yes |
 
 ### Printer events
 
@@ -56,9 +56,10 @@ All topics are prefixed with your configured prefix. **The default prefix is `ba
 | `bambuddy/printers/{serial}/online` | Printer just came online. Fires on the **connection edge**, so it is a transition, not a heartbeat. |
 | `bambuddy/printers/{serial}/offline` | Printer just went offline — the same edge, the other direction. |
 | `bambuddy/printers/{serial}/print/started` | Print job started |
-| `bambuddy/printers/{serial}/print/completed` | Print completed (status=`completed`) |
-| `bambuddy/printers/{serial}/print/failed` | Print failed (status=`failed`) |
+| `bambuddy/printers/{serial}/print/completed` | Print completed (status=`completed`). Also published on the next start for a print that ended while BamDude was stopped. |
+| `bambuddy/printers/{serial}/print/failed` | Print ended any other way; `status` says how (`failed`, `cancelled`, …) |
 | `bambuddy/printers/{serial}/ams/changed` | AMS filament changed |
+| `bambuddy/printers/{serial}/filament/low` | A loaded spool crossed its low mark — once per crossing. Payload: `slot`, `remaining_percent`, `color`, `spool_id` (BamDude's own inventory; `null` with Spoolman). |
 | `bambuddy/printers/{serial}/error` | HMS / firmware error |
 
 ### Queue events
@@ -68,13 +69,13 @@ All topics are prefixed with your configured prefix. **The default prefix is `ba
 | `bambuddy/queue/job_added` | Job added to queue |
 | `bambuddy/queue/job_started` | Job started printing |
 | `bambuddy/queue/job_completed` | Job completed successfully |
-| `bambuddy/queue/job_failed` | Job ended with status=`failed` (same publisher as `job_completed`, branched on status) |
+| `bambuddy/queue/job_failed` | Job ended any other way; `status` says how (`failed`, `cancelled`, …) |
 
 ### Maintenance events
 
 | Topic | Description |
 |-------|-------------|
-| `bambuddy/maintenance/alert` | A maintenance task tripped its threshold |
+| `bambuddy/maintenance/alert` | A maintenance task is due or close to it. Payload: `maintenance_type`, `current_value` (what has passed since it was last done), `threshold` (its interval) and `unit` (`hours` of printing or `days`). |
 | `bambuddy/maintenance/reset` | A maintenance counter was reset (task marked done) |
 
 !!! note "There is no `maintenance/acknowledged`"
@@ -86,16 +87,16 @@ All topics are prefixed with your configured prefix. **The default prefix is `ba
 
 | Topic | Description |
 |-------|-------------|
-| `bambuddy/smart_plugs/on` | Smart plug just turned on (post-confirmation, not just the request). Payload includes `plug_id`, `plug_name`, `bound_printer_id`. |
-| `bambuddy/smart_plugs/off` | Smart plug just turned off. |
-| `bambuddy/smart_plugs/energy` | **Hourly**, alongside the energy snapshot BamDude already records. Payload: `plug_id`, `plug_name`, `power_watts`, `energy_today_kwh`, `energy_total_kwh`, `timestamp`. |
+| `bambuddy/smart_plugs/on` | BamDude switched a plug on and the device accepted the command — by the button, the schedule, the automation around a print, the queue waking a printer. Payload: `plug_id`, `plug_name`, `state`, `printer_id`, `printer_name`. |
+| `bambuddy/smart_plugs/off` | The same for switching off, including the delayed and temperature-based auto-off and failure detection. A plug switched by hand on the device itself is not published. |
+| `bambuddy/smart_plugs/energy` | **Hourly**, alongside the energy snapshot BamDude already records. Payload: `plug_id`, `plug_name`, `power_watts`, `energy_today_kwh`, `energy_total_kwh`, `timestamp`. A figure the plug does not report is `null`, never 0. |
 
 ### Archive events
 
 | Topic | Description |
 |-------|-------------|
-| `bambuddy/archive/created` | New archive row created (post-3MF parse). Payload: `archive_id`, `printer_id`, `task_name`, `effective_hash`, `created_at`. |
-| `bambuddy/archive/updated` | Archive row mutated (status flipped, plate metadata refilled, retry-download succeeded, etc.). Payload includes the changed fields. |
+| `bambuddy/archive/created` | An archive row was created — at print start. Payload: `archive_id`, `print_name`, `printer_name`, `status`. |
+| `bambuddy/archive/updated` | The archive's status changed when its print ended. Payload: `archive_id`, `print_name`, `status`. |
 
 ---
 
@@ -171,6 +172,7 @@ mqtt:
   binary_sensor:
     - name: "BamDude Online"
       state_topic: "bambuddy/status"
+      value_template: "{{ value_json.status }}"
       payload_on: "online"
       payload_off: "offline"
       device_class: connectivity
@@ -214,11 +216,9 @@ Wire the first output to a Function that filters `msg.payload.printer_name === "
 
 When **Use TLS** is on:
 
-- BamDude opens the broker connection over TLS using the system certificate store.
-- **Self-signed broker certificates are not verified by default** — the connection is still encrypted, but the cert chain isn't validated. This makes home-lab setups with a local Mosquitto + self-signed cert work out of the box. For production deployments, sign your broker cert against a CA the system trusts (Let's Encrypt, internal PKI) and the connection upgrades to fully verified.
+- BamDude opens the broker connection over TLS.
+- **The broker's certificate is not verified** — the connection is encrypted, but neither the certificate chain nor the host name is checked. This is what lets a local Mosquitto with a self-signed certificate work out of the box; it also means the encryption does not prove which broker answered. Keep the broker on a network you trust.
 - Username + password are sent **inside** the TLS tunnel — they're encrypted on the wire even with self-signed certs.
-
-If you need strict cert verification, install your CA into the host's trust store (`/etc/ssl/certs/` + `update-ca-certificates`); BamDude's MQTT client picks it up via the system bundle.
 
 ---
 
