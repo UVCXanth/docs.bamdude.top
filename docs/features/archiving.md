@@ -490,9 +490,20 @@ Open an archive with a timelapse → click the timelapse thumbnail → **Edit** 
 |---|---|
 | **Trim handles** (two) | Drag the two markers on the timeline to set start / end of the kept segment |
 | **Speed selector** | 0.25× → 4× playback speed |
-| **Music dropdown** | Upload an MP3 / WAV / M4A / AAC / OGG and adjust volume; preview is synced with video playback |
+| **Music overlay** | Upload an MP3 / WAV / M4A / AAC / OGG (100 MB at most) and set its volume; the preview is synced with video playback. The volume you set is the volume of the saved video. A track shorter than the video is repeated, as in the preview |
+| **Save without sound** (the speaker button) | The saved video has no sound at all — neither the music nor the recording's own |
 | **Preview Play** | Plays only the trimmed range with the music overlay applied |
-| **Save** | Re-encodes via ffmpeg server-side and replaces the original timelapse with the edited version |
+| **Save** | Re-encodes on the server and replaces the video attached to the print with the edited one |
+| **Save as new** | Re-encodes on the server and keeps the result beside the original, which stays attached |
+
+Saving does not wait in the browser. The window shows what the server is doing — waiting for the encoder, encoding with a percentage, saving the result — and offers **Cancel the edit**. You can close the window meanwhile: the edit goes on, and opening the editor again in the same sign-in session shows it. The percentage reaches 100 only when the edited video is actually saved.
+
+- One video is edited by one edit at a time; a second **Save** for the same video is refused until the first ends. The server encodes one video at a time, so an edit may wait for its turn.
+- If the archive's video is replaced or removed while an edit is running, the edit's result is **not** saved, and the window says so. Nothing is overwritten by a result that arrives late.
+- An edit stops, and saves nothing, if your right to change archives is removed or your session ends while it runs, and when a restore from a backup starts.
+- A cancelled edit reads as cancelled only once the encoder has really stopped.
+- The edited video keeps the resolution of the original.
+- A video saved with **Save as new** is listed under **Download print videos**, marked **Saved from the editor, beside the original**. It can be downloaded there and, with the right to delete archives, removed with the bin button beside it. It is included in backups like the attached video.
 
 ### Manual upload + remove
 
