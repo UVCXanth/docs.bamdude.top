@@ -752,6 +752,8 @@ In both queue modes, explicitly disabling **Use AMS** in the slicer's job retain
 
 When a slicer sends a print to a Queue-mode VP, it normally carries the per-job print-option toggles — **bed levelling**, **flow calibration**, **layer inspection**, and **timelapse**. Some slicer builds and headless / scripted upload paths **omit** these flags.
 
+On a dual-nozzle printer the slicer's **nozzle offset calibration** choice (off, on or auto) is taken the same way. In **auto-queue** mode the job has no printer yet: the options are decided when Auto-Queue hands it to one, and there too what the slicer sent comes first, then the print options saved for that printer's model.
+
 A queue item resolves each of those four flags with this precedence:
 
 | Priority | Source | When it applies |

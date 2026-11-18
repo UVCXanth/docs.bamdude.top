@@ -31,6 +31,7 @@ Navigate to **Settings > Network > MQTT Publishing**.
 | **Password** | Authentication (optional) | -- |
 | **Topic Prefix** | Prefix for all topics | `bamdude` (set to `bambuddy` to keep the topics used through 0.4.5) |
 | **Use TLS** | Enable TLS/SSL encryption | Off |
+| **Verify the broker's certificate** | Shown when Use TLS is on. Check the certificate and the host name against the system's trusted authorities; refuse to connect when the check fails. | Off |
 
 !!! tip "Port auto-population"
     When you toggle **Use TLS** on, the port field auto-fills `8883` (the default MQTT-over-TLS port). Toggle it off and the port snaps back to `1883`. You can override either default — auto-fill only fires when the field still holds the default for the previous mode.
@@ -66,7 +67,7 @@ All topics are prefixed with your configured prefix. **The default prefix is `ba
 
 | Topic | Description |
 |-------|-------------|
-| `bambuddy/queue/job_added` | Job added to queue |
+| `bambuddy/queue/job_added` | A job landed in a printer's queue — however it arrived: the queue page or API, the slicer plugin, Auto-Queue handing it to a printer, a Virtual Printer, Retry / Clone / Repeat, the Telegram bot. A job waiting in Auto-Queue is announced when a printer receives it. |
 | `bambuddy/queue/job_started` | Job started printing |
 | `bambuddy/queue/job_completed` | Job completed successfully |
 | `bambuddy/queue/job_failed` | Job ended any other way; `status` says how (`failed`, `cancelled`, …) |
@@ -217,7 +218,8 @@ Wire the first output to a Function that filters `msg.payload.printer_name === "
 When **Use TLS** is on:
 
 - BamDude opens the broker connection over TLS.
-- **The broker's certificate is not verified** — the connection is encrypted, but neither the certificate chain nor the host name is checked. This is what lets a local Mosquitto with a self-signed certificate work out of the box; it also means the encryption does not prove which broker answered. Keep the broker on a network you trust.
+- **By default the broker's certificate is not verified** — the connection is encrypted, but neither the certificate chain nor the host name is checked. This is what lets a local Mosquitto with a self-signed certificate work out of the box; it also means the encryption does not prove which broker answered. Keep such a broker on a network you trust.
+- Turn on **Verify the broker's certificate** to have both checked against the authorities the system trusts (a certificate from Let's Encrypt, or your own CA installed in the host's trust store). BamDude then does not connect to a broker that fails the check. Changing the switch asks for the broker password again, because it changes where the password may be sent. MQTT smart plugs use the same broker connection settings.
 - Username + password are sent **inside** the TLS tunnel — they're encrypted on the wire even with self-signed certs.
 
 ---

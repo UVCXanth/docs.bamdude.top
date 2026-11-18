@@ -150,6 +150,7 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | `mqtt_port` | `1883` | Broker port. TLS deployments typically use `8883`. |
 | `mqtt_username` / `mqtt_password` | empty | Broker auth. Password is encrypted at rest. |
 | `mqtt_use_tls` | `false` | Use TLS for the MQTT broker connection. |
+| `mqtt_tls_verify` | `false` | With TLS on, check the broker's certificate and host name against the system's trusted authorities and refuse to connect when the check fails. Off accepts any certificate (a self-signed broker works). |
 | `mqtt_topic_prefix` | `bambuddy` | Prefix for all republished topics. Inherited from upstream Bambuddy — change to `bamdude` on fresh installs if you prefer. |
 | `ftp_retry_enabled` | `true` | Retry FTP 3MF downloads when the printer was unreachable at print start. See [Print Archive](../features/archiving.md). |
 | `ftp_retry_count` | `3` | Maximum retries per attempt cycle (1–10). |
