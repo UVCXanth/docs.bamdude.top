@@ -67,7 +67,7 @@ Two different things carry a status here, and they are easy to confuse. The **qu
 
 ### One active start per printer
 
-Pending jobs are a backlog, so you can continue filling and ordering a queue. A **Print now** or **Reprint** request, however, is refused while that printer already has a running or preparing print, or while its queue is paused or in error; resume and inspect the queue first. Auto-Queue treats both a pending backlog and an active claim as unavailable capacity, then tries another eligible printer in the same pass.
+Pending jobs are a backlog, so you can continue filling and ordering a queue. A **Print now** or **Reprint** request, however, is refused while that printer already has a running or preparing print, or while its queue is paused or in error; resume and inspect the queue first. A printer that only waits for its plate to be cleared is a different case: the request is taken, nothing is uploaded yet, and the job goes to the **first place** of that printer's queue marked *Plate not cleared* — it starts as soon as you answer **Clear plate**, ahead of everything that was already waiting. Auto-Queue treats both a pending backlog and an active claim as unavailable capacity, then tries another eligible printer in the same pass.
 
 If BamDude observes a new external print whose archive does not identify the current claim, it keeps both records visible and pauses further automatic starts. It never guesses ownership from the newest row or a filename.
 
