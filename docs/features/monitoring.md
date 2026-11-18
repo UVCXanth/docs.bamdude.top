@@ -420,11 +420,42 @@ If the folder was listed completely before, a listing that did not answer or is 
 
 | Action | Single | Multiple |
 |--------|--------|----------|
-| **Download** | Direct download | ZIP archive of selection |
+| **Download** | The file itself | One ZIP archive of the selection |
 | **Save to Library** | Lands the 3MF as a Library file (BamDude-only) — folder picker prompts for destination | Same, batched |
 | **Delete** | Confirm + delete | Bulk-delete with confirm |
 
 The **Save to Library** path also auto-promotes bare `.3mf` filenames to `.gcode.3mf` when the bytes are sliced (probes the zip for `Metadata/plate_*.gcode`), so the Library's tag/parser pipeline classifies it correctly.
+
+Click a file's checkbox to select it. **Shift**-click selects every file shown between the last file you clicked and this one, in the order and under the filter on screen; files the filter hides are never included. **Select All** and **Deselect All** do the same without a keyboard.
+
+A selection follows what the printer says. A file leaves the selection when a complete listing no longer has it. While the printer has not answered — the list on screen is then the last complete one — the selection is kept and marked **list not confirmed**, and **Download** asks for a fresh listing first instead of acting on the old one.
+
+### Downloading files
+
+**Download** does not hold the file in the browser. BamDude prepares it on the server's disk and your browser then saves it like any other download, so a folder of timelapses does not have to fit in memory.
+
+A strip above the buttons shows what is happening:
+
+| The strip says | What it means |
+|---|---|
+| **Waiting for a free download slot…** | Two downloads are prepared at a time on the whole server; yours is next. |
+| **Preparing the download…** / **Preparing file 3 of 12…** | Files are being read from the printer, with the amount received so far. **Cancel** stops it. |
+| **Stopping the download…** | You cancelled; the transfer from the printer is being stopped. It reads **The download was cancelled.** only once it really has. |
+| ***name* is ready** | The browser has started saving it. **Save** saves it again; **Discard** frees the space on the server. |
+| ***N* of *M* files could not be downloaded** | The printer did not give some files; each is listed with the reason. **Save the rest** takes the archive without them. Nothing is saved until you choose. |
+
+If no file at all could be read, the download fails and says so — you never get an empty archive.
+
+You can close the window while a download is being prepared. BamDude asks whether to **Keep downloading** in the background or **Cancel the download**; open the file manager for that printer again to find it and save it. A download is visible only to the sign-in that started it: it is not listed in another browser, or after you sign in again. A prepared download is kept for an hour.
+
+A download stops by itself, and nothing is handed out, when:
+
+- your access to the printer's files is removed, your session is ended or your account is deactivated while it is being prepared;
+- the selection grows past 10 GB, or the server would be left with less than its reserve of free space (5 % of the volume, at least 512 MB);
+- it has been preparing for 45 minutes;
+- a backup is restored.
+
+One download takes at most 1000 files, from the storage you are looking at.
 
 ### Files a print is using
 

@@ -459,6 +459,29 @@ Only ever after the copy is safely saved, and only the very recording that was c
 !!! warning "Why this is not on by default"
     Having a copy in BamDude is not the same as nobody needing the file on the machine — it can still be watched from the printer's own screen, or carried away on the card.
 
+### Downloading a print's videos
+
+**Download print videos** in an archive's menu opens one window with everything recorded for that print:
+
+| List | What it holds |
+|---|---|
+| **Attached to the archive** | The video BamDude keeps for the print. |
+| **Timelapse recordings on the printer** | Recordings still on the printer's card or in its built-in storage. |
+| **Camera recordings on the SD card** | The chunks the printer's own camera recorded to the card (`ipcam-record.*`), when video recording is on at the printer. |
+
+Tick what you want and press **Download selected**: one file is saved as it is, several as one ZIP archive. It is prepared and saved the same way as a [download from the printer's file browser](monitoring.md#downloading-files), with the same progress strip, limits and the choice to keep it running in the background.
+
+The three lists answer separately. The attached video needs nothing from the printer — it is offered when the printer is off, has been removed from BamDude, or when you have no access to its files. Each printer list says what happened to it instead of showing nothing: **Nothing found on the printer**, **The printer did not answer**, **The printer is still listing its files**, **You do not have access to this printer's files**, **This printer has no SD card to read these recordings from**, or **The printer of this archive is no longer configured**.
+
+**Nothing is selected for you**, and a file is marked **Recorded during this print** only when BamDude knows when it was written:
+
+- recordings in built-in storage carry an exact time and are compared as they are;
+- files on the card carry the printer's own clock, and the card does not say which time zone that clock is in. They are shown with the time the printer wrote and the note **Printer time — its time zone is not confirmed**.
+
+To compare card files as well, type how many hours the printer's clock is ahead of UTC into **Printer clock ahead of UTC, hours** (for example `2`, or `-5`). Files that then fall within the print are marked **Recorded during this print, by the offset you set**. An older file, for which the card gives only a date and no hour, is never marked that way: the offset can show that its day lies outside the print, not that it was recorded during it. **Time margin** widens the window around the print, from 10 minutes to 3 hours. Both settings change only this list: they do not change BamDude's time zone, and they never attach a video to an archive.
+
+Reading recordings from the printer needs the **printers:files** permission; an API key also needs that printer in its list. The attached video needs only the right to see the archive. A download of recordings that is already prepared is not handed out, and is no longer listed, once that permission is gone; a download of the attached video alone is unaffected.
+
 ### Editor controls
 
 Open an archive with a timelapse → click the timelapse thumbnail → **Edit** in the viewer header.
