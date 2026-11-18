@@ -446,7 +446,7 @@ A strip above the buttons shows what is happening:
 
 If no file at all could be read, the download fails and says so — you never get an empty archive.
 
-You can close the window while a download is being prepared. BamDude asks whether to **Keep downloading** in the background or **Cancel the download**; open the file manager for that printer again to find it and save it. A prepared download is kept for an hour.
+You can close the window while a download is being prepared. BamDude asks whether to **Keep downloading** in the background or **Cancel the download**; open the file manager for that printer again to find it and save it. A download is visible only to the sign-in that started it: it is not listed in another browser, or after you sign in again. A prepared download is kept for an hour.
 
 A download stops by itself, and nothing is handed out, when:
 

@@ -478,9 +478,9 @@ The three lists answer separately. The attached video needs nothing from the pri
 - recordings in built-in storage carry an exact time and are compared as they are;
 - files on the card carry the printer's own clock, and the card does not say which time zone that clock is in. They are shown with the time the printer wrote and the note **Printer time — its time zone is not confirmed**.
 
-To compare card files as well, type how many hours the printer's clock is ahead of UTC into **Printer clock ahead of UTC, hours** (for example `2`, or `-5`). Files that then fall within the print are marked **Recorded during this print, by the offset you set**. **Time margin** widens the window around the print, from 10 minutes to 3 hours. Both settings change only this list: they do not change BamDude's time zone, and they never attach a video to an archive.
+To compare card files as well, type how many hours the printer's clock is ahead of UTC into **Printer clock ahead of UTC, hours** (for example `2`, or `-5`). Files that then fall within the print are marked **Recorded during this print, by the offset you set**. An older file, for which the card gives only a date and no hour, is never marked that way: the offset can show that its day lies outside the print, not that it was recorded during it. **Time margin** widens the window around the print, from 10 minutes to 3 hours. Both settings change only this list: they do not change BamDude's time zone, and they never attach a video to an archive.
 
-Reading recordings from the printer needs the **printers:files** permission; an API key also needs that printer in its list. The attached video needs only the right to see the archive.
+Reading recordings from the printer needs the **printers:files** permission; an API key also needs that printer in its list. The attached video needs only the right to see the archive. A download of recordings that is already prepared is not handed out, and is no longer listed, once that permission is gone; a download of the attached video alone is unaffected.
 
 ### Editor controls
 
