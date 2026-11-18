@@ -486,6 +486,8 @@ Reading recordings from the printer needs the **printers:files** permission; an 
 
 Open an archive with a timelapse → click the timelapse thumbnail → **Edit** in the viewer header.
 
+The player and the editor show the whole picture inside the window whatever the video's shape: a recording made upright is not cut off and does not push the controls off the screen, on a desktop or on a phone.
+
 | Control | Description |
 |---|---|
 | **Trim handles** (two) | Drag the two markers on the timeline to set start / end of the kept segment |
