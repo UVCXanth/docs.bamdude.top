@@ -231,7 +231,7 @@ If its containment or local connection fails, camera functions become
 unavailable; the application health endpoint and unrelated printing/queue work
 continue. Jobs that explicitly require a camera check may wait for recovery.
 The worker restarts with bounded backoff after a process failure. Check
-**System → Camera worker** for the reason and next retry time. A Virtual Printer
+**Information → Camera worker** for the reason and next retry time. A Virtual Printer
 camera passthrough is a worker-owned, byte-for-byte raw TCP lease; its other
 functions keep running during a camera outage.
 
@@ -255,7 +255,7 @@ latency and frame counts describe backend delivery, not proof of browser renderi
 `viewers_gone` after close is normal. `subscribers=0` confirms that no browser viewer
 remains on that relay; another viewer legitimately keeps the shared source alive.
 
-Download the current log from **System Info**. DEBUG is not required for this
+Download the current log from **Information → Log Files**. DEBUG is not required for this
 basic diagnosis. Worker forwarding bounds record size and rate and redacts
 credentials/URLs; it does not log each video frame. Keep an issue's time and
 printer name when sending a log to support. Isolation does not automatically

@@ -96,7 +96,7 @@ sudo systemctl restart bamdude
 
 ## :material-source-branch: Git-бекап (GitHub / GitLab / Gitea / Forgejo)
 
-Окремий від ZIP-флоу. **Налаштування → Резервна копія → Git Backup** надсилає вибрані категорії бекапу в репозиторій GitHub, GitLab, Gitea або Forgejo — корисно для off-site синку профілів, координації multi-host ферми і PR-based історії змін у налаштуваннях принтера.
+Окремий від ZIP-флоу. **Налаштування → Резервна копія → Резервне копіювання Git** надсилає вибрані категорії бекапу в репозиторій GitHub, GitLab, Gitea або Forgejo — корисно для off-site синку профілів, координації multi-host ферми і PR-based історії змін у налаштуваннях принтера.
 
 !!! warning "Після оновлення погодьте наявні розклади"
     Git-бекапи можуть містити credentials інтеграцій і приватні дані ферми. Використовуйте **приватний репозиторій**. Після оновлення активний адміністратор із правом Git-бекапу має явно зберегти кожну наявну конфігурацію, щоб експорт відновився. Самого успішного тесту з’єднання недостатньо.
@@ -129,7 +129,7 @@ sudo systemctl restart bamdude
         - Обери expiration (`No expiration` рекомендується для unattended scheduled-бекапів).
         - У **Select scopes** відмітьте `repo` (потрібно для репо-доступу і коммітів).
     3. **Налаштуй у BamDude**:
-        - **Налаштування** → **Резервна копія** → Git Backup.
+        - **Налаштування** → **Резервна копія** → **Резервне копіювання Git**.
         - Provider: `github`.
         - Repository URL: наприклад `https://github.com/username/bamdude-backup`.
         - Введи PAT.
@@ -458,7 +458,7 @@ docker run -d \
 ## :material-lightbulb: Поради
 
 !!! tip "Off-site покриття"
-    Скомбінуйте **Заплановані локальні бекапи** (повні дані, on-disk) з **Git-бекапом** (профілі, off-site) — локальний переживе software wipe, git — переживе hardware loss.
+    Скомбінуйте **Резервні копії за розкладом** (повні дані, on-disk) з Git-бекапом (**Резервне копіювання Git**) (профілі, off-site) — локальний переживе software wipe, git — переживе hardware loss.
 
 !!! tip "Бекап перед оновленням"
     [`UPDATING.md`](https://github.com/kainpl/bamdude/blob/main/UPDATING.md) рекомендує свіжий ручний бекап перед кожним minor-апгрейдом. Міграції ідемпотентні і one-shot, але автоматичного шляху для downgrade немає.

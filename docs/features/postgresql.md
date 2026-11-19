@@ -256,7 +256,7 @@ ORDER BY total_exec_time DESC
 LIMIT 5;
 ```
 
-The extension query must return a version, and the final query must succeed; a fresh statistics table can be empty. Other roles' query text may be hidden, which is expected without additional monitoring privileges. Refresh **System → Database Health** after verification.
+The extension query must return a version, and the final query must succeed; a fresh statistics table can be empty. Other roles' query text may be hidden, which is expected without additional monitoring privileges. Refresh **Information → Database health** after verification.
 
 | Error or symptom | What to check |
 |---|---|
@@ -343,7 +343,7 @@ Some migrations are slow whatever the backend, because the bottleneck is opening
 
 ## :material-heart-pulse: Checking that it is healthy
 
-**System → Database health** answers «is this database well, and if not, which part» on either backend. Note the page: it is the top-level **Information** entry in the sidebar, not a Settings tab.
+**Information → Database health** answers «is this database well, and if not, which part» on either backend. Note the page: it is the top-level **Information** entry in the sidebar, not a Settings tab.
 
 | What it shows | What to look at |
 |---|---|

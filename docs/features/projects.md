@@ -204,7 +204,7 @@ A finished render, a new or removed photo or another picture chosen in the edito
 
 **Export** carries each part's choice and photo; **import** restores them, re-pinning an instance to the imported file. Rendered pictures are a cache under `DATA_DIR/part-renders`, deliberately left out of backups: after a restore they are rendered again.
 
-On a machine with no official Node.js build — 32-bit ARM, for example — parts get only the fallback picture a 3MF can give, and a raw `.gcode` gets none. The System page says so; see [Part thumbnail worker](../reference/troubleshooting.md#part-thumbnail-worker).
+On a machine with no official Node.js build — 32-bit ARM, for example — parts get only the fallback picture a 3MF can give, and a raw `.gcode` gets none. The **Information** page says so; see [Part thumbnail worker](../reference/troubleshooting.md#part-thumbnail-worker).
 
 ### Export and import
 

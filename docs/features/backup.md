@@ -129,7 +129,7 @@ Distinct from the ZIP flow. **Settings → Backup → Git Backup** pushes select
         - Choose your expiration (`No expiration` is recommended for unattended scheduled backups).
         - Under **Select scopes**, check `repo` (required for repository access and commits).
     3. **Configure in BamDude**:
-        - **Settings** → **Backup** → Git Backup.
+        - **Settings** → **Backup** → **Git Backup**.
         - Provider: `github`.
         - Repository URL: e.g. `https://github.com/username/bamdude-backup`.
         - Enter the PAT.

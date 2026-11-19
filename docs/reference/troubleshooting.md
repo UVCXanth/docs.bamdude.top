@@ -187,7 +187,7 @@ See [Cameras reconnect by themselves](../features/camera.md#cameras-reconnect).
 
 **What to do.**
 
-1. Open **System → Print state diagnostics**. A stalled start is shown with its job, how many times it was deferred and for how long, and a link to the row that holds the printer.
+1. Open **Information → Print state diagnostics**. A stalled start is shown with its job, how many times it was deferred and for how long, and a link to the row that holds the printer.
 2. If that row offers **Release the finished context**, preview it and confirm. Only that finished run leaves memory; the archive and accounting stay; nothing is sent to the printer; the queue is paused. If the row explains why there is no button (a swap still owed, a layer timelapse of that print still open, a start or completion still running, a printer whose state is not fresh, …), deal with that first or wait and **Check again**.
 3. Check the printer and the plate — the release is not a plate confirmation — then **Resume queue**. The waiting job starts the ordinary way.
 4. If heating was left requested by a refused start, the row says so; the pause does not turn heaters off.
@@ -341,7 +341,7 @@ Your browser renders it in **DevTools → Network → the request → Timing**, 
 
 ## :material-stethoscope: Self-service diagnostics
 
-BamDude can triage most setup problems for you. On the **System** page, the **Connection Diagnostic** section probes each printer (ports, LAN developer mode, Docker network mode, subnet, credentials) and the **System Health** section scans recent logs against the known-issue catalog below. The in-app bug reporter runs both when you open it, so a fixable problem is surfaced before you file a report. The "How to fix" links on each finding point at the matching section here.
+BamDude can triage most setup problems for you. On the **Information** page, the **Connection Diagnostic** section probes each printer (ports, LAN developer mode, Docker network mode, subnet, credentials) and the **System Health** section scans recent logs against the known-issue catalog below. The in-app bug reporter runs both when you open it, so a fixable problem is surfaced before you file a report. The "How to fix" links on each finding point at the matching section here.
 
 The network-mode step passes a container with host networking and one on a **macvlan** or **ipvlan (L2)** network, which sits on the LAN with its own address. **ipvlan in L3 mode** gets a warning — it passes no broadcast or multicast, so printer discovery and the Virtual Printer's discovery cannot work there; use macvlan or ipvlan L2. If the container's link kind cannot be read, the step reports the mode as unknown instead of assuming bridge.
 
@@ -393,7 +393,7 @@ The SQLite database is hitting "database is locked" errors under load — common
 
 ### Camera and 3MF analysis workers
 
-**Worker unavailable?** Open **System** and read that
+**Worker unavailable?** Open **Information** and read that
 worker's reason separately from preview health. The camera worker starts with
 the application (a failed first attempt and cleanup may add up to about 40
 seconds before HTTP is ready), then retries process failures with bounded
@@ -412,13 +412,13 @@ local disk permissions and free space before restarting the service.
 
 ### Uploads and folder scans fail together
 
-Check **System → Library file worker**, **3MF analysis worker** and **Local preview service**. They share the bundled broker, so several unavailable panels can have one startup cause. Read the first startup error, free space and access to the runtime directory. A missing `broker/logs/nats.log` does not rule out broker failure: startup can fail before a log is created.
+Check **Information → Library file worker**, **3MF analysis worker** and **Local preview service**. They share the bundled broker, so several unavailable panels can have one startup cause. Read the first startup error, free space and access to the runtime directory. A missing `broker/logs/nats.log` does not rule out broker failure: startup can fail before a log is created.
 
 The bundled broker manager restores private permissions (`0700` on POSIX) on its own service directories before startup, including directories previously created with `0755`. It does not repair a wrong owner or a read-only mount. Update to a version containing the fix and restart normally; do not recursively change permissions on the entire data directory or remove ownership records to force startup.
 
 ### Local preview service {#local-preview-service}
 
-Open **System → Local preview service** to see whether it is available,
+Open **Information → Local preview service** to see whether it is available,
 starting, restarting or unavailable. The panel gives the reason, error type
 and runtime directory when unavailable, with a link to this guide. A worker
 restart/backoff is distinct from an unresolved broker or process ownership;
@@ -457,7 +457,7 @@ is retained too, but only counted at INFO level; it needs no immediate action.
 After a confirmed crash of the **current** service, BamDude cleans only that
 service's abandoned attempts before relaunch. If an owned cleanup fails, look
 for `staging_cleanup_failed` with its path and error in the server log; the
-System page does not show per-file cleanup failures. A persistent disk or
+**Information** page does not show per-file cleanup failures. A persistent disk or
 permission error may require fixing the cause and restarting. Once BamDude and
 all its workers are stopped, old temporary staging may be removed manually
 after verifying ownership. Existing library/archive thumbnails and archive
@@ -476,7 +476,7 @@ explicitly; interrupted preview attempts are not replayed after restart.
 
 ### Part thumbnail worker {#part-thumbnail-worker}
 
-Open **System → Part thumbnail worker**. It renders the [part pictures](../features/projects.md#part-pictures) with a pinned Node.js runtime, through the same bundled broker as the preview service. The panel shows its state, the reason as a sentence with its code, the pinned Node.js version, the queue and the last attempt.
+Open **Information → Part thumbnail worker**. It renders the [part pictures](../features/projects.md#part-pictures) with a pinned Node.js runtime, through the same bundled broker as the preview service. The panel shows its state, the reason as a sentence with its code, the pinned Node.js version, the queue and the last attempt.
 
 **While it is down, nothing else stops.** Products, orders and stock keep working; parts show **being prepared** or the picture they already had; queued plates wait, and attempts that could not start are not counted as failures. When the worker is back, the queue carries on by itself.
 
@@ -503,7 +503,7 @@ A STEP thumbnail that ends with **the STEP component is not available on this se
 - **Docker on 32-bit ARM:** the image has no build of the component for this architecture. There is nothing to repair; everything else keeps working.
 - **A native install that declined it** — at the installer's question, or with `--yes` on a fresh install: from the install directory run `sudo install/step-preview.sh enable` (without `sudo` on macOS). BamDude may keep running; the next STEP thumbnail uses the component. On Arch Linux and openSUSE install libGL, libX11 and expat yourself first; the script installs the system libraries only on Debian/Ubuntu and Fedora/RHEL.
 
-`sudo install/step-preview.sh status` checks that the component really renders and says what to do if not — the System page's **STEP preview component** line shows *Installed*, never *works*. Both commands exit `0` when done (or when the component works), `1` on a failure, with its reason, and `3` when the component is not available for this machine or its Python.
+`sudo install/step-preview.sh status` checks that the component really renders and says what to do if not — the **Information** page's **STEP preview component** line shows *Installed*, never *works*. Both commands exit `0` when done (or when the component works), `1` on a failure, with its reason, and `3` when the component is not available for this machine or its Python.
 
 | Reason | What to do |
 |---|---|

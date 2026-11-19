@@ -93,7 +93,7 @@ The queue card header shows counters in two flavours. **Pending** and **Skipped*
 ---
 
 !!! warning "A previous print context is blocking a start"
-    The job stays pending before another upload or preheat begins. A direct send is refused before its source is copied. Use **Check print states** to open the System page for that printer; the link only reads diagnostics. If a safe release is offered, review and confirm it, inspect the printer, then resume its queue separately. A brief finishing race can also cause this refusal: retrying after the context ends is allowed.
+    The job stays pending before another upload or preheat begins. A direct send is refused before its source is copied. Use **Check print states** to open the **Information** page for that printer; the link only reads diagnostics. If a safe release is offered, review and confirm it, inspect the printer, then resume its queue separately. A brief finishing race can also cause this refusal: retrying after the context ends is allowed.
 
     A missing archive or unfinished work can make a safe release unavailable. Save a support bundle for the responsible operator. This warning does not automatically clear a print context or authorize deleting and re-adding the printer.
 

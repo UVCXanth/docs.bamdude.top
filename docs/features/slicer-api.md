@@ -384,7 +384,7 @@ Sidecar health surfaces in three places, sharing one React Query cache + the `GE
 
 - **Settings → Profiles → Slicer API** — small inline status next to each URL field (green check + version, or red X with error).
 - **Slice modal** — the picker cards each carry a live health badge (see above), and a note under them when the picked slicer's container is older than BamDude needs — see [Updating the sidecars](#updating-the-sidecars).
-- **System page → Slicer Sidecars** section — version + reachability + URL for each sidecar (auto-refresh 30 s alongside the rest of system info).
+- **Information → Slicer Sidecars** section — version + reachability + URL for each sidecar (auto-refresh 30 s alongside the rest of system info).
 
 A persistent toast in the bottom-right tracks the job: live progress percent + elapsed time, replaced by a transient success / error toast on completion. The sliced output lands in the same library folder with `.gcode.3mf` extension and `source_type='sliced'` provenance — the original file is untouched.
 

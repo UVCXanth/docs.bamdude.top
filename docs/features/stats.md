@@ -35,7 +35,7 @@ Hover any bar to see the breakdown for that day.
 
 ## :material-printer-3d-nozzle: Per-printer breakdown
 
-**Prints by Printer** is a bar chart with one bar per printer and a switch for what the bar measures: the number of prints, the filament weight or the print hours. Energy and cost are not broken down per printer — the energy tiles are farm-wide figures.
+**Prints by Printer** is a bar chart with one bar per printer and a switch for what the bar measures — **Weight** (filament), **Prints** or **Time** (print hours). Energy and cost are not broken down per printer — the energy tiles are farm-wide figures.
 
 **Defects by printer** — printed, defective and the rate per machine over the selected timeframe, worst rate first; completed prints only.
 
@@ -121,7 +121,7 @@ The Maintenance page has a similar Excel export for service intervals — see [M
 | **CSV** | Spreadsheets, ad-hoc analysis, scripts | One row per archive: printer, file, status, start time, duration, filament grams, filament details, energy kWh, costs |
 | **Excel** | Reports with formatting, sharing with non-technical stakeholders | Same columns as CSV plus formatting, frozen header, per-column types |
 
-Both exports respect the **currently active filters** — date range, printer-selection chips, per-user filter. Reset filters first to export the full dataset.
+Both exports respect the **currently active filters** — date range and per-user filter. Reset filters first to export the full dataset.
 
 ---
 
@@ -129,42 +129,32 @@ Both exports respect the **currently active filters** — date range, printer-se
 
 The Stats page is a customisable grid of widgets, not a fixed report. You can:
 
-- **Drag** any widget by its header to reorder
-- **Resize** via the corner handle — cycles through Small → Medium → Large → Full Width
-- **Hide** widgets you don't need with the eye icon — restore them from the **Hidden** menu in the dashboard header
-- **Reset to default** — the header has a button that restores the original layout
+- **Drag** any widget by the handle in its header to reorder
+- **Resize** with the size button in the header — it cycles through a quarter, a half and the full width
+- **Hide** widgets you don't need — the **N Hidden** button in the page header lists them and brings them back
+- **Reset Layout** — the button in the page header restores the original arrangement
 
-Layout is **persisted per-user** in the backend, so the same login on a different device sees the same arrangement.
+The layout is kept **in the browser**: another browser or device starts from the default arrangement.
 
 ### Available widgets
 
 | Widget | What it shows |
 |---|---|
-| **Print Success Rate** | Donut gauge with a completed / failed / **Cancelled** split. Per-printer filterable. See the note below on how cancelled prints are counted. |
-| **Filament by Type** | Pie chart of material distribution (PLA / PETG / ABS / ...). Click segments to filter. A print that used the same material from two slots counts once for that material. |
-| **Filament Trends** | Filament consumption over the selected range, with the [By material number](#by-material-number) table below it. |
-| **Print Activity Calendar** | GitHub-style heatmap, daily print count, click any day to drill into that day's archives. |
-| **Print Duration Distribution** | Bucket bar chart: `<30m`, `30m–1h`, `1–2h`, `2–4h`, `4–8h`, `8–12h`, `12–24h`, `24h+`. Surfaces your typical print length. |
-| **Time Accuracy** | Predicted-vs-actual print times. Per-printer averages and trend — answers "is calibration drifting?" Prints that BamDude had to recover after a disconnect are excluded: their end time is reconstructed from the estimate, so they'd score a perfect 100% nobody measured. |
-| **Printer Utilization** | Hours of active printing per printer; idle-time percentage. |
-| **Recent Activity** | Feed of the last 10 completed prints; click to open the archive card. |
-| **Quick Stats** | KPI tiles (prints, filament, time, cost, energy) for the active range. |
+| **Quick Stats** | Four tiles for the active range: **Total Prints**, **Print Time**, **Filament Used**, **Filament Cost**. |
+| **Energy** | The four energy tiles — **Energy While Printing**, **Energy At The Plug**, **Cost While Printing**, **Cost At The Plug** — and **Printer Wear** when any wear was charged in the range. |
+| **Success Rate** | A ring gauge with the **Successful**, **Failed** and **Cancelled** counts beside it, and dispatch errors on their own line. At half width or wider it also lists the prints per printer. See the note below on how cancelled prints are counted. |
+| **Time Accuracy** | A gauge of how close actual print times were to the estimates (100 % is a perfect estimate), with the per-printer averages at half width or wider. Prints that BamDude had to recover after a disconnect are excluded: their end time is reconstructed from the estimate, so they'd score a perfect 100% nobody measured. |
+| **Failure Analysis** | The failure rate for the range and the top failure reasons — see [Failure Analysis](failure-analysis.md). |
+| **Print Activity** | A calendar heatmap of prints per day; for a range of a week or less, an hour-by-hour heatmap instead. |
+| **Records** | The extremes of the range — see [Records](#records). |
+| **Printer Stats** | **Prints by Printer** (a bar per printer, switchable between **Weight**, **Prints** and **Time**), **Print Duration**, **Print Habits**, **Print Time of Day** and **Defects by Printer**. |
+| **Filament Trends** | **Usage Over Time**, **By Material** and **Color Distribution**, with the [By material number](#by-material-number) table below them. |
 
 ### By material number {#by-material-number}
 
 The **Filament Trends** widget ends with a **By material number** table: the filament drawn from the spools that carry each [material number](inventory.md#material-number) in the selected range, and what it cost. Its columns are **Material number**, **Spools** (how many different spools were printed from), **Consumed** and **Cost**; the heaviest consumer is listed first.
 
 The table is read from the built-in inventory's usage records, so it counts prints only — AMS weight corrections and runout close-outs are left out — and spools without a material number are not listed. It appears once at least one numbered spool was printed from in the range, and stays empty in Spoolman mode.
-
-### Printer Selection
-
-Multi-select chips above the widgets scope the **entire dashboard** to a subset of printers:
-
-- Click a chip to toggle that printer on/off
-- All widgets re-render against the filtered set immediately
-- The export button respects the same filter
-
-Useful for "show me just my MakerSpace's row of A1s" or "compare X1C-A vs X1C-B side by side".
 
 ### Cancelled prints have their own bucket
 
@@ -257,4 +247,4 @@ Everything this page reads lives under `/api/v1/statistics/`:
 | `POST /statistics/recalculate-costs` | Rebuild every archive's filament cost from its recorded usage |
 | `POST /statistics/reprice-usage` | Re-price the recorded usage of one spool and / or one period at the spools' current prices; a preview unless asked to apply |
 
-Earlier releases answered under `/api/v1/archives/…` (`/archives/stats`, `/archives/aggregate`, `/archives/analysis/failures`, `/archives/stats/export`, `/archives/recalculate-costs`). Those paths are gone, not redirected. `/api/v1/statistics/reports` is reserved for the reports that will be built here.
+These endpoints are not served under `/api/v1/archives/…`: `/archives/stats`, `/archives/aggregate`, `/archives/analysis/failures`, `/archives/stats/export` and `/archives/recalculate-costs` do not exist and are not redirected. `/api/v1/statistics/reports` is reserved for the reports that will be built here.

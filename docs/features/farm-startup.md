@@ -16,7 +16,7 @@ A newly created, empty installation can skip this first review only when BamDude
 ## Allow new starts
 
 1. Check the printers, plates and power supply. In particular, check the load that caused a power failure or inverter trip.
-2. Read the persistent banner on the dashboard, Queue or System page.
+2. Read the persistent banner on the dashboard, Queue or **Information** page.
 3. Choose **Allow new starts** and confirm. Administrators have this permission by default; it can be granted separately as **Allow new farm starts after recovery**.
 
 An API key must have the corresponding control scope and owner permission, with access to the whole farm. A key limited to selected printers cannot release a global pause. A confirmation from an old browser tab cannot release a newer startup pause.

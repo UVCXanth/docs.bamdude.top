@@ -16,7 +16,7 @@ The **Information** page (sidebar → Information, route `/system`) is BamDude's
 
 A read-only dashboard that pulls from `GET /api/v1/system/info` (most of the page), `GET /api/v1/system/storage-usage` (the storage breakdown), and `GET /api/v1/support/logs` (the log viewer). Maintenance actions are POST endpoints behind the appropriate permissions. Health is reported by the local installation; no external metrics database is required (for that, see [Prometheus](prometheus.md)).
 
-The System page also shows separate, read-only health for the local preview,
+The **Information** page also shows separate, read-only health for the local preview,
 camera and 3MF filament-analysis workers. Camera failure affects camera
 features; analysis failure pauses new filament-usage projections. Neither
 stops unrelated printing or queues; a job requiring a camera check can wait
@@ -119,7 +119,7 @@ Multi-line entries (stack traces, especially) are reassembled — a continuation
 
 The active log file (`bamdude.log`) rolls over on the first log entry after midnight (server local time). Archives are plain text, named `bamdude-YYYY-MM-DD.log`. Restarting during the day does not force rotation.
 
-Under **System Info → Log Files**, `bamdude.log` appears first with a **Current** label, its size, modification time and **Download** button. It is available even before the first daily archive exists. Download saves the full file as it stands when copying begins; logging continues. There is no restart or DEBUG-mode requirement, and no support-bundle tail limit. The size shown in the list is refreshed with **Refresh** and may differ from the later download as new entries arrive.
+Under **Information → Log Files**, `bamdude.log` appears first with a **Current** label, its size, modification time and **Download** button. It is available even before the first daily archive exists. Download saves the full file as it stands when copying begins; logging continues. There is no restart or DEBUG-mode requirement, and no support-bundle tail limit. The size shown in the list is refreshed with **Refresh** and may differ from the later download as new entries arrive.
 
 Daily archives follow, newest first, with **Download** and a two-step **Delete** confirmation. The current row has no delete action; the existing **Truncate** action in the log viewer remains separate.
 
@@ -198,7 +198,7 @@ The bundle is the right thing to attach to a [GitHub issue](https://github.com/k
 | **Rebuild archive search index** — see [Search](search.md) | `POST /api/v1/archives/search/rebuild-index` | `archives:update_all` |
 | **Check for updates** — see [Updates](#update-checker) below | `GET /api/v1/updates/check` | `system:read` |
 
-There is **no separate "Clear Cache" button** on the BamDude System page — the page-level caches (storage breakdown, system info) auto-expire on their own; the only manual flush is the `?refresh=true` query param on `/system/storage-usage`.
+There is **no separate "Clear Cache" button** on the **Information** page — the page-level caches (storage breakdown, system info) auto-expire on their own; the only manual flush is the `?refresh=true` query param on `/system/storage-usage`.
 
 There is also **no "Restart application" button** — the upstream Bambuddy concept of an in-app restart only makes sense for bare-metal/systemd installs, and the BamDude target deployment is Docker. Restart the container with `docker compose restart bamdude` (or whatever your orchestrator uses).
 
@@ -314,7 +314,7 @@ After applying, the dialog confirms the committed close and separately reports w
 
 ### Duplicate queue claims after a restart {#duplicate-queue-claims}
 
-If the printer has finished but its queue still says **Printing**, use **Print state diagnostics** on the Info page and filter by printer ID. Changing the queue header to Idle alone does not release the execution claims or resolve an owed plate swap. Reconnecting is not a repair for conflicting persisted claims.
+If the printer has finished but its queue still says **Printing**, use **Print state diagnostics** on the **Information** page and filter by printer ID. Changing the queue header to Idle alone does not release the execution claims or resolve an owed plate swap. Reconnecting is not a repair for conflicting persisted claims.
 
 The updated recovery path rejoins a print already in progress when BamDude restarts, including a paused print. If it ends during reconnect, a delayed recovery callback does not create another print or clear the plate check. If the live run cannot be identified, the panel explains the uncertainty and preserves the records; it does not invent a completed print or offer a forced repair.
 

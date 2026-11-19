@@ -29,7 +29,7 @@ Navigate to **Settings > Network > MQTT Publishing**.
 | **Port** | Broker port | 1883 (8883 with TLS) |
 | **Username** | Authentication (optional) | -- |
 | **Password** | Authentication (optional) | -- |
-| **Topic Prefix** | Prefix for all topics | `bamdude` (set to `bambuddy` to keep the topics used through 0.4.5) |
+| **Topic Prefix** | Prefix for all topics | `bamdude` (set to `bambuddy` to keep the topics of an install that still used the old default) |
 | **Use TLS** | Enable TLS/SSL encryption | Off |
 | **Verify the broker's certificate** | Shown when Use TLS is on. Check the certificate and the host name against the system's trusted authorities; refuse to connect when the check fails. | Off |
 
@@ -40,7 +40,7 @@ Navigate to **Settings > Network > MQTT Publishing**.
 
 ## :material-broadcast: Published Topics
 
-All topics are prefixed with your configured prefix. **The default prefix is `bamdude`** (releases through 0.4.5 defaulted to `bambuddy`, inherited from upstream). If you publish to an external broker and never set a prefix explicitly, upgrading from one of those older releases moves your topics from `bambuddy/...` to `bamdude/...` — update your Home Assistant / Node-RED subscriptions accordingly, or set the prefix back to `bambuddy` under Settings → Network to keep the old topics. The example topics below are written with the `bambuddy/` prefix for continuity — substitute your actual prefix.
+All topics are prefixed with your configured prefix. **The default prefix is `bamdude`** (the old default was `bambuddy`, inherited from upstream). If you publish to an external broker and never set a prefix explicitly, upgrading from an install that still used the old default moves your topics from `bambuddy/...` to `bamdude/...` — update your Home Assistant / Node-RED subscriptions accordingly, or set the prefix back to `bambuddy` under Settings → Network to keep the old topics. The example topics below are written with the `bambuddy/` prefix for continuity — substitute your actual prefix.
 
 ### Service status
 

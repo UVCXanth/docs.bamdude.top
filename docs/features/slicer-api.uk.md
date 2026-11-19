@@ -382,7 +382,7 @@ Modal кешує cloud- і standard-preset-listing'и на кілька хвил
 
 - **Settings → Profiles → Slicer API** — невеликий inline-статус біля кожного URL-поля (зелений чек + версія, або червоний хрестик з помилкою).
 - **Slice modal** — кожна картка picker'а несе live-індикатор здоров'я (див. вище), а під картками є примітка, коли контейнер вибраного слайсера старіший, ніж потрібно BamDude, — див. [Оновлення sidecar'ів](#updating-the-sidecars).
-- **System page → Slicer Sidecars** секція — версія + доступність + URL кожного sidecar (auto-refresh 30 с разом із рештою system info).
+- Секція **Інформація → Slicer-sidecar'и** — версія + доступність + URL кожного sidecar (auto-refresh 30 с разом із рештою system info).
 
 Persistent-toast у нижньому правому кутку трекає job: live progress percent + elapsed time, заміняється transient success/error toast при завершенні. Sliced-output лягає в ту ж папку бібліотеки як `.gcode.3mf` з `source_type='sliced'` provenance — оригінал не чіпається.
 
