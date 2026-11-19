@@ -67,9 +67,10 @@ Each archive row carries the file, the parsed metadata, the run state, and full 
 
     | Field | Description |
     |-------|-------------|
-    | `status` | `printing`, `completed`, `failed`, `cancelled`, `stopped`, or `archived`. See [status badges](#archive-status-badges). |
+    | `status` | `printing`, `completed`, `failed`, `aborted`, `cancelled`, `stopped`, or the legacy `archived`. See [status badges](#archive-status-badges) and [changing a status by hand](#changing-a-prints-status-by-hand). |
+    | `outcome_checked_at` | When somebody checked what the print produced — see [Checking a print's result](#checking-a-prints-result). Empty on a completed print nobody has looked at yet. |
     | `started_at`, `completed_at` | Wall-clock bounds of the run (NULL until they happen). |
-    | `failure_reason` | Short cause code (e.g. `firmware_error`). |
+    | `failure_reason` | Short cause key (e.g. `layerShift`, `filamentRunout`, `userCancelled`). Empty when the printer gave no recognisable cause. |
     | `error_message` | Verbose diagnostic from the dispatcher / scheduler — shown on hover over the badge. |
     | `energy_start_kwh`, `energy_kwh`, `energy_cost` | Per-print energy from the printer's smart plug. `energy_start_kwh` is captured at print start so the delta survives backend restarts mid-print. `energy_cost` is the energy at the [electricity price of its own time](energy.md#cost-calculation). |
     | `wear_cost`, `wear_rate` | [Printer wear](stats.md#printer-wear) charged to the print — its measured duration at the printer's hourly rate — and the rate that was applied. Both empty when the printer had no rate or the duration was not measured. |
@@ -78,7 +79,7 @@ Each archive row carries the file, the parsed metadata, the run state, and full 
 
     | Field | Description |
     |-------|-------------|
-    | `printer_id` | Which printer produced it. |
+    | `printer_id` | Which printer produced it. A fixed fact of the print: it cannot be changed in the editor or through the API. |
     | `library_file_id` | The `library_files` row this archive was dispatched from. NULL for external prints (printer-screen, cloud, manual SD-card start). |
     | `project_id` | Optional project the archive was assigned to. |
     | `created_by_id` | User who triggered the print. |
@@ -119,22 +120,60 @@ The Archives page renders a small status pill on each card. The common case (a f
 |-------|--------|---------|
 | :material-loading: blue (pulsing) | `printing` | The print is running on the printer right now. Click → jumps to the printer page. |
 | (none) | `completed` | The print finished successfully. No badge — keeps the grid clean. |
-| :material-alert-circle: red | `failed` | The print started but ended in firmware-error state. Hover the badge to see the full `error_message` from the dispatcher. |
-| :material-cancel: red | `cancelled` / `stopped` | The print was aborted — manual cancel from the printer, queue cancellation, or `IDLE` after `RUNNING` (treated as a user abort). Same red styling as `failed`. |
-| :material-archive-outline: grey | `archived` | The 3MF was registered (typically via dispatch dedup) but the print never actually ran. No `completed_at` / `failed_at`. Rare — usually only seen when an upload was deduped against an existing file. |
+| :material-alert-circle: red | `failed` | The printer reported the print as failed, or the job never started. A print cancelled on the printer's own screen also ends as `failed`, with the reason `userCancelled`. Hover the badge to see the failure reason and the `error_message`. |
+| :material-cancel: red | `cancelled` | A person stopped the print from BamDude — the printer card, the queue, the Telegram bot, a webhook or the HMS dialog — or a job was cancelled before it started. The reason is `userCancelled`. Same red styling as `failed`. |
+| :material-cancel: red | `aborted` | The printer ended the print without reporting it finished or failed. Counted with `failed` in statistics. |
+| :material-cancel: red | `stopped` | A status from older versions. BamDude no longer writes it; prints that carry it keep showing it and count with `cancelled`. |
+| :material-archive-outline: grey | `archived` | A status from older versions for a file that was registered but never printed. BamDude no longer writes it; rows that carry it keep the grey badge. |
+
+### Changing a print's status by hand { #changing-a-prints-status-by-hand }
+
+The edit dialog's **Status** field offers the finished statuses under their own names — **Completed**, **Failed**, **Aborted** and **Cancelled** — and opens on the print's real one (a print stored as **Stopped** shows as that). Statistics count **Failed** and **Aborted** as failures and keep **Cancelled** and **Stopped** in their own [Cancelled bucket](stats.md#cancelled-prints-have-their-own-bucket), so pick the one that says what happened.
+
+- **Printing is never set by hand.** It belongs to the print that is running: the field does not offer it, and the API refuses it.
+- **A running print's status is locked.** The field is shown disabled with the note *This print is still running — its status follows the printer and cannot be changed here.* The printer's own report closes the print.
+- **Changing to Completed clears the failure reason** and the error details — a completed print does not keep "cancelled by user".
+- **Free stock follows the change.** For a print filed under no order, leaving **Completed** takes the print's parts back off the product's shelf, and entering it counts the good ones in — see [Prints without an order](projects.md#prints-without-an-order). When those parts were already used, the status still changes and the editor says the stock needs correcting by hand on the product page.
 
 ---
 
-## :material-filter-variant: Printed / Not Printed filters
+## :material-check-circle-outline: Checking a print's result { #checking-a-prints-result }
 
-The Archives page header carries two single-click chips — **Printed** and **Not Printed** — that quickly slice the list by whether a file has any successful print history yet:
+A completed print carries a **Not checked** mark on its archive card and on its list row until somebody has looked at what came off the plate. The mark goes away when either happens:
 
-| Chip | Shows | Useful for |
-|---|---|---|
-| **Printed** | Archives whose `library_file_id` is referenced by at least one `completed` archive (i.e. you've actually run this file successfully at least once). | Reprint candidates — you've already validated the slice. |
-| **Not Printed** | The opposite — files with no `completed` archive yet. | The "what's still pending" pile from a multi-day batch, or library imports you haven't gotten around to printing. |
+- **Defects are recorded for the print** — by any of the [ways to record them](../scenarios/recording-defects.md), and a count of zero is an answer too.
+- **No defects** is pressed — in the print's menu, in its edit dialog, or for several prints at once in selection mode.
 
-The chips are mutually exclusive (toggle one off to enable the other) and stack with the freeform search box + status filters above them. Not Printed pairs naturally with the [Library Trash auto-purge](library-trash.md) **Include never-printed** toggle — flip Not Printed on first to see what you're about to purge.
+The **Unchecked** filter in the Archives header lists only the prints that still wait.
+
+This is not a pass/fail verdict. Whether the parts are good is the defect count, and marking a print changes neither that count nor any statistic — it only says somebody looked. Only a completed print can be unchecked: a failed, cancelled or running print never is, and neither is a calibration print. Prints that had already finished when BamDude began keeping the mark count as checked.
+
+Marking a print needs the right to edit it (`archives:update_own` for your own prints, `archives:update_all` for any). An optional reminder about prints that stay unchecked is described under [Notifications → Result not checked](notifications.md#result-not-checked), and the Telegram bot [answers it with buttons and reactions](telegram-bot.md#actionable-notifications).
+
+| API | |
+|---|---|
+| `POST /api/v1/archives/{id}/outcome-checked` | Mark a completed print as checked, no defects. `409` for a print that is not completed; marking twice is not an error. |
+| `GET /api/v1/archives/?outcome=unchecked` | Only the prints whose result nobody has checked. |
+| `outcome_checked_at`, `outcome_unchecked` | In every archive answer: when the result was checked, and whether this print still waits. |
+
+---
+
+## :material-filter-variant: Collections { #collections }
+
+The first dropdown in the Archives filter bar picks one collection — a ready-made slice of the list:
+
+| Collection | Shows |
+|---|---|
+| **All** | Every archive. |
+| **Last 24 Hours** | Archives created in the last 24 hours. |
+| **This Week** | Archives created in the last 7 days. |
+| **This Month** | Archives created since the first day of the current month. |
+| **Favorites** | Archives marked with the star. |
+| **Printed** | Prints that have ended, whatever the outcome — everything except the ones still running. |
+| **Failed Prints** | Prints that did not finish: failed, aborted, cancelled and stopped. |
+| **Duplicates** | Archives whose source file was printed more than once. |
+
+One collection is active at a time, and it combines with the search box and the other filters.
 
 ---
 
@@ -216,7 +255,7 @@ A recovered file must be the plate that was printed: a candidate whose sliced pl
 
 Concurrent triggers don't race: a per-archive `asyncio.Lock` returns `"in_progress"` immediately if another retry is already running. Five distinct return statuses (`recovered`, `already_has_file`, `in_progress`, `failed`, `error`) map to clean toasts in the UI. The print-start download takes the same lock even though it doesn't come from this service — a printer reconnect part-way through it would otherwise open a second FTP session for a file already on its way, and attach a second copy on top of the first. So does the download for a print BamDude adopts at start-up (below).
 
-One attempt fetches a file at most once. When a download starts and then fails, BamDude stops trying the other candidate names over that connection, which has just failed. The rest of the attempt — a search for a close name over a fresh connection, then built-in storage — can still go ahead, but never fetches that same file again; the next trigger asks again. From built-in storage the file is checked as it arrives — every frame, and the whole file against the printer's own checksum when the printer sends one — and is written straight to disk rather than held in memory.
+One attempt fetches a file at most once. When a download starts and then fails, BamDude stops trying the other candidate names over that connection, which has just failed. The rest of the attempt — a search of the printer's directory listing over a fresh connection, then built-in storage — can still go ahead, but never fetches that same file again; the next trigger asks again. From the listing only a file with the print's own name is taken (`X.3mf` or `X.gcode.3mf`, whatever the letter case and spaces or underscores): a file whose name merely contains the print's name belongs to another print and is never attached. From built-in storage the file is checked as it arrives — every frame, and the whole file against the printer's own checksum when the printer sends one — and is written straight to disk rather than held in memory.
 
 While the row has no file yet:
 
@@ -584,18 +623,22 @@ Each card shows the thumbnail, filename, printer / model line, duration, status 
 
 The cost of a print that is **still running** is an estimate and is shown with a `~` prefix (`~12.50`), on cards and in the list view: it is the filament weight at the default filament price, and the cost is taken from the spools when the print ends. Hovering the figure says so.
 
+A print that **did not finish** and whose filament was never measured keeps the cost of one full print of its plate. Hovering that figure says so too, so a failed or cancelled print is not read as having used the whole plate's filament.
+
 The printer / model line is **uniform across provenance**: every archive reads as `<name-or-model> [bed-icon] GCODE <hash>` and scans identically regardless of whether the archive came from a live printer or a slicer-only upload.
 
 The **build-plate icon** sits next to the printer / model name and reflects the plate the 3MF was sliced for (Cool / Cool SuperTack / Engineering / High Temp / Textured PEI / Smooth PEI), with the full plate name in the hover tooltip — so you don't have to open the source 3MF in a slicer just to read the bed setting before a re-print. The icon is populated from `curr_bed_type` in the 3MF's `slice_info.config` (per-plate, authoritative) with a fallback to `project_settings.config` for older 3MF shapes; archives created before this feature shipped show no icon until you hit the per-archive **Rescan** action, which re-parses the on-disk 3MF.
 
 | Button | Description |
 |--------|-------------|
-| **Reprint** | Print immediately on a connected printer. Creates a new archive row but keeps the same `source_content_hash`, so reprint history stays linked. |
-| **Schedule** | Add to the print queue. |
+| **Reprint** | Print immediately on a connected printer. Creates a new archive row but keeps the same `source_content_hash`, so reprint history stays linked. Opens on the plate that was printed. |
+| **Schedule** | Add to the print queue. Opens on the plate that was printed. |
 | :material-cube-outline: | Open the 3D preview. |
 | :material-download: | Download the 3MF file. Disabled if `file_path` is empty. |
-| :material-pencil: | Edit archive details (tags, notes, order and line, filament used, photos). |
+| :material-pencil: | Edit archive details (tags, notes, order and line, filament used, defects, status, photos). The printer is not among them — it is a fixed fact of the print. |
 | :material-cloud-download: | Retry 3MF download. Only visible when `file_path = ""`. |
+
+**Printing from an archive needs the right to reprint it.** **Reprint**, **Schedule** — to a printer's queue or to the Auto-Queue — and **Slice** all make new print work from the archive, so each asks `archives:reprint_own` for your own prints or `archives:reprint_all` for any, beside its own permission (`queue:create` for queueing, `library:upload` for slicing). Reading the archive is not enough. With the default groups, Operators and Administrators can do this for any archive they can see.
 
 !!! tip "An archive can be filed under an order — or counted into stock"
     The edit dialog carries an **Order** and a **Line** picker, and the Archives page's selection
@@ -615,31 +658,35 @@ The **build-plate icon** sits next to the printer / model name and reflects the 
 
 **Edit → Filament used (g)** can supply or correct an archive's weight, including a print whose 3MF was never recovered. Statistics, cost and order figures read this value; saving it does **not** debit any spool. A missing cost or one calculated using the farm rate follows the new weight; a cost already calculated from spool tracking stays. Both decimal point and comma are accepted.
 
+A cost written through the API (`PATCH /api/v1/archives/{id}`) must be a number from 0 to 1,000,000; a negative, larger or non-numeric value is refused.
+
 ## :material-view-grid: View Modes
 
-- **Grid** — large thumbnails for visual browsing.
+The switch in the page header has three positions:
+
+- **Cards** — large thumbnails for visual browsing.
 - **List** — compact table for data-focused browsing; one row per archive with sortable columns and inline edit / delete.
-- **Calendar** — month-grid view of archives by date. Each day cell shows a count badge + colour coding (success / failure / mixed). Clicking a day filters the grid view to that day's prints.
+- **Calendar** — the last 30 days as a grid of days, with three totals above it: **Prints (30 days)**, **Successful** and **Failed**. Each day cell shows how many prints it holds and is coloured green when all of them succeeded, red when all failed and yellow when mixed. Clicking a day opens that day's prints in a panel beside the calendar — thumbnail, name, status, time, printer and filament for each; clicking the day again closes it. The view stays on the calendar, and the search box and filters are hidden while it is open. A day is the calendar day the print was created on, in your time zone, so the number in a cell and the prints an opened day lists are the same ones.
 
 ### Cross-view highlighting
 
-Hover an archive in the **List** or **Calendar** view and the matching cell / row highlights in the other; clicking jumps directly. Clicking an archive in the calendar also auto-switches to grid view, scrolls to the selected card, and highlights it with a yellow border for 5 seconds — useful for finding a specific print across views.
+On a card or list row that is a reprint, clicking its purple duplicate badge scrolls to the original and highlights it for 5 seconds. When the original is not on the current page or is filtered out, the page says **Original print not visible - try clearing filters**.
 
 ---
 
 ## :material-tag: Tags & Filtering
 
-Organize archives with custom tags. Filter by printer, tags, material, color, file type, favorites, and the duplicates view (which uses `COALESCE(source_content_hash, content_hash)`). Tag management is under the gear icon next to the tag filter.
+Organize archives with custom tags. Filter by collection, printer, material, kind of print, tags, colour, favorites, and the duplicates view (which uses `COALESCE(source_content_hash, content_hash)`). Tag management is under the gear icon next to the tag filter.
 
 ### Sorting
 
-In **List** view, click a column header — **Name**, **Printer**, **Date** or **Size**. Click it again to reverse. Each column opens at the end worth looking at first: the newest print, the biggest file, names A-Z.
+In **List** view, click a column header — **Name**, **Printer**, **Print time**, **Date** or **Size**. Click it again to reverse. Each column opens at the end worth looking at first: the newest print, the biggest file, the longest print, names A-Z.
 
 Sorting by printer uses the name shown in the column, so a print from a printer you have since deleted keeps its place in the order rather than disappearing or collecting at one end.
 
-**Print time has no sorting.** The archive has never been able to order by it, and a header that looked clickable but did nothing would be worse than a plain one.
+**Print time** sorts on the real duration of the print, not the slicer's estimate, so a print that never finished sorts to the end.
 
-**Grid** view has no headers to click, so it keeps the sort dropdown beside the colour filter.
+**Cards** view has no headers to click, so it keeps a sort dropdown beside the colour filter — **Date**, **Name**, **Size**, **Printer**, **Cost**, **Energy**, **Filament** or **Print time** — with a button next to it that reverses the direction.
 
 ### Paging
 
@@ -651,16 +698,23 @@ Changing the page size returns you to the first page — staying on page 3 of a 
 
 ### Filter chips
 
-| Chip | Behaviour |
+The filter bar is shown in the **Cards** and **List** views. The page has no date-range picker: the **Last 24 Hours**, **This Week** and **This Month** collections narrow the list by date, and the **Calendar** view opens a single day.
+
+| Control | Behaviour |
 |---|---|
-| **Printer** | Single-select; defaults to "All printers". |
-| **Colour** | Multi-select. Default semantics is **OR** — pick *Red* + *Blue* to see archives that used Red **or** Blue. The chip strip exposes an **AND/OR toggle** — flip to AND when you need archives that used *Red* **and** *Blue* together (multi-colour prints). |
-| **Material** | Multi-select OR (PLA + PETG → either). |
-| **Kind** | Single-select: **All prints** / **Calibration prints** / **Regular prints**. Keyed on the `is_calibration` flag the Filament Calibration wizard stamps on every test print it dispatches. |
-| **Favourites** | Toggle: show only archives flagged with the heart. |
-| **Date range** | Two-input picker: shows archives whose `started_at` falls inside the range. Pairs with the calendar view. |
-| **Status** | Multi-select status filter — printing / completed / failed / cancelled / archived. |
-| **Duplicates** | Toggle: groups rows by `effective_hash` so multi-printer reprints collapse into one card with a count badge. |
+| **Search archives...** | Free-text search box, full width above the other filters. |
+| Collection | Dropdown, one at a time — see [Collections](#collections). Defaults to **All**. |
+| Printer | Dropdown, single-select; defaults to **All Printers**. Archived printers are listed too. |
+| Material | Dropdown, single-select; defaults to **All Materials**. |
+| Kind of print | Dropdown, single-select: **All prints** / **Calibration prints** / **Regular prints**. Keyed on the `is_calibration` flag the Filament Calibration wizard stamps on every test print it dispatches. |
+| **Favorites** | Toggle: show only archives marked with the star. Hidden while the **Favorites** collection is selected. |
+| **Hide Failed** | Toggle: leaves out prints that did not finish — failed, aborted, cancelled and stopped, the same ones the **Failed Prints** collection shows. Hidden while that collection is selected. |
+| **Unchecked** | Toggle: only completed prints whose result [nobody has checked yet](#checking-a-prints-result). |
+| **Hide Duplicates** | Toggle: collapses reprints of the same source file (same `effective_hash`) into one row. Hidden while the **Duplicates** collection is selected. |
+| Tag | Dropdown, single-select; defaults to **All Tags**. Shown once any archive has a tag, with the gear button for tag management beside it. |
+| **Colors:** | A row of colour swatches, multi-select. With two or more picked, an **OR** / **AND** button appears: **OR** shows archives that used any of the selected colours, **AND** only those that used all of them. **Clear** drops the colour selection. |
+| File | A green chip with the file name, present when the page was opened from a file in the File Manager; it limits the list to that file's prints. Click it to remove the filter. |
+| **Reset** | Clears the search and every filter above except the collection and the colours. |
 
 !!! tip "Batch operations"
     Enter selection mode to tag, assign an order, or compare multiple archives at once.

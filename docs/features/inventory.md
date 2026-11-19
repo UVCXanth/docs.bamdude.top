@@ -245,6 +245,8 @@ The last one is deliberately a separate, explicit action rather than the default
 
 Archive, Restore and Delete ask for confirmation first.
 
+**Archiving a spool takes it out of its AMS slot.** The slot is released on the printer card, and the next print from it is no longer charged to the archived spool. A spool in a slot a running print feeds from cannot be archived until that print ends: a single archive is refused, and a bulk archive skips such spools and says how many were kept — archive them when the print ends. An archived spool that is still shown in a slot leaves it once its printer is idle.
+
 !!! warning "A used spool is archived, not deleted"
     **Delete** removes only a spool that nothing refers to. A spool that has usage history, sits in a slot or belongs to a running print is refused, with a hint to archive it instead — its records, and the prints costed from them, would otherwise lose their spool. In a bulk delete the spools that can go are deleted and the refused ones are reported. Use **Archive** for a reel you have finished.
 
@@ -498,7 +500,7 @@ cost = (weight_used_grams / 1000) × cost_per_kg
 
 A print keeps the cost it was booked with: every usage record stores what its grams cost at the spool's price at that moment. The **Recalculate Costs** button on the [Stats](stats.md#recalculate-costs) page rebuilds every archive's cost from those records — the recorded prices are kept — in this priority order:
 
-1. `spool_usage_history` records joined to `archive_id` (most accurate, per-spool actuals), plus the default rate for any grams no spool covered.
+1. `spool_usage_history` records joined to `archive_id` (most accurate, per-spool actuals), plus the default rate for any grams no spool covered or recorded without a price.
 2. Legacy usage records joined by print name (for older archives without the FK link).
 3. The default filament cost (when no usage records exist at all).
 

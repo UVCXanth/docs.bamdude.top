@@ -393,6 +393,7 @@ Persistent-toast у нижньому правому кутку трекає job:
 | Permission | Що дозволяє |
 |------------|--------------|
 | `library:upload` | Тригерити слайсинг із File Manager (sliced-output — це свіжий library-upload). |
+| `archives:reprint_own` / `archives:reprint_all` | Нарізати архів — поруч із `library:upload`. Повторна нарізка створює з архіву нову роботу для друку, тож питає право його передруковувати: власні друки або будь-які. API-ключ не може перенарізати архів, якого його власник не бачить. |
 | `library:read` | Поллити job-tracker toast (`/api/v1/slice-jobs/{id}`) і filament-discovery preview-slice progress (`/api/v1/slicer/preview-progress/{id}`). |
 | `cloud:auth` | Потрібно щоб тягнути `cloud` preset-tier — без неї modal показує тільки `local` + `standard` tier'и. |
 | `printers:read` | Перемикачі **Лише принтери, що в мережі** / **Лише завантажені філаменти** в діалозі нарізки — без цього права вони не показуються. |

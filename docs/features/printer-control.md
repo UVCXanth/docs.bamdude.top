@@ -80,6 +80,8 @@ Both actions show a confirmation dialog to prevent fat-finger interrupts.
 
 Every other way a person stops a print is recorded the same way — a stop from the queue, from the [Telegram bot](telegram-bot.md), through the webhook `stop` / `cancel` endpoints, or with **Stop Printing** in the [HMS error dialog](monitoring.md#remediation-actions). The print ends as cancelled, not failed: no *print failed* notification, the queue is paused rather than put in error, and the job's owner gets the *stopped* e-mail.
 
+A stop from the queue on a printer that cannot be reached closes nothing: the stop was not sent, BamDude says so and pauses that printer's queue, and the job stays printing until the printer's own report closes it — as completed, with its filament recorded, if it really finished.
+
 ### Skip object
 
 For multi-object plates: skip a single object that's failing while letting the rest finish.

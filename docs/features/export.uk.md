@@ -36,8 +36,8 @@ description: Bulk-експорт метаданих архіву та стати
 |--------|------------------|
 | Printer | Лише архіви цього принтера |
 | Project | Лише цей проєкт |
-| Status | Лише цей статус (наприклад, `success`, `failed`) |
-| Date range | Включно `date_from` … `date_to` (ISO 8601) |
+| Status | Лише цей статус (наприклад, `completed`, `failed`) |
+| Date range | Включно `date_from` … `date_to` (ISO 8601). Сама дата — це календарний день у вашому часовому поясі, і день `date_to` входить цілком |
 | Search | Match по `print_name`, `filename`, `tags`, `notes`, `designer` |
 
 Два виключення завжди увімкнено: `status='archived'` (uploaded but never printed) і trashed архіви (`deleted_at IS NOT NULL`). Це тримає експорт чисельно консистентним з тим, що показує дашборд [Statistics](stats.uk.md).
@@ -80,7 +80,7 @@ Stats workbook — це single sheet з парами Metric / Value та weekly-
 | `id` | ID | Primary key архіву |
 | `print_name` | Print Name | Display-ім'я (fallback на filename) |
 | `filename` | Filename | Оригінальне ім'я 3MF |
-| `status` | Status | `success` / `failed` / `aborted` / `cancelled` |
+| `status` | Status | `completed` / `failed` / `aborted` / `cancelled` / `stopped` |
 | `quantity` | Items Printed | Скільки копій на plate |
 | `printer_id` | Printer ID | FK до `printers.id` |
 | `project_name` | Project | Joined з `projects.name` |
@@ -158,8 +158,8 @@ GET /api/v1/archives/export
 | `printer_id` | int | — | Фільтр по принтеру |
 | `project_id` | int | — | Фільтр по проєкту |
 | `status` | string | — | Exact match |
-| `date_from` | ISO datetime | — | Включно |
-| `date_to` | ISO datetime | — | Включно |
+| `date_from` | ISO date або datetime | — | Включно. Сама дата (`2026-02-01`) — це початок цього календарного дня в часовому поясі того, хто питає: браузера, а для API-ключа чи скрипта — сервера |
+| `date_to` | ISO date або datetime | — | Включно. Сама дата означає весь цей день. Повна позначка часу — це момент: UTC, якщо вона не несе зміщення |
 | `search` | string | — | LIKE по name / filename / tags / notes / designer |
 
 Auth: дозвіл `archives:read`. Шліть JWT у `Authorization: Bearer …` або API key у `X-API-Key`.

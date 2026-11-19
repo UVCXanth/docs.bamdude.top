@@ -359,6 +359,8 @@ It is deliberately not automatic. A surplus is sometimes shipped with the order 
 
 A print that completes filed under **no** order is credited to stock automatically, good parts only — printed minus defective. The accounting then follows you if you change your mind: file that print under an order afterwards and the credit is taken back; take it back out and it returns. A reversal that would push a part below zero is refused, but the print is still filed — those parts were already spent, and refusing the filing would punish you for the books not balancing.
 
+Changing such a print's status by hand in the archive editor moves the shelf the same way: leaving **Completed** takes the print's parts back, and entering it counts the good ones in; the stock journal notes that the print's status was changed by hand. If those parts were already used, the status still changes and the editor says the stock needs correcting by hand on the product page.
+
 Prints from before this existed are **not** swept up: a farm with years of history would grow a shelf nobody has ever seen. The archive editor offers **Count into stock** for a print that **finished successfully** and belongs to no order, one at a time, when you say so — a failed or cancelled print made nothing there is anything to count.
 
 ### Taking individual parts from stock

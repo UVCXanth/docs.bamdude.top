@@ -114,6 +114,8 @@ The queue card header shows counters in two flavours. **Pending** and **Skipped*
 4. Optionally configure filament mapping
 5. Print is added to queue
 
+The dialog opens on the plate that was printed. Queueing an archive — to a printer's queue or to the Auto-Queue — is a reprint of it: beside `queue:create` it needs `archives:reprint_own` for your own prints or `archives:reprint_all` for any. See [Archive Cards & Actions](archiving.md#archive-cards-actions).
+
 ### From File Manager
 
 1. Select sliced files in **File Manager**
@@ -462,6 +464,8 @@ Programmatic queue control via REST:
 | `POST /api/v1/queue/reorder` · `/{id}/reorder` · `/{id}/bump` · `/{id}/bump-bottom` | Ordering, whole-queue or one row at a time |
 | `POST /api/v1/queue/batch` · `/batch/{batch_id}/…` | Group rows into a batch, then ungroup / cancel / skip / reorder / bump / clone / edit it as one |
 | `GET /api/v1/queue/stagger-state` | What the staggered-start gate is currently holding |
+
+**Stopping a printing item is finished by the printer, not by the button.** `/stop` sends the stop to the printer, and the printer's own report then closes the item and its archive as cancelled and pauses the queue. When the printer cannot be reached, the stop is not sent and BamDude says so (`503`, error `stop_not_sent`): the item stays `printing`, that printer's queue is paused so nothing is dispatched behind it, and the job is closed by the printer's own report once it is back — as completed, with its filament recorded, if the print really finished. A job that was still being sent or heated has nothing on the printer to report it, so it is cancelled right away.
 
 Queue **state** lives on its own router: `GET` / `PATCH /api/v1/queues/{id}` reads a queue and sets it. `status` accepts only `idle` or `paused` — `printing` and `error` are set by the system, never by a client — and a queue cannot be moved to `paused` while it is `printing` (stop the print first). `is_paused`, being orthogonal, is allowed in **any** state including mid-print.
 

@@ -96,7 +96,7 @@ BamDude поставляється з завжди увімкненою авте
 - **Users / Groups** -- `users:read`, `users:create`, `users:update`, `users:delete`, `groups:read`, `groups:create`, `groups:update`, `groups:delete`
 
 !!! tip "Права власності"
-    Використовуйте права `*_own` для користувачів, які мають змінювати лише свої власні завантаження та елементи черги. Operators зазвичай отримують `*_all`; Viewers -- ні те, ні інше. `*_all` завжди включає `*_own`.
+    Використовуйте права `*_own` для користувачів, які мають змінювати лише свої власні завантаження та елементи черги. Типова група **Operators** читає архіви, чергу й бібліотеку по всій фермі (`*:read_all`), але редагує й видаляє лише своє (`archives:update_own` / `delete_own`, `queue:update_own` / `delete_own`, `library:update_own` / `delete_own`). Передрук — виняток: Operators мають `archives:reprint_all`, тож можуть передруковувати, ставити в чергу й перенарізати будь-який архів, який бачать. **Viewers** мають `*:read_all` і жодної з пар запису. `*_all` завжди включає `*_own`.
 
 !!! tip "Cloud-профілі — per-user"
     Кожен користувач має свій логін у Bambu Cloud — вхід User A не впливає на сесію User B. Єдине право `cloud:auth` покриває login, logout і весь CRUD cloud-профілів; `settings:read` **не** потрібен.
@@ -110,6 +110,8 @@ BamDude поставляється з завжди увімкненою авте
 |---|---|
 | `archives:delete_own` | Видаляти лише архіви, **які ти створив / запустив**. |
 | `archives:delete_all` | Видаляти будь-який архів, включно з ownerless. Включає `*_own`. |
+| `archives:reprint_own` | Створювати нову роботу для друку з архівів, **які ти запустив**: Reprint, постановка в чергу принтера чи в Auto-Queue і повторна нарізка. |
+| `archives:reprint_all` | Те саме для будь-якого архіву. |
 | `queue:update_own` | Редагувати лише свої queue-айтеми. |
 | `library:update_all` | Перейменовувати / переміщувати / видаляти будь-який library-файл. |
 

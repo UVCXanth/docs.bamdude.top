@@ -395,6 +395,7 @@ A persistent toast in the bottom-right tracks the job: live progress percent + e
 | Permission | Grants |
 |------------|--------|
 | `library:upload` | Trigger a slice from the File Manager (the sliced output is a fresh library upload). |
+| `archives:reprint_own` / `archives:reprint_all` | Slice an archive — beside `library:upload`. Re-slicing makes new print work from the archive, so it asks the right to reprint it: your own prints, or any. An API key cannot re-slice an archive its owner may not see. |
 | `library:read` | Poll the job-tracker toast (`/api/v1/slice-jobs/{id}`) and the filament-discovery preview slice progress (`/api/v1/slicer/preview-progress/{id}`). |
 | `cloud:auth` | Required to fetch the `cloud` preset tier — without it, the modal shows only `local` + `standard` tiers. |
 | `printers:read` | The **Only printers that are online** / **Only filaments that are loaded** switches of the Slice modal — without it they are not shown. |

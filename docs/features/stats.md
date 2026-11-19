@@ -22,7 +22,7 @@ The cost figures use `default_filament_cost` and the electricity price, both set
 
 ## :material-calendar-range: Time-range filter
 
-A range picker above the KPIs scopes everything below — last 7 days / last 30 / last quarter / custom range. The KPIs become the same metrics over the chosen range; the per-printer breakdown re-renders to match.
+A range picker above the KPIs scopes everything below — **Today**, **This Week**, **This Month**, **Last 7 Days**, **Last 30 Days**, **Last 90 Days**, **This Year**, **All Time** or a **Custom Range**. The presets follow your calendar day: **Today** is today in your time zone from its first minute, a week starts on Monday, and the last day of a range is included. The KPIs become the same metrics over the chosen range; the per-printer breakdown re-renders to match.
 
 ## :material-chart-line: Time-series charts
 
@@ -203,7 +203,7 @@ Cost tiles only show numbers when the underlying inputs are configured.
 Existing archives keep the prices that were active when they completed — historical data isn't auto-rewritten when you bump rates. **Recalculate Costs** rebuilds every print's filament cost from its recorded usage:
 
 1. Click **Recalculate Costs** in the dashboard header
-2. Every archive's filament cost is summed again from its usage records. The prices recorded with those records are kept; filament no spool covered is priced at today's default rate
+2. Every archive's filament cost is summed again from its usage records. The prices recorded with those records are kept; filament no spool covered — or recorded without a price — is priced at today's default rate
 3. The dashboard re-renders against the new totals
 
 To change what past prints cost because a spool's price was wrong, use **Re-price usage** below.

@@ -122,6 +122,7 @@ The source of truth is `backend/app/schemas/settings.py::AppSettings`. If a sett
 | `log_retention_days` | `7` | Retention limit for daily `bamdude-YYYY-MM-DD.log` archives. Range 1–365. Excess archives are removed at the next successful rotation. See [System info → Log rotation](../features/system-info.md#log-rotation-retention). |
 | `bed_cooled_threshold` | `35.0` | Bed temperature (°C) at which the `bed_cooled` notification fires. |
 | `pause_warning_minutes` | `5` | **Pause heads-up lead time** (Settings → Printing): how many minutes before a pause added in the slicer the [Pause coming up](../features/notifications.md#pause-coming-up) event is sent. Range 0–120; `0` switches the event off. Without a time estimate the event is sent when the print reaches the layer before the pause. |
+| `outcome_reminder_after_minutes` | `60` | **Unchecked result reminder** (Settings → Printing): how many minutes a completed print may stay [unchecked](../features/archiving.md#checking-a-prints-result) before the [Result Not Checked](../features/notifications.md#result-not-checked) event is sent, once per print. Range 5–10080 (a week). |
 
 ## :material-bolt: Energy & cost
 

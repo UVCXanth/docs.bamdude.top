@@ -333,6 +333,7 @@ What an assignment does to the slot:
 - **The spool's own filament preset configures the slot.** When no calibration is linked to the spool, the preset stored on it — set in the spool form, or taken from the tray when BamDude created the spool — tells the printer what is loaded. A preset of another material than the spool's is ignored, and the slot gets a stand-in profile for the spool's material instead.
 - **A pressure-advance profile is selected by default.** When no profile was linked to the spool by hand, the slot gets the active calibration for that printer, filament, nozzle diameter, flow type and extruder — as in the built-in inventory.
 - **An archived spool cannot be assigned** to a slot.
+- **Archiving or deleting a spool releases its slot.** The slot is freed on the printer card and the next print from it is not charged to that spool. While the spool sits in a slot of a printer that is printing, archiving and deleting are refused until the print ends.
 - **While Spoolman is switched on but unreachable**, the printer card neither offers nor accepts an assignment — it says *Spoolman is unreachable. Spools can be assigned once it responds again.* Spools of the built-in inventory are not offered in its place.
 
 ### :material-flash: K-profile auto-reapply on AMS change
@@ -355,7 +356,7 @@ The full Spoolman inventory feature ships under `/api/v1/spoolman/inventory/*` (
 
 - `GET /spoolman/inventory/spools` + `GET /spoolman/inventory/spools/{id}` — list / single spool with BamDude joins (slot assignment, storage location, K-profile counts).
 - `POST /spoolman/inventory/spools` + `POST /spoolman/inventory/spools/bulk` + `PATCH /spoolman/inventory/spools/{id}` — create / bulk-create / update.
-- `POST /spoolman/inventory/spools/{id}/archive` + `/restore` — soft-delete via Spoolman's archive flag.
+- `POST /spoolman/inventory/spools/{id}/archive` + `/restore` — soft-delete via Spoolman's archive flag. Archiving releases the spool's slot and answers `409` while that slot feeds a running print.
 - `POST /spoolman/inventory/slot-assignments` + `DELETE /spoolman/inventory/slot-assignments/{id}` — assign / unassign.
 - `GET /spoolman/inventory/slot-assignments` — list-all-enriched (joined with spool data).
 - `POST /spoolman/inventory/spools/{id}/sync-weight` — pull current AMS weight into the spool row.

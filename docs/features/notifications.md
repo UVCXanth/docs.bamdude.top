@@ -309,6 +309,7 @@ The pause-state is also visualised on the Printers page in real time — a pause
 | `print_complete` | Print finishes successfully |
 | `print_failed` | HMS error / hardware fault stopped the print |
 | `print_stopped` | A person stopped the print — from the printer card, the queue, the Telegram bot, a webhook or the HMS dialog's **Stop Printing** |
+| `print_outcome_unchecked` | **Result Not Checked** — a reminder that nobody has checked the result of a completed print. Off by default; see [below](#result-not-checked). |
 | `bed_cooled` | Bed cooled to threshold (post-print cleanup signal) |
 
 **AMS / filament:**
@@ -380,6 +381,28 @@ Pause at layer 42/250, in about 5 min
 
 Without a time estimate the last part reads *on the next layer*.
 
+### Result not checked { #result-not-checked }
+
+**Result Not Checked** (`print_outcome_unchecked`) reminds that a completed print still carries its [**Not checked** mark](archiving.md#checking-a-prints-result) — nobody has recorded its defects or pressed **No defects**. It only informs: the print, its defect count and the queue are not touched.
+
+- **Off by default everywhere** — on every provider, in every Telegram chat, and in the inbox subscriptions (it is an *info* event). Switch it on where you want it.
+- **Once per print.** A reminder that could not be delivered is not sent again, and a print gets none once its result has been checked.
+- **When it is sent** is the **Unchecked result reminder** under **Settings → Printing**: how many minutes a completed print may stay unchecked, 60 by default, from 5 minutes to a week (10080). The time counts from the moment the print finished.
+- **Only completed prints.** A failed, cancelled or calibration print is never unchecked, so it is never reminded about.
+- **Switching the event on later releases no backlog.** A print whose time has passed is settled whether or not anybody was subscribed at that moment.
+- **In Telegram** the reminder carries **Defects…** and **No defects** buttons for that print, and a 👍 or 👎 reaction on it answers too — see [Telegram Bot → Actionable Notifications](telegram-bot.md#actionable-notifications).
+
+The default message:
+
+```
+Print Result Not Checked
+Bambu X1C: Benchy
+Finished 2024-01-15 13:30. Nobody has checked the result yet.
+https://bamdude.example/archives?outcome=unchecked
+```
+
+The link opens the Archives page with the **Unchecked** filter on; it is left out when no **External URL** is set under **Settings → Network**.
+
 ---
 
 ## :material-send: Actionable Telegram Notifications
@@ -388,7 +411,8 @@ When using Telegram as a notification provider, BamDude sends actionable notific
 
 | Event | Actions |
 |-------|---------|
-| **Print Complete** | Clear plate button |
+| **Print Complete** | Clear plate / Repeat print / Defects… / No defects buttons |
+| **Result Not Checked** | Defects… / No defects buttons |
 | **Maintenance Due** | Mark done button |
 | **Print Progress** | Pause / Stop buttons |
 
@@ -442,7 +466,7 @@ The Templates tab groups the default templates by purpose so a glance tells you 
 
 | Group | Count | What it's for |
 |---|---|---|
-| **Print events** | 12 | `print_start/complete/failed/stopped/paused/resumed/progress`, `plate_not_empty`, `bed_cooled`, `first_layer_complete`, `pause_coming_up`, `print_missing_spool_assignment` |
+| **Print events** | 13 | `print_start/complete/failed/stopped/paused/resumed/progress`, `plate_not_empty`, `bed_cooled`, `first_layer_complete`, `pause_coming_up`, `print_outcome_unchecked`, `print_missing_spool_assignment` |
 | **Printer status** | 4 | `printer_offline`, `printer_error`, `filament_low`, `maintenance_due` |
 | **AMS environmental** | 2 | `ams_humidity_high`, `ams_temperature_high` (also reused at runtime for the AMS-HT events) |
 | **Sensor alerts** | 5 | `sensor_above_max`, `sensor_below_min`, `sensor_back_in_range`, `sensor_silent`, `sensor_speaking_again` — see [Environment Sensors](sensors.md) |
@@ -540,6 +564,15 @@ Templates substitute `{variable}` placeholders. The schema is locked per event, 
 | `{total_layers}` | Total layers of the print |
 | `{time_to_pause}` | A ready phrase: `in about 5 min`, or `on the next layer` when there is no time estimate |
 | `{minutes}` | The estimate as a bare number; empty when there is no time estimate |
+
+**Result not checked** (`print_outcome_unchecked`):
+
+| Variable | Meaning |
+|---|---|
+| `{printer}` | Printer display name |
+| `{filename}` | The print's name |
+| `{finished_at}` | When the print finished, in the server's time zone (`2024-01-15 13:30`) |
+| `{archive_url}` | Link to the Archives page with the **Unchecked** filter on; empty without an External URL |
 
 **Inventory events** (`stock_reorder_alert`, `stock_break_alert`):
 

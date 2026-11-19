@@ -36,8 +36,8 @@ Whatever filter chips you have selected on the Archives page propagate into the 
 |--------|------------------|
 | Printer | Only that printer's archives |
 | Project | Only that project |
-| Status | Only that status (e.g. `success`, `failed`) |
-| Date range | Inclusive `date_from` … `date_to` (ISO 8601) |
+| Status | Only that status (e.g. `completed`, `failed`) |
+| Date range | Inclusive `date_from` … `date_to` (ISO 8601). A bare date is a calendar day in your time zone, and the whole `date_to` day is included |
 | Search | Matches `print_name`, `filename`, `tags`, `notes`, `designer` |
 
 Two exclusions are always on: `status='archived'` (uploaded but never printed) and trashed archives (`deleted_at IS NOT NULL`). This keeps the export numerically consistent with what the [Statistics](stats.md) dashboard shows.
@@ -80,7 +80,7 @@ These are the default fields emitted for every archive row. You can narrow the s
 | `id` | ID | Archive primary key |
 | `print_name` | Print Name | Display name (falls back to filename) |
 | `filename` | Filename | Original 3MF filename |
-| `status` | Status | `success` / `failed` / `aborted` / `cancelled` |
+| `status` | Status | `completed` / `failed` / `aborted` / `cancelled` / `stopped` |
 | `quantity` | Items Printed | How many copies on the plate |
 | `printer_id` | Printer ID | FK to `printers.id` |
 | `project_name` | Project | Joined from `projects.name` |
@@ -158,8 +158,8 @@ GET /api/v1/archives/export
 | `printer_id` | int | — | Filter by printer |
 | `project_id` | int | — | Filter by project |
 | `status` | string | — | Exact status match |
-| `date_from` | ISO datetime | — | Inclusive |
-| `date_to` | ISO datetime | — | Inclusive |
+| `date_from` | ISO date or datetime | — | Inclusive. A bare date (`2026-02-01`) is the start of that calendar day in the caller's time zone — the browser's, or the server's for an API key or script |
+| `date_to` | ISO date or datetime | — | Inclusive. A bare date means the whole of that day. A full timestamp is an instant: UTC unless it carries an offset |
 | `search` | string | — | LIKE match across name / filename / tags / notes / designer |
 
 Auth: `archives:read` permission. Send your JWT in `Authorization: Bearer …` or your API key in `X-API-Key`.

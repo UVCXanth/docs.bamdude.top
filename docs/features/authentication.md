@@ -96,7 +96,7 @@ Permissions follow a `resource:action` pattern -- e.g. `printers:control`, `arch
 - **Users / Groups** -- `users:read`, `users:create`, `users:update`, `users:delete`, `groups:read`, `groups:create`, `groups:update`, `groups:delete`
 
 !!! tip "Ownership permissions"
-    Use `*_own` permissions for users who should only modify their own uploads and queue items. Operators typically get `*_all`; Viewers get neither. `*_all` always implies `*_own`.
+    Use `*_own` permissions for users who should only modify their own uploads and queue items. The default **Operators** group reads archives, the queue and the library farm-wide (`*:read_all`) but edits and deletes only its own (`archives:update_own` / `delete_own`, `queue:update_own` / `delete_own`, `library:update_own` / `delete_own`). Reprinting is the exception: Operators hold `archives:reprint_all`, so they can reprint, queue and re-slice any archive they can see. **Viewers** hold `*:read_all` and none of the write pairs. `*_all` always implies `*_own`.
 
 !!! tip "Cloud profiles are per-user"
     Each user has their own Bambu Cloud login -- signing in as User A doesn't affect User B's session. The single `cloud:auth` permission covers login, logout, and all cloud-profile CRUD; `settings:read` is **not** required.
@@ -110,6 +110,8 @@ Permissions follow a `resource:action` pattern -- e.g. `printers:control`, `arch
 |---|---|
 | `archives:delete_own` | Delete only archives **you uploaded / started**. |
 | `archives:delete_all` | Delete any archive, including ownerless ones. Implies `*_own`. |
+| `archives:reprint_own` | Make new print work from archives **you started**: Reprint, adding to a printer's queue or the Auto-Queue, and re-slicing. |
+| `archives:reprint_all` | The same for any archive. |
 | `queue:update_own` | Edit only queue items you added. |
 | `library:update_all` | Rename / move / delete any library file. |
 

@@ -207,12 +207,21 @@ Notifications sent to Telegram include inline action buttons:
 
 | Notification | Actions |
 |-------------|---------|
-| **Print Complete** | Clear plate / Repeat print / Defects… |
+| **Print Complete** | Clear plate / Repeat print / Defects… / No defects |
+| **Result Not Checked** | Defects… / No defects |
 | **Print Failed** | Clear plate / Repeat print when a held run is known |
 | **Maintenance Due** | Mark done |
 | **Print Progress** | Pause / Stop |
 
 Every completion control is bound to the exact completed run shown on its card. An old button cannot clear or repeat a newer print on the same printer; open the current printer card if Telegram says the card is stale. **Defects…** names the printer, print and run in every prompt. It offers one message per part with buttons 0–5 (*other…* opens a reply-only number prompt); reply to that exact prompt so a late number cannot land on another print. Needs the plate-clear permission and the printer in the chat's scope.
+
+**No defects** marks the print's result as [checked](archiving.md#checking-a-prints-result) without recording anything else: the message gains a line *✅ Checked, no defects — name*, and the **Defects…** / **No defects** pair leaves it while the plate buttons stay. It is not a verdict — the defect count stays what it is — and it asks the same permission and scope as **Defects…**. Both buttons also come with the optional [Result Not Checked](notifications.md#result-not-checked) reminder.
+
+**Reactions answer too.** On a print-complete or reminder message, 👍 marks the print as checked, exactly like **No defects**, and the bot replies who confirmed; 👎 records nothing and opens the same prompt **Defects…** opens. Three things to know:
+
+- **In a group the bot must be an administrator** — Telegram delivers reactions in groups only to administrator bots. In a private chat nothing needs setting up.
+- **A reaction on a message sent before BamDude was last restarted does nothing.** The buttons on that message still work.
+- A reaction that does not apply — from a chat without the permission, an anonymous group administrator, or on any other message — is ignored without an answer.
 
 ---
 
@@ -246,7 +255,7 @@ preferences leak between chats — set them once per chat.
 
 ### Event filter
 
-Pick which of the 41 event types (`backend/app/models/telegram_chat.py::ALL_NOTIFY_EVENTS`) this chat should receive. This is the **sole** authority for telegram per-event filtering — the bot-level provider row does not gate events. The defaults mirror what most operators care about:
+Pick which of the 42 event types (`backend/app/models/telegram_chat.py::ALL_NOTIFY_EVENTS`) this chat should receive. This is the **sole** authority for telegram per-event filtering — the bot-level provider row does not gate events. The defaults mirror what most operators care about:
 
 | Default events ON |
 |---|
@@ -254,6 +263,8 @@ Pick which of the 41 event types (`backend/app/models/telegram_chat.py::ALL_NOTI
 
 Everything else (`print_start`, `print_progress`, `pause_coming_up` — the
 [heads-up before a slicer pause](notifications.md#pause-coming-up) —
+`print_outcome_unchecked` — the
+[reminder about an unchecked result](notifications.md#result-not-checked) —
 `printer_offline`, `maintenance_due`, AMS humidity/temperature, queue
 lifecycle, etc.) is opt-in. A workshop chat can subscribe only to `print_failed`; an admin
 chat can subscribe to everything.

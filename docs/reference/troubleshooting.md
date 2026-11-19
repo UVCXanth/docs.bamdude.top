@@ -165,8 +165,8 @@ See [Cameras reconnect by themselves](../features/camera.md#cameras-reconnect).
 
 1. **SD card inserted?** Required for file downloads
 2. **Developer Mode enabled?** Required for FTP access
-3. **Auto-archive enabled?** Check per-printer setting
-4. **Calibration prints** are automatically skipped
+3. **Every print is archived** — there is no per-printer switch to turn archiving off. A print whose file could not be fetched still has its archive row, without a 3MF — see [3MF Download Recovery](../features/archiving.md#3mf-download-recovery)
+4. **The printer's own built-in calibration** is not a print and is not archived. Test prints of the Filament Calibration wizard are archived, as calibration prints
 
 ---
 

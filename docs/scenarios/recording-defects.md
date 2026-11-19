@@ -22,6 +22,7 @@ A plate comes off with two of six parts warped. Where do you say so — and what
 2. **When you clear the plate.** On the printer card, the finished print's counters sit beside **Clear plate** and **Repeat** — fill in what came out bad and press either; the count travels with the answer. Only the print on the plate can be graded this way, under the same permission as clearing.
 3. **In Telegram.** The completion message offers **Defects…** with its printer, print and run reference. Tap one count per part (0–5), or use *other…* and reply to that exact prompt with a number. **Plate cleared** and **Repeat print** answer only the run named on their card; an old card is refused rather than touching a newer plate.
 4. **Later, on any print.** The archive editor keeps its counters for prints of any age.
+5. **And when nothing is wrong.** A completed print stays marked **Not checked** in Archives until its defects are recorded — a zero counts — or somebody presses **No defects**: in the print's menu, in its edit dialog, for a selection, or under the Telegram message (a 👍 reaction on that message does the same, a 👎 opens the defects prompt). The **Unchecked** filter lists the prints still waiting. The mark is not a verdict — whether the parts are good is the defect count — it only shows that somebody looked. See [Checking a print's result](../features/archiving.md#checking-a-prints-result).
 
 Skipped objects are counted for you: a part you skip from the printer's screen or from BamDude is already in the count when you get there.
 
