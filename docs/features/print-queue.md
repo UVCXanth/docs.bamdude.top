@@ -57,13 +57,13 @@ Two different things carry a status here, and they are easy to confuse. The **qu
 |-------|---------|
 | `idle` | Nothing is dispatched here; the scheduler may pick this queue's next item. |
 | `printing` | A print is running or imminent on this printer. This is the **authoritative busy marker** — the scheduler builds its "busy" set straight from these rows, which is what keeps the queue claimed across the whole post-print swap macro no matter what the live MQTT says. |
-| `paused` | Set automatically after a **cancel during dispatch**. Nothing failed — the operator aborted one item, so the rest of the queue waits instead of racing on. |
-| `error` | Set automatically after a dispatch **failure**. |
+| `paused` | Set automatically when a print or a start ended without a failure but in a way somebody should look at: a print that ended **cancelled** (stopped by a person — card, queue, Telegram, webhook — or aborted by the printer itself), a **cancel during dispatch**, a **Stop** on a queue job that was still being sent or heated, and, on a swap-mode printer, a plate swap that failed or could not run after the print. Some recoveries after a restart or reconnect leave it too (see *Repairing an old stuck queue row* below), and it can be set through the API. The rest of the queue waits instead of racing on. |
+| `error` | Set automatically after a **failed** dispatch or a failed print. |
 
-`is_paused` is a **separate column, orthogonal to `status`** — the operator's own pause toggle. A queue can be `printing` and `is_paused` at the same time (a pause taken mid-print): the running job finishes normally, the next item simply doesn't dispatch until you resume. The scheduler skips a queue when **either** signal is set, which is why one **Resume** control clears both at once.
+`is_paused` is a **separate column, orthogonal to `status`** — the operator's own pause toggle (**Pause queue**). BamDude sets it too where a print may still be running and nothing may start behind it: a **Stop** that could not be sent to an unreachable printer, a job that wants a timelapse while the printer has no room for one, a print whose ownership cannot be proven (an external print that does not match the queue's current job, several jobs claiming one print, closing duplicate claims), and the actions under **Information → Print state diagnostics**. A queue can be `printing` and `is_paused` at the same time (a pause taken mid-print): the running job finishes normally, the next item simply doesn't dispatch until you resume. The scheduler skips a queue when **either** signal is set, which is why one **Resume** control clears both at once.
 
 !!! info "A paused queue still accepts work"
-    Neither `is_paused` nor a `paused` / `error` status stops you adding to the queue, from any dialog. Only the scheduler reads them — a job put on a parked printer just waits there, visibly.
+    Neither `is_paused` nor a `paused` / `error` status stops you adding to the queue, from any dialog. Only the scheduler and the Auto-Queue router read them — a job put on a parked printer just waits there, visibly, and the Auto-Queue hands such a printer no new work until it is resumed.
 
 ### One active start per printer
 
@@ -81,12 +81,12 @@ Every queue item carries one of exactly six statuses (visible on the queue card 
 | `printing` | Dispatched. Set the moment the queue row is claimed, **before** the FTP upload begins. |
 | `completed` | The print finished. The row normally goes immediately — its history lives on in the archive — but where the plate-clear gate will arm, it stays until you answer: **Clear Plate** drops it, **Repeat print** re-arms the same row for another copy. |
 | `failed` | Dispatch or print failed; verbose `error_message` on hover. |
-| `skipped` | The `require_previous_success` gate refused it because the last print on that printer failed. `error_message` reads *"Previous print failed"*. **Unskip** clears the gate for it. |
+| `skipped` | Skipped by hand, or refused by the **Only run if the previous print succeeded** gate (`require_previous_success`): when the row was next to start, the newest finished print on that printer had failed and the failure had not been released. `error_message` reads *"Previous print failed"*. **Unskip** puts the row back and releases that failure, so the rows behind it are not held by it either. See [Only after a successful previous print](#previous-success). |
 | `cancelled` | Queue row cancelled — by you, or automatically when the source disappears: trashing an archive cancels its still-`pending` items with the reason *"Source archive deleted"*, and trashing a library file does the same with *"Source file deleted"*. The row stays visible with its reason rather than vanishing, because a job that disappeared silently is indistinguishable from one that was never queued. |
 
 There is **no `paused` item status.** A print paused *on the printer* — operator pause, filament runout, an AMS issue — is a printer state, read live off the machine; the queue item stays `printing` throughout.
 
-**Waiting is not a state of its own either.** An item the scheduler looked at and decided not to start yet stays `pending` and carries a separate `waiting_reason` text, shown on the row — *"Printer offline"*, *"Drying in progress"*, *"Plate not cleared"*, a staggered-start line naming what it is waiting behind, or *"Swap macro failed: …"*. The reason is checked on every pass, updated when the decision changes, and cleared when the printer is ready, so it always reflects the most recent tick rather than a status the row is stuck in.
+**Waiting is not a state of its own either.** An item the scheduler looked at and decided not to start yet stays `pending` and carries a separate `waiting_reason` text, shown on the row — *"Printer offline"*, *"Printer powering on"*, *"Drying in progress"*, *"Plate not cleared"*, a staggered-start line naming what it is waiting behind, or *"Swap macro failed: …"*. The reason is checked on every pass, updated when the decision changes, and cleared when the printer is ready, so it always reflects the most recent tick rather than a status the row is stuck in.
 
 The queue card header shows counters in two flavours. **Pending** and **Skipped** are cached on the queue row and recounted whenever it changes; **Total / Completed / Failed / Cancelled** are computed from `print_archives` through `archive.queue_id` at read time, so they stay right even after the live rows auto-clean.
 
@@ -195,7 +195,7 @@ On supported dual-nozzle printers, **[L] / [R]** badges show nozzle bindings. Su
 
 On an **H2C**, every filament that prints from the rack gets a **rack position** picker (**R1**–**R6**, numbered as on the printer and on the printer card) beside its AMS slot; a filament on the fixed hotend shows **[L]**. Which of the six rack nozzles a colour uses is not stored in the 3MF — Bambu Studio sends it with the print — so the dialog asks. Every position is listed with the nozzle it holds; an empty position, or one holding the wrong diameter or flow type, is greyed out with the reason. The choice is per filament **group**: filaments the slicer grouped together share one hotend and move together.
 
-Nothing has to be picked. The dialog pre-selects what the dispatcher would assign: a position already loaded with that colour first, otherwise the lowest one that fits. The nozzle currently on the carriage — which the printer leaves out of its rack report — is offered at its own position. The pick is stored with a queued job and sent with a print started straight away, a reprint and every copy of a quantity; it applies to the one printer it was made for.
+Nothing has to be picked. The dialog pre-selects what the dispatcher would assign: a position already loaded with that colour first, otherwise the lowest one that fits. The nozzle currently on the carriage — which the printer leaves out of its rack report — is offered at its own position. The pick is stored with a queued job and sent with a print started straight away, a reprint and every copy of a quantity; it applies to the one printer it was made for. Moving the job to another printer's queue — by editing it, in bulk or as part of a batch — drops the pick, and the positions are assigned from the new printer's rack.
 
 It is checked again when the print is sent, because the rack can be reloaded in the meantime. A position **you chose** that no longer fits stops the print with a message saying what the position holds now, and the uploaded file is removed from the printer. Positions that were **assigned automatically** and can no longer be placed are left to the printer to choose.
 
@@ -325,7 +325,7 @@ Default. Job starts as soon as the printer is idle and the dispatcher reaches it
 
 ### Scheduled
 
-Pick a future date + time. The job stays in `pending` until the scheduled clock hits, then enters dispatch. If the printer is off and one of its smart plugs has auto-on set, the scheduler powers it on and waits for it to come up **at that moment** — there is no pre-warm offset that fires ahead of the clock.
+Pick a future date + time. The job stays in `pending` until the scheduled clock hits, then enters dispatch. If the printer is off and one of its smart plugs has auto-on set, the scheduler switches it on **at that moment** and the job starts once the printer has connected (see [Smart plug automation](#smart-plug-automation)) — there is no pre-warm offset that fires ahead of the clock.
 
 !!! note "`scheduled_time` is a gate, not a sort key"
     A queue is walked strictly in `position` order — drag-and-drop, the up / down / bump buttons and the copy/clone paths are the only things that decide who is next. A future `scheduled_time` makes the scheduler skip that row and move on to the one below it; it never reorders the queue around it.
@@ -354,6 +354,17 @@ This is a **per-printer** setting, not a farm-wide one — **Require plate-clear
 
 **Defects with the answer.** When a finished print waits for *Clear plate*, its parts appear beside the two buttons with a counter each; fill in what came out bad and press either answer — the count is written to that print, under the same permission. Untouched counters send nothing.
 
+### Only after a successful previous print {#previous-success}
+
+**Only run if the previous print succeeded** (`require_previous_success`) holds a job back while the newest finished print on its printer is a failure that has not been released.
+
+- **Only the job that is next is judged.** The gate is asked when a job is the one its printer would start now. A job further down the queue is not judged while the job ahead of it still waits — for filament, an order restriction or anything else.
+- **What counts as a failure.** A print that failed, and a start the printer received but did not run. A start that never reached the printer — an upload the printer refused, a printer that went offline before the start — does not count. A cancelled print is neutral: cancelling is a decision, not a failure.
+- **What releases it.** A later successful print on that printer releases every older failure there, for good. **Unskip** on a job the gate skipped releases the failure for the jobs behind it as well. **Acknowledge failure** on the printer card releases it without putting anything back.
+- **The printer card says so.** While the newest finished print on a printer is an unreleased failure, its card shows *The last print on this printer failed. Jobs set to run only if the previous print succeeded are held until the failure is acknowledged.* With `queue:update_all` the note carries **Acknowledge failure**, which also releases Auto-Queue jobs waiting for that printer. Each press releases the failure the gate is reading; when an earlier unreleased failure is then the newest, the note stays. If nothing was holding jobs, the answer is *No failure was holding jobs on this printer*.
+
+A job in a printer's own queue that the gate refuses becomes `skipped`, with the **Job Skipped** notification. An Auto-Queue job is not skipped: the router passes over that printer, and the job waits with *The previous print failed.* only while no other printer can take it; see [Auto-Queue Routing](auto-queue.md#eligibility-rules).
+
 ### Bulk Editing
 
 Select multiple queue items via the toolbar checkboxes to apply a bulk edit. **Only `pending` rows are touched** — anything already printing or finished is counted as skipped and reported back, and without `queue:update_all` so is anything you didn't queue yourself.
@@ -362,12 +373,12 @@ Every field is optional: leave one out and each row keeps what it had.
 
 | Field | Notes |
 |-------|-------|
-| Target queue | Moves the rows to another printer's queue. The queue must exist; there is no filament re-check at this point — the scheduler maps each row against whatever printer it ends up on. |
+| Target queue | Moves the rows to another printer's queue. The queue must exist; there is no filament re-check at this point — the scheduler maps each row against whatever printer it ends up on. Hand-picked H2C rack positions are dropped with the move. |
 | Scheduled time | Pins one fixed clock across the selection. There is no "shift everything forward by N hours" form. |
 | Manual start · Auto power-off · Require previous success | The three scheduling flags. |
 | Use AMS · Bed levelling · Flow · Nozzle offset · Layer inspect · Timelapse · Record to · Mesh-mode fast check · G-code injection · Preheat | Every print option, plus swap-macro and selected-macro choices. |
 
-Cancelling in bulk is a **separate action**, not a field on this edit — and batch-level cancel / skip / reorder have endpoints of their own that act on a whole `batch_id` at once.
+Cancelling in bulk is a **separate action**, not a field on this edit — and batch-level cancel / skip / reorder have endpoints of their own that act on a batch's jobs in one printer queue at once (see [Group, collapse, and reorder batches](#group-collapse-and-reorder-batches)).
 
 ### Group, collapse, and reorder batches
 
@@ -377,7 +388,7 @@ Tame a long queue by grouping related pending jobs on a printer's queue card:
 - **Collapse** — fold a batch down to a single summary row; the collapsed / expanded state is remembered per batch in the browser's local storage.
 - **Drag to reorder** — grab a row's **grip handle** and drag to reposition. This is available only when the card is fully **expanded** and has **no collapsed batch** on it, so a drag can never move a hidden row or split a batch; the up / down / bump buttons stay as the always-available fallback.
 
-Selection is scoped to a single card — a batch is per-queue, so a selection can't span printers.
+Selection is scoped to a single card, so a selection can't span printers. A batch can: when the Auto-Queue deals a batch's copies out to several printers, every copy keeps the batch, and each of those printers' cards shows its own share. A batch action on a card — cancel, skip, reorder, bump, edit, clone, ungroup, the manual-start toggle — acts only on the copies in that printer's queue, on the queue card and on the timeline alike; the other printers' copies stay as they are. Moving a batch to another printer is checked like moving one job — the file's model and the target's swap rule — and the batch moves whole or not at all. Archives keep the shared batch, so history still groups every copy.
 
 ---
 
@@ -424,10 +435,10 @@ ETA chaining is a planning tool — it doesn't account for clear-plate confirmat
 
 When a printer has an associated smart plug, the queue can drive power state:
 
-- **Auto power-on** (`auto_on`, on by default) — when the scheduler reaches an item on a printer that is offline, it switches the plug on **then** and waits for the printer to connect before dispatching. There is no offset that fires ahead of a scheduled clock; if you want the machine up earlier, the plug's own **schedule** (a plain on/off time of day) is the tool for that.
+- **Auto power-on** (`auto_on`, on by default) — when the scheduler reaches an item on a printer that is offline, it switches the printer's power plug on **then** ([which plug](smart-plugs.md#which-plug-powers-the-printer)) and goes on with the other printers; it does not wait for this one. The item shows *"Printer powering on"*, and a later pass starts it once the printer has connected; the printer's other enabled auto-on plugs are switched on at that point. A printer that has not connected within three minutes is left alone for ten minutes before it is switched on again, and so is one whose plug could not be reached or would not switch. There is no offset that fires ahead of a scheduled clock; if you want the machine up earlier, the plug's own **schedule** (a plain on/off time of day) is the tool for that.
 - **Auto power-off** (`auto_off`, on by default) — fires after the print finishes or fails, then waits out a delay. Two delay modes: **time** (default 5 minutes) or **temperature** — hold until the printer cools below a threshold (default 70 °C). A separate toggle does the same after an **AMS drying** cycle, with its own longer delay (default 10 minutes), because the chamber is hot afterwards.
 - **Per-job** — the Add-to-Queue dialog's `auto_off_after` asks for a power-off after *this* job specifically.
-- **Auto-queue** — a job aimed at a printer model, with every matching printer off, switches one on per pass: the first that can run it. What a switched-off printer holds is read from the spools assigned to its slots (BamDude or Spoolman) and, for an unassigned slot, from what the printer last reported; a printer whose every slot is known and which lacks a channel's material or forced colour is passed over, and the job's waiting reason names what it lacks. A printer BamDude has not heard from since it started is still switched on.
+- **Auto-queue** — a job aimed at a printer model, with every matching printer off, switches one on per pass — all of its enabled auto-on plugs at once: the first that can run it. What a switched-off printer holds is read from the spools assigned to its slots (BamDude or Spoolman) and, for an unassigned slot, from what the printer last reported; a printer whose every slot is known and which lacks a channel's material or forced colour is passed over, and the job's waiting reason names what it lacks. A printer BamDude has not heard from since it started is still switched on.
 
 Full setup + per-printer linking → [Smart plugs](smart-plugs.md).
 
@@ -449,7 +460,7 @@ Programmatic queue control via REST:
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /api/v1/queue/` | List queue items (filterable by printer, status) |
+| `GET /api/v1/queue/` | List queue items (filterable by printer, status — several statuses separated by commas, e.g. `?status=pending,printing`) |
 | `GET /api/v1/queue/{id}/copy-source` | Read the saved source profile used by Copy Queue |
 | `POST /api/v1/queue/` | Add a new queue item from an archive, library file, or saved queue-job source |
 | `PATCH /api/v1/queue/{id}` | Edit position, schedule, AMS, options |
@@ -462,12 +473,16 @@ Programmatic queue control via REST:
 | `POST /api/v1/queue/{id}/clone` | One more copy of an existing row |
 | `PATCH /api/v1/queue/bulk` | Bulk edit — `pending` rows only |
 | `POST /api/v1/queue/reorder` · `/{id}/reorder` · `/{id}/bump` · `/{id}/bump-bottom` | Ordering, whole-queue or one row at a time |
-| `POST /api/v1/queue/batch` · `/batch/{batch_id}/…` | Group rows into a batch, then ungroup / cancel / skip / reorder / bump / clone / edit it as one |
+| `POST /api/v1/queue/batch` · `/batch/{batch_id}/…` | Group rows into a batch, then ungroup / cancel / skip / reorder / bump / clone / edit it as one — in one printer queue, named by `?queue_id=` |
 | `GET /api/v1/queue/stagger-state` | What the staggered-start gate is currently holding |
+
+**A batch route acts on one printer queue.** Every `/batch/{batch_id}/…` route takes `?queue_id=` and touches only the batch's jobs in that queue. Without it, the batch's only queue is used; a batch with waiting or printing jobs in several queues is refused with `409` and error `batch_spans_queues`. On `PATCH /batch/{batch_id}`, `?queue_id=` names whose copies change and a `queue_id` in the body moves them. An API key limited to some printers can act on its own printers' copies of a batch.
+
+**Skip and Retry refuse a job that changed meanwhile.** `/skip` and `/retry` answer `409` with error `recovery_changed` when the job is no longer in the state they were asked about — for a skip, usually because the scheduler has just started it. Nothing is changed; refresh the queue.
 
 **Stopping a printing item is finished by the printer, not by the button.** `/stop` sends the stop to the printer, and the printer's own report then closes the item and its archive as cancelled and pauses the queue. When the printer cannot be reached, the stop is not sent and BamDude says so (`503`, error `stop_not_sent`): the item stays `printing`, that printer's queue is paused so nothing is dispatched behind it, and the job is closed by the printer's own report once it is back — as completed, with its filament recorded, if the print really finished. A job that was still being sent or heated has nothing on the printer to report it, so it is cancelled right away.
 
-Queue **state** lives on its own router: `GET` / `PATCH /api/v1/queues/{id}` reads a queue and sets it. `status` accepts only `idle` or `paused` — `printing` and `error` are set by the system, never by a client — and a queue cannot be moved to `paused` while it is `printing` (stop the print first). `is_paused`, being orthogonal, is allowed in **any** state including mid-print.
+Queue **state** lives on its own router: `GET` / `PATCH /api/v1/queues/{id}` reads a queue and sets it. `status` accepts only `idle` or `paused` — `printing` and `error` are set by the system, never by a client — and a queue cannot be moved to `paused` while it is `printing` (stop the print first). `is_paused`, being orthogonal, is allowed in **any** state including mid-print. A queue also carries `previous_print_failed` — the newest finished print on that printer is a failure nobody has released, so jobs set to run only after a successful previous print wait — and `POST /api/v1/queues/{id}/acknowledge-failure` (`queue:update_all`) releases it, answering `{"acknowledged": true}` or `false` when no failure was holding jobs. See [Only after a successful previous print](#previous-success).
 
 Full schema + auth details: [API reference](../reference/api.md).
 
@@ -510,7 +525,7 @@ The active-job toast in the bottom-right tracks each dispatch independently — 
 
 Once the start command has gone out, only the printer's own answer decides the attempt. A problem afterwards — saving the dispatched filament mapping, registering macros, cleaning up a temporary file — is logged, and the print keeps printing; it is never put back in the queue and printed a second time. If BamDude itself cannot read the printer's answer, it keeps looking for as long as a printer normally takes to answer, the job still holding the printer. When it still cannot tell, the job keeps the printer, the start is never sent again, and **Information → Print state diagnostics** offers to close the attempt once you have checked the printer — no restart needed.
 
-A dispatch that ends without a print marks the job **failed** with a reason class shown before the detail: the source was unavailable, the upload or the start was refused, the printer did not acknowledge the start, or it took the file but never started. That printer's queue then stops with an error and waits for **Resume** — it does not try again by itself, because a start that may have reached the printer can only be checked at the printer. You are told once, through the usual *queue job failed* notification — also when the job's dispatch attempts are used up. **Retry** gives the job a fresh set of dispatch attempts and keeps the record that it was started before; the halted queue still needs Resume.
+A dispatch that ends without a print marks the job **failed** with a reason class shown before the detail: the source was unavailable, the upload or the start was refused, the printer did not acknowledge the start, or it took the file but never started. That printer's queue then stops with an error and waits for **Resume** — it does not try again by itself, because a start that may have reached the printer can only be checked at the printer. Until then the Auto-Queue gives that printer no new work. For **Only run if the previous print succeeded**, only a start the printer received counts as a failed print; a job that failed before its start went out — the upload refused, the printer gone offline — does not hold the next one back. You are told once, through the usual *queue job failed* notification — also when the job's dispatch attempts are used up. **Retry** gives the job a fresh set of dispatch attempts and keeps the record that it was started before; the halted queue still needs Resume.
 
 A refusal before anything was sent — the printer busy or disconnected at the last moment, a filament slot not ready — is not a failure: the job waits in the queue and the attempt it used is given back. The exception is our swap-start macro: if it already ran (or may have), the job fails instead of waiting, so the table is never moved twice. A refusal that ends the job (a **Print now** job, an unavailable source) marks it failed, and its attempt is counted under **Dispatch errors** in Statistics, never as a print.
 
@@ -524,7 +539,7 @@ Cancelling a print **while the dispatcher is still uploading the 3MF or preparin
 
 The **Cancel** button of the dispatch window belongs to that window only. During the upload it stops the transfer and removes the partial file from the printer. Once the start command has been sent, the button is gone and the window says so: from then on it is a print, and a print is stopped from the printer card.
 
-This is the one place a **queue** ends up `paused` on its own — the two columns below are the two state sets from [Queue states](#queue-states), not one status seen twice.
+A cancel here is one of the cases in which a **queue** goes to `paused` by itself (the full list is under [Queue states](#queue-states)) — the two columns below are the two state sets from that section, not one status seen twice.
 
 | Slice | Item status | Queue status | Archive status |
 |---|---|---|---|
@@ -534,7 +549,7 @@ This is the one place a **queue** ends up `paused` on its own — the two column
 
 The semantic distinction matters: the queue moving to `paused` (not `error`) tells the operator that **nothing failed** — the rest of the queue is fine, they decided to abort one item. They can inspect the remaining items and resume the queue when ready. Before this distinction was wired in, a cancel during the dispatch window left the queue in `error` with the just-cancelled row marked `failed`, which was misleading.
 
-Cancelled queue rows live alongside failed and skipped rows in the queue card's **Issues** section so they don't clutter the live `pending` list but stay visible for retry.
+Cancelled queue rows live alongside failed and skipped rows in the queue card's **Issues** section so they don't clutter the live `pending` list but stay visible for retry. An open Issues list takes in a job as soon as it fails, is cancelled or is skipped.
 
 ### :material-restart: Restart a cancelled item
 
@@ -635,6 +650,10 @@ The same guard covers the moment immediately after a print completes on H2D / H2
 ## Queue attention and pending estimates
 
 The printer card shows its **queue state** separately from the printer's physical state, including when the queue is empty or the printer is offline. In the sidebar, the existing job count remains; a separate dot at the right edge is yellow for a paused printer queue and red for a queue error. Error takes priority. A physical printer pause and an old failed job alone do not set this dot.
+
+The queue block on the printer card names the job the scheduler will start next — the first waiting job that is neither staged nor scheduled for later — under **Next in queue**. When only scheduled or staged jobs wait, it names the one due first under **Scheduled for …**, or says **Staged — starts only by hand**. When the printer's last print failed, a note on the card says that jobs set to run only after a successful previous print are held, and offers **Acknowledge failure**; see [Only after a successful previous print](#previous-success).
+
+**View archive** in a queued job's menu opens the Archives page on the page that holds that archive and highlights it; when the current filters leave it out, the page says *The linked archive is not in the current list - try clearing filters*.
 
 Pending jobs show their selected captured plate's **slicer estimate**, not a completion time. Missing estimates are shown as **—**. A collapsed batch in either queue shows the time of one print only when every copy has the same known estimate; otherwise expand it to see individual estimates. Long names shorten with an ellipsis so the time and actions remain visible. On printer queue cards, **More** contains reorder, edit and cancel actions; source and batch markers sit below the name.
 

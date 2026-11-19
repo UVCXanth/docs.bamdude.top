@@ -735,6 +735,8 @@ Separate from the provider system above, BamDude can email the **owner** of a pr
 
 The print-finished e-mail shows the finish photo when one was taken, and the completed / failed / stopped templates can place it with `{finish_photo_url}`.
 
+A print end that BamDude cannot match to a print of its own mails nobody: only the notification providers subscribed to the event are told.
+
 Each user opts in and out of the four events individually on the **Email** tab of their own [notification centre](#the-notification-centre) — the Bell in the sidebar. Operators / admins control the global **User Notifications** master switch under **Settings** → **Notifications**.
 
 ---

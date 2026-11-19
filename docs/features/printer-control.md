@@ -55,7 +55,7 @@ A drop is accepted whatever the printer is doing — printing, paused or offline
 
 ### H2C rack-nozzle choice
 
-For a sliced plate using the H2C rack, the print dialog shows **Rack position** (R1–R6) beside each rack filament group. Empty positions and nozzles with the wrong diameter or flow type are disabled with a reason. Filaments in the same slicer group share one hotend. Leaving the choice automatic prefers a suitable loaded nozzle; a manual choice is checked again at dispatch and refuses the print if the rack changed. Queues and reprints keep the choice.
+For a sliced plate using the H2C rack, the print dialog shows **Rack position** (R1–R6) beside each rack filament group. Empty positions and nozzles with the wrong diameter or flow type are disabled with a reason. Filaments in the same slicer group share one hotend. Leaving the choice automatic prefers a suitable loaded nozzle; a manual choice is checked again at dispatch and refuses the print if the rack changed. Queues and reprints keep the choice; moving a queued job to another printer drops it, and the new printer's rack decides.
 
 ### Nozzle Offset Calibration (dual-nozzle only)
 
@@ -304,6 +304,8 @@ Two sections side by side:
 
 !!! info "Resume banner"
     If you close the wizard mid-flow (after the print finished but before you saved), reopening the wizard shows a yellow banner with **Resume / Discard** for the in-flight session.
+
+    A session whose test print was deleted from the queue before it printed ends as cancelled, so the wizard stops waiting for it and a new calibration can be started on that printer.
 
 ### Permissions and audit
 

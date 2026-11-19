@@ -26,6 +26,8 @@ A slot is freed by one of two rules, depending on **Wait for bed to heat**:
 - **On (default)** — the slot is held until that printer's bed reaches its target (within **±1 °C**), and then for the **interval** on top.
 - **Off** — the slot frees the moment the print starts, and the interval counts from there.
 
+A queued start that fails or is cancelled before anything was sent to the printer gives its slot back at once.
+
 Slots live **in memory**. A backend restart forgets them; a few seconds after MQTT reconnects, BamDude scans the farm and re-registers a slot for any printer it finds actively heating, so a restart mid-heat doesn't hand out a free pass. A print you start **on the printer's own screen** takes a slot too — BamDude registers one when it sees that print begin with the bed still below target. A printer already at temperature is skipped: its heating spike is behind it.
 
 ### Where it lives

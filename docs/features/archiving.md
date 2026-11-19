@@ -685,6 +685,8 @@ The switch in the page header has three positions:
 
 On a card or list row that is a reprint, clicking its purple duplicate badge scrolls to the original and highlights it for 5 seconds. When the original is not on the current page or is filtered out, the page says **Original print not visible - try clearing filters**.
 
+**View archive** in a queued job's menu on the Queue page opens this page on the page of the list that holds that archive, under your current filters and sort, and highlights it the same way. When the list as filtered does not hold it, the page says **The linked archive is not in the current list - try clearing filters**.
+
 ---
 
 ## :material-tag: Tags & Filtering

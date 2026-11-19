@@ -65,7 +65,7 @@ Use this when the urgent job should *stay* model-routed — "any P1S, whichever 
 - **A per-printer queue is walked by position.** A scheduled time is a gate that makes the scheduler skip a row and move on; it never re-sorts the queue. A row added with **Queue only** (staged) waits for **Start**.
 - **Every running print claims its printer.** A direct **Print** claims the queue before the upload begins, so the router cannot dispatch over it while the file is still transferring.
 - **Every start takes a stagger slot** — queued or direct — and waits for one. With **Strict mode for direct dispatch** on, a direct **Print** on a full phase is refused with *Stagger cap reached* instead of waiting; the queued rows just wait.
-- **The last print on that printer failed?** A row with **Only run if the previous print succeeded** is held as *skipped* until you press **Unskip** — one press clears the whole queue behind it.
+- **The last print on that printer failed?** Its queue waits for **Resume queue** first. After that, a row with **Only run if the previous print succeeded** that comes up next is held as *skipped* until you press **Unskip** — one press clears the whole queue behind it. **Acknowledge failure** on the printer card releases the rows before any of them is skipped.
 
 ## :material-alert: Pitfalls and what-ifs
 
