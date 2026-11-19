@@ -355,7 +355,7 @@ Weak signal is the most common cause of "printer drops mid-print" + intermittent
 
 ## :material-timer-sand: Total print hours
 
-The card carries a cumulative print-time counter (sourced from `print_archives` rows for that printer). Useful for:
+The expanded card shows the printer's total print hours. The figure is the printer's own runtime counter plus its hours offset — the correction you set when you edit the total print time of a machine that arrived with hours on it. It is not summed from the archive, and it is the same figure hours-based maintenance counts from. The runtime counter grows only while BamDude sees the printer connected and printing; paused and offline time are not counted — see [Maintenance → Interval Types](maintenance.md#interval-types). Useful for:
 
 - maintenance scheduling — pair with the [Maintenance](maintenance.md) feature to flag rod / nozzle / belt jobs at the right hour mark
 - spotting heavily-used machines when you're load-balancing the farm

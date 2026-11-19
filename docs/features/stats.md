@@ -16,9 +16,9 @@ The header bar shows four lifetime counters:
 | **Prints completed** | `print_archives` rows with `status='completed'`. |
 | **Filament consumed** | Sum of `filament_used_grams` across all archives in range (not just completed), grouped by material/colour. Failed / cancelled prints contribute the filament **actually** extruded, not the full slicer estimate, so the total matches what inventory was deducted. |
 | **Print time** | Measured, not estimated: for each archive with both a start and an end timestamp it's the elapsed time between them, and only archives missing one falls back to the slicer's `print_time_seconds`. A print BamDude had to recover after a disconnect is credited with its *expected* duration rather than the whole offline gap — otherwise a weekend outage would add days of phantom print time. |
-| **Energy used** | Sum of `energy_kwh` (the per-print delta the dispatcher computed at completion) over completed archives that had a smart-plug bound at print start. Falls back to a ranged sum from `smart_plug_energy_snapshots` when individual-print captures are missing. |
+| **Energy** | Two pairs of tiles, always both. **Energy While Printing** / **Cost While Printing** — the sum of `energy_kwh` and `energy_cost` (the per-print figures recorded at completion) over the prints in range: what the jobs themselves drew. **Energy At The Plug** / **Cost At The Plug** — everything the smart plugs counted, idle included: the plugs' lifetime counters for all time, hourly snapshots for a date range. The gap between the pairs is what standing still costs. See [Energy → Two Energy Figures](energy.md#two-energy-figures-printing-and-at-the-plug). |
 
-Each KPI also shows the matching cost when `default_filament_cost` and `energy_cost_per_kwh` are configured under Settings → System.
+The cost figures use `default_filament_cost` and the electricity price, both set in **Settings → Printing → Cost Tracking**.
 
 ## :material-calendar-range: Time-range filter
 
@@ -53,11 +53,11 @@ On each print:
 - At `print_complete` it reads the plug again, computes `current - energy_start_kwh`, and stores **the delta directly** in `print_archives.energy_kwh`. There is no separate `energy_end_kwh` column — the end reading is consumed during the subtraction and discarded.
 - The reads are restart-resilient — values come from a fresh DB session each time, never an in-memory dict, so a backend restart between start and complete doesn't break the capture.
 
-If a plug isn't bound, or the plug is offline at one of the two boundaries, `energy_kwh` stays null and that print is excluded from the energy KPI.
+If a plug isn't bound, or the plug is offline at one of the two boundaries, `energy_kwh` stays null and that print is left out of the printing figures.
 
-### Hourly snapshot fallback
+### Hourly snapshots
 
-Per-print capture relies on the plug being responsive at exactly the right two moments. To smooth over plug outages, BamDude also takes an **hourly snapshot** of every plug's cumulative kWh into `smart_plug_energy_snapshots`. For date-range "total energy" queries the stats page falls back to this table when individual-print fields are missing — `_sum_snapshot_deltas()` computes per-plug `max(0, last_in_range - baseline)` and sums across plugs.
+Independently of the prints, BamDude takes an **hourly snapshot** of every plug's cumulative kWh into `smart_plug_energy_snapshots`. They are what **Energy At The Plug** is read from for a date range: per plug `max(0, last_in_range - baseline)`, summed across plugs. They do not fill in a print whose own capture is missing.
 
 The snapshot table is bounded — old rows are pruned after a configurable retention window so it doesn't grow forever.
 
@@ -193,9 +193,9 @@ When you hold the `stats:filter_by_user` permission (Administrators only by defa
 
 ### Energy "warming-up" indicator
 
-In **Total Consumption** energy mode, date-range energy is computed from hourly snapshots of each smart plug's lifetime counter (see [Smart Plugs](smart-plugs.md)). On a brand-new install — or shortly after upgrading — the first snapshot before your selected range may not exist yet. The Energy Used / Energy Cost tiles show a small yellow warning icon with a tooltip explaining the situation.
+For a date range, the plug figures are computed from hourly snapshots of each smart plug's lifetime counter (see [Smart Plugs](smart-plugs.md)). On a brand-new install, or for a plug added after the range began, a snapshot from before your selected range may not exist yet. The **Energy At The Plug** and **Cost At The Plug** tiles then show a small yellow warning icon with a tooltip explaining the situation. The printing pair is not affected.
 
-After ~1 hour of runtime the indicator disappears for any range that starts after the first snapshot. The KPI value during the warming-up window is computed against `0` baseline, which over-counts by whatever the plug was at install time — wait the hour before reading the number.
+The indicator disappears for any range that starts after every plug's first snapshot. While it shows, a plug without a baseline is measured from its earliest snapshot, so the figure leaves out the beginning of the range and may undercount.
 
 ---
 

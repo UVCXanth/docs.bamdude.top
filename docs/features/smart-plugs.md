@@ -200,19 +200,22 @@ If those work but BamDude doesn't see the plug, the issue is auth or IP routing 
 
 ### Initial config
 
-1. **Settings → Smart Plugs → Add → Home Assistant** (one-time per BamDude install).
+The connection to Home Assistant is set up once per BamDude install, in its own card — not in the plug dialog.
+
+1. Open **Settings → Network** and find the **Home Assistant** card. Turn on **Enable Home Assistant**.
 2. Fill in:
-    - **HA URL** — e.g. `http://homeassistant.local:8123` or `https://ha.example.com`
-    - **HA Long-Lived Access Token** — HA → click profile → bottom of page → Long-lived access tokens → **Create token**
+    - **Home Assistant URL** — e.g. `http://homeassistant.local:8123` or `https://ha.example.com`
+    - **Long-Lived Access Token** — in Home Assistant: Profile → Long-Lived Access Tokens → Create Token
 
-3. Hit **Test** — BamDude pings `/api/states` to verify URL + token. The form is locked behind that check.
+3. Press **Test Connection**. When the test fails it names the cause — see [Troubleshooting](#per-type-troubleshooting).
+4. Press **Save connection**. Connection changes stay a draft until you save them; testing does not save.
 
-!!! tip "HA add-on auto-config"
-    If you run BamDude as a **Home Assistant add-on**, the install pre-populates `HA_URL` + `HA_TOKEN` env vars from the supervisor. The fields show locks (:material-lock:) — no manual config needed.
+!!! tip "Set by environment variables"
+    When `HA_URL` and `HA_TOKEN` are set in BamDude's environment, the connection is enabled automatically and the two fields are read-only, marked *(Environment Managed)* — no manual config needed.
 
 ### Adding a plug
 
-After the HA URL is set, the **Add Plug → Home Assistant** dropdown lists every `switch.*` / `light.*` / `input_boolean.*` entity exposed by HA.
+**Settings → Smart Plugs → Add → Home Assistant**. While Home Assistant is not connected, the dialog says *Home Assistant is not configured. Set it up in Settings → Network → Home Assistant* and the entity list is disabled. Once it is connected, the **Select Entity** list loads every `switch.*` / `light.*` / `input_boolean.*` / `script.*` entity exposed by HA, without the entities another plug already uses.
 
 - Pick the entity that controls the plug (`switch.x1c_smart_plug` etc.).
 - For **separate energy sensor entities** (Tapo P110M, IKEA Tradfri, Shelly Plus Plug — they expose power/energy as `sensor.*` entities, not on the switch), the form has secondary dropdowns for the matching sensor:
@@ -239,10 +242,13 @@ script:
           entity_id: switch.x1c_chamber_fan
 ```
 
-Then create a Smart Plug entry pointing at `script.x1c_full_power_on` (HA scripts also expose the standard `switch.*` interface). On the plug card:
+Then add a Home Assistant plug whose entity is `script.x1c_full_power_on` and link it to the printer. A printer can have several scripts. A script entry has the same controls as any Home Assistant plug:
 
-- :material-checkbox-marked: **Run when on** — fire the script on power-on
-- :material-checkbox-marked: **Show on Printer Card** — surface the toggle directly on the card instead of behind the cog
+- **Show on Printer Card** (in the add / edit dialog) — puts a button on the printer card. For a script the button runs it; for a switch, light or input boolean it toggles the entity.
+- **Enabled** (on the plug card, under **Automation Settings**) — the script's automation switch. With it off, nothing runs the script except its own button.
+- **Auto On** — the script runs when a print starts and when the printer's power is switched on.
+- **Auto Off** — the script runs when the printer's power is switched off.
+- **Show in Switchbar** — adds the entry to the quick-access switchbar in the sidebar.
 
 #### When a linked script runs
 
@@ -529,16 +535,16 @@ For smart plugs that report a kWh meter, BamDude captures the meter reading at p
 
 For "kWh used by printer X this month" reports, BamDude takes hourly snapshots in the `smart_plug_energy_snapshots` table. Date-range totals compute per-plug `max(0, last_in_range - baseline)` so meter resets (firmware reflashes, plug power cycles) don't cause negative deltas.
 
-### Energy Display Mode
+### Printing and at the plug
 
-In **Settings → System → "Energy display mode"**:
+The Statistics page always shows both answers, as two pairs of tiles — there is no setting to choose one:
 
-| Mode | Source | Use Case |
-|------|--------|----------|
-| `print` | Sum of per-print archive deltas | "How much electricity did the prints I ran cost?" |
-| `total` (default) | Lifetime plug counter via snapshot range | "How much did the printer's plug consume?" |
+| Tiles | Source | Answers |
+|-------|--------|---------|
+| **Energy While Printing** · **Cost While Printing** | Sum of per-print archive deltas | "How much electricity did the prints I ran cost?" |
+| **Energy At The Plug** · **Cost At The Plug** | The plugs' lifetime counters; hourly snapshots for a date range | "How much did the printers' plugs consume?" |
 
-The two modes can diverge when the printer is powered (heating, idle, standby) without an active print — only `total` captures that.
+The two diverge when a printer is powered (heating, idle, standby) without an active print — only the plug pair captures that, and the gap is what standing still costs. See [Energy → Two Energy Figures](energy.md#two-energy-figures-printing-and-at-the-plug).
 
 ---
 
@@ -709,8 +715,8 @@ BamDude does not switch or poll such a plug until it is corrected. Open **Edit**
     targeting, and per-swap-profile filtering.
 
 !!! tip "Energy reporting"
-    Switch the energy display mode to `print` if you charge customers
-    per-print. Use `total` for personal "what does my farm cost"
-    reporting — it includes idle/standby draw that `print` misses.
+    Read **Cost While Printing** if you charge customers per-print.
+    Read **Cost At The Plug** for "what does my farm cost" reporting —
+    it includes the idle/standby draw the printing figure leaves out.
 
 > Originally based on [Bambuddy](https://github.com/maziggy/bambuddy) documentation.

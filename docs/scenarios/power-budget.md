@@ -22,7 +22,7 @@ Three things at once: no breaker trips on a plate-change round, no printer idlin
 | [Staggered start](../features/staggered-start.md) | Caps how many beds heat at once — the peak. |
 | [Smart plugs → Automation](../features/smart-plugs.md#automation) | **Auto Power Off** after a print and cooldown; **Auto Power On** for the next queued print — the idle draw. |
 | [Per-print energy](../features/smart-plugs.md#per-print-energy-tracking) and [Energy tracking](../features/energy.md) | The plug's meter read at print start and print end; the delta is the print's kWh, costed at the electricity price that was in effect while it was used. |
-| [Stats → Energy](../features/stats.md) | Lifetime and per-printer totals; the `print` / `total` switch. |
+| [Stats → Energy](../features/stats.md) | Both energy figures side by side — while printing and at the plug — for all time or a date range. |
 
 ## :material-format-list-numbered: Step by step
 
@@ -34,9 +34,9 @@ Three things at once: no breaker trips on a plate-change round, no printer idlin
 
 4. **Put a price on a kWh.** **Settings → Printing → Cost Tracking**: your rate per kWh, in the currency you pay in. On a tariff that changes during the day, set **Electricity price source** to **Home Assistant sensor** and BamDude reads the price once an hour. Either way every change of the price is kept with its time, so energy is costed at the price of the hour it was used in — see [Cost Calculation](../features/energy.md#cost-calculation).
 
-5. **Choose what "energy" means.** **Settings → System → Energy display mode**: `print` sums the per-print deltas — *what did the prints cost*; `total` reads the plug's lifetime counter — *what did the printer's socket consume*, idle included. The two diverge by exactly the idle draw you are trying to see.
+5. **Know the two energy figures.** There is nothing to choose: the Statistics page always shows both. **Energy While Printing** sums the per-print deltas — *what did the prints cost*; **Energy At The Plug** reads the plugs' counters — *what did the printers' sockets consume*, idle included. The two diverge by exactly the idle draw you are trying to see.
 
-6. **Read it back.** Every archive card now carries the print's kWh and cost; the order page sums them into *Cost* and, with a price on the order, *Margin*. A printer with a **Wear cost per printing hour** in its settings adds [its wear](../features/stats.md#printer-wear) to both. **Stats → Energy** shows per-printer totals for a date range, so the machine that idles most is the one with the biggest gap between `total` and `print`.
+6. **Read it back.** Every archive card now carries the print's kWh and cost; the order page sums them into *Cost* and, with a price on the order, *Margin*. A printer with a **Wear cost per printing hour** in its settings adds [its wear](../features/stats.md#printer-wear) to both. The Statistics page shows both pairs for a date range; the gap between **Cost At The Plug** and **Cost While Printing** is what the idle hours cost.
 
 ## :material-cogs: What BamDude does on its own after that
 
@@ -54,7 +54,7 @@ Three things at once: no breaker trips on a plate-change round, no printer idlin
 - **Print-hour maintenance intervals run on print time, not on plug time.** Cutting power does not reset anything there.
 - **A plug without a meter** still switches, but leaves the print's kWh empty; the order's *Cost* then carries filament only for those prints.
 - **The archive's kWh is the printer's kWh.** A plug that also feeds the chamber heater or the lights measures them too. Put accessories on their own plug if the per-print figure has to mean *the printer*.
-- **`total` can be smaller than `print` after a reset.** A plug that lost its counter starts from zero; the per-print deltas from before are still on their prints. The date-range clamp keeps the total from going negative; it cannot invent the lost history.
+- **The plug figure can be smaller than the printing figure after a reset.** A plug that lost its counter starts from zero; the per-print deltas from before are still on their prints. The date-range clamp keeps the total from going negative; it cannot invent the lost history.
 
 ## :material-link-variant: Related scenarios
 

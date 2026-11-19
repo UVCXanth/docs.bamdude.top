@@ -162,28 +162,30 @@ From then on:
 
 ---
 
-## :material-toggle-switch: Energy Tracking Mode
+## :material-toggle-switch: Two Energy Figures: Printing and At the Plug
 
-**Settings → System → Energy → Energy Tracking Mode** (`energy_tracking_mode`):
+The Statistics page answers "how much energy" twice, as four tiles. There is no setting that chooses between them — both pairs are always shown, for all time or for the selected date range.
 
-| Mode | What "Energy used" Means on Stats |
-|------|----------------------------------|
-| `print` | Sum of per-archive `energy_kwh` values over the date range. Excludes idle, standby, chamber-only heating. Pure printing cost. |
-| `total` *(default)* | Lifetime plug counter via snapshot range — `last_in_range − baseline_before_range`. Includes idle / standby / chamber heating / firmware-update sessions / anything the printer drew while plugged in. |
+| Tiles | What they count |
+|-------|-----------------|
+| **Energy While Printing** · **Cost While Printing** | Measured between the start and end of each print — what the jobs themselves drew. It is the sum of the per-archive `energy_kwh` and `energy_cost` of the prints in the period, and leaves out everything between prints: idle, standby, heating with no print running. |
+| **Energy At The Plug** · **Cost At The Plug** | Everything the smart plugs counted: printing, idling, warming up, and anything else on the same socket. For all time it is read from the plugs' lifetime counters; for a date range it comes from the hourly snapshots — `last_in_range − baseline_before_range` per plug. |
 
-Pick `print` if you bill customers per job. Pick `total` if you want to know what your printer farm actually costs to keep running.
+The gap between the two pairs is what standing still costs, and that is why both are shown: one figure alone cannot say whether a high bill comes from printing or from printers left on.
+
+Read the printing pair if you bill customers per job. Read the plug pair if you want to know what your printer farm actually costs to keep running.
 
 ---
 
 ## :material-clock-alert: "Warming-Up" Indicator
 
-The `total` mode needs **at least one snapshot before the start of your selected range** to compute a baseline. On a fresh install, immediately after upgrading to a build that ships snapshot support, or right after `Last 7 days` is shifted into a window with no prior snapshot, that baseline doesn't exist yet.
+For a date range, the plug figures need **at least one snapshot from before the start of the range** to measure from. On a fresh install, or for a plug that was added after the range began, that baseline doesn't exist yet; BamDude then measures from the plug's earliest snapshot, so the figure leaves out the beginning of the range.
 
-When this happens, the Stats page shows a yellow warning icon next to **Energy Used** and **Energy Cost**:
+When this happens, the Statistics page shows a yellow warning icon on **Energy At The Plug** and **Cost At The Plug**, with the tooltip:
 
-> :material-alert-outline: *Still warming up — at least one plug doesn't have a snapshot from before the start of your range.*
+> :material-alert-outline: *Energy tracking is still collecting hourly snapshots. Date-range totals will become accurate once at least one snapshot exists before the selected range. Early values may undercount.*
 
-The icon disappears as soon as enough snapshots exist. No configuration needed; the system is just collecting data. Backend flag: `energy_data_warming_up=True` on the stats response.
+The printing pair is not affected — it does not come from snapshots. The icon disappears as soon as enough snapshots exist. No configuration needed; the system is just collecting data. Backend flag: `energy_data_warming_up=True` on the stats response.
 
 ---
 
@@ -249,15 +251,15 @@ For more on the Home Assistant integration architecture see [Smart Plugs → Hom
 
 ## :material-chart-line: Stats-Page Widgets
 
-The Statistics page surfaces energy in three places:
+The Statistics page shows energy as four tiles, for all time or for the selected date range — see [Two Energy Figures](#two-energy-figures-printing-and-at-the-plug):
 
-- **Energy used** (kWh) for the selected date range, respecting `energy_tracking_mode`
-- **Energy cost** in your configured currency
+- **Energy While Printing** and **Cost While Printing** — what the prints themselves drew
+- **Energy At The Plug** and **Cost At The Plug** — everything the plugs counted, idle included
 - **Per-printer breakdown** so you can see which machine is drawing most
 
 When some prints' energy is estimated from the power history, or unknown, the printing figures say how many — see [When a Plug's Counter Stops](#when-a-plugs-counter-stops).
 
-Charts and totals are kept in sync with the `print` vs `total` switch — toggling rebuilds them server-side. See [Statistics](stats.md) for the full widget tour.
+All four are computed by the server. See [Statistics](stats.md) for the full widget tour.
 
 ---
 
@@ -282,5 +284,5 @@ Charts and totals are kept in sync with the `print` vs `total` switch — toggli
 !!! tip "Snapshot baselines need uptime"
     The hourly snapshot loop only runs while BamDude is running. If you stop the container for two days and ask for a 7-day total, the missing 48h shows up as a flat baseline — the warming-up icon will surface this.
 
-!!! tip "Print mode for invoicing, total mode for ROI"
-    Switch to `print` mode when exporting customer invoices — they shouldn't pay for your standby. Switch to `total` mode when calculating whether the farm is paying for itself.
+!!! tip "Printing figures for invoicing, plug figures for ROI"
+    Use **Cost While Printing** when invoicing customers — they shouldn't pay for your standby. Use **Cost At The Plug** when calculating whether the farm is paying for itself.
