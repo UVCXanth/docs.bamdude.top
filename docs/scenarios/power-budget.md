@@ -21,7 +21,7 @@ Three things at once: no breaker trips on a plate-change round, no printer idlin
 |---|---|
 | [Staggered start](../features/staggered-start.md) | Caps how many beds heat at once — the peak. |
 | [Smart plugs → Automation](../features/smart-plugs.md#automation) | **Auto Power Off** after a print and cooldown; **Auto Power On** for the next queued print — the idle draw. |
-| [Per-print energy](../features/smart-plugs.md#per-print-energy-tracking) and [Energy tracking](../features/energy.md) | The plug's meter read at print start and print end; the delta is the print's kWh, and × your rate is its cost. |
+| [Per-print energy](../features/smart-plugs.md#per-print-energy-tracking) and [Energy tracking](../features/energy.md) | The plug's meter read at print start and print end; the delta is the print's kWh, costed at the electricity price that was in effect while it was used. |
 | [Stats → Energy](../features/stats.md) | Lifetime and per-printer totals; the `print` / `total` switch. |
 
 ## :material-format-list-numbered: Step by step
@@ -32,11 +32,11 @@ Three things at once: no breaker trips on a plate-change round, no printer idlin
 
 3. **Cut the idle.** On each plug card: **Auto Power Off** with the cooldown threshold (default **50 °C** bed) and a delay; **Auto Power On** so a queued print can wake the printer. Leave **Keep enabled** on the plug that runs the chamber heater or the room's HVAC — that one must not cycle.
 
-4. **Put a price on a kWh.** **Settings → System → Energy**: your rate per kWh. It is a plain multiplier — enter it in the currency you pay in.
+4. **Put a price on a kWh.** **Settings → Printing → Cost Tracking**: your rate per kWh, in the currency you pay in. On a tariff that changes during the day, set **Electricity price source** to **Home Assistant sensor** and BamDude reads the price once an hour. Either way every change of the price is kept with its time, so energy is costed at the price of the hour it was used in — see [Cost Calculation](../features/energy.md#cost-calculation).
 
 5. **Choose what "energy" means.** **Settings → System → Energy display mode**: `print` sums the per-print deltas — *what did the prints cost*; `total` reads the plug's lifetime counter — *what did the printer's socket consume*, idle included. The two diverge by exactly the idle draw you are trying to see.
 
-6. **Read it back.** Every archive card now carries the print's kWh and cost; the order page sums them into *Cost* and, with a price on the order, *Margin*. **Stats → Energy** shows per-printer totals for a date range, so the machine that idles most is the one with the biggest gap between `total` and `print`.
+6. **Read it back.** Every archive card now carries the print's kWh and cost; the order page sums them into *Cost* and, with a price on the order, *Margin*. A printer with a **Wear cost per printing hour** in its settings adds [its wear](../features/stats.md#printer-wear) to both. **Stats → Energy** shows per-printer totals for a date range, so the machine that idles most is the one with the biggest gap between `total` and `print`.
 
 ## :material-cogs: What BamDude does on its own after that
 

@@ -5,7 +5,7 @@ description: Per-print and lifetime electricity tracking via smart plugs
 
 # Energy Tracking
 
-Track electricity consumed by every print and across the whole lifetime of a printer, then multiply by your kWh rate to get cost. The numbers come straight from a smart plug's energy register — not from estimates.
+Track electricity consumed by every print and across the whole lifetime of a printer, and cost it at the electricity price that was in effect while it was used. The numbers come straight from a smart plug's energy register — not from estimates.
 
 ---
 
@@ -51,7 +51,7 @@ Captured on `PrintArchive`:
 |--------|---------------|---------|
 | `energy_start_kwh` | At print start | Plug's lifetime counter at the moment the print began |
 | `energy_kwh` | At print complete | `(end_counter − energy_start_kwh)`, the kWh this single print consumed |
-| `energy_cost` | At print complete | `energy_kwh × cost_per_kwh` (denominated in your configured currency) |
+| `energy_cost` | At print complete | The print's energy at the electricity price of its own time — see [Cost Calculation](#cost-calculation) (denominated in your configured currency) |
 
 **Restart-resilient.** Because `energy_start_kwh` is persisted to the archive row inside the same transaction that records `started_at`, a backend crash or container restart mid-print does not lose the baseline — the next `on_print_complete` will compute the delta correctly.
 
@@ -126,19 +126,39 @@ The `max(0, …)` clamps to zero when the lifetime counter has been reset (e.g. 
 
 ## :material-cash: Cost Calculation
 
-Cost is a single-rate calculation against the lifetime / per-print delta:
+Energy is costed at the price that was in effect when it was used. BamDude keeps a **history of the electricity price** — every change, with its time — and the price of any moment is the last change at or before it.
 
-```
-cost = energy_kwh × energy_cost_per_kwh
-```
+**A print.** Its cost is worked out step by step along the plug's counter: the reading at the start of the print, the hourly snapshots taken while it ran, and the reading at its end. Each step is costed at the price in effect when that step began. A print that runs through a price change is therefore costed partly at the old price and partly at the new one, not whole at the price of the moment it ended. A print whose energy is [estimated from the power history](#when-a-plugs-counter-stops) is costed at the time-weighted average price of its measured window.
 
-Configure the rate in **Settings → System → Energy**:
+**The plug totals.** *Cost At The Plug* on the Statistics page — for all time and for a date range — is worked out the same way, along each plug's hourly snapshots. Changing the price does not re-cost the past.
+
+**Before the price history existed.** The history starts on the day BamDude was updated to a version that keeps it. Earlier prices were never recorded, so all energy from before that day is costed at the price that stood on the day of the update. Costs of prints that were already recorded are not touched.
+
+Configure the price in **Settings → Printing → Cost Tracking**:
 
 | Setting | Description |
 |---------|-------------|
-| `energy_cost_per_kwh` | Your electricity price per kWh (default `0.15`) |
+| **Electricity price source** (`energy_price_source`) | **Fixed price** (default) — you enter the price yourself. **Home Assistant sensor** — BamDude reads it from a sensor, see below. |
+| **Electricity cost per kWh** (`energy_cost_per_kwh`) | The price now (default `0.15`). With a fixed price, every change you save is added to the history from that moment on. |
 
-The numeric rate is dimensionless — display the cost in whatever currency matches your real tariff. BamDude doesn't convert currencies; it just multiplies.
+The numeric rate is dimensionless — display the cost in whatever currency matches your real tariff. BamDude doesn't convert currencies. A negative price counts as 0.
+
+### Price from a Home Assistant sensor
+
+For a tariff that changes during the day, BamDude can read the price itself. Home Assistant must be connected first (the Home Assistant card in **Settings → Network**).
+
+1. In **Settings → Printing → Cost Tracking**, set **Electricity price source** to **Home Assistant sensor**.
+2. In **Price sensor**, name the entity whose value is the price — for example `sensor.electricity_price`. A `sensor.*`, `input_number.*` or `number.*` entity is accepted.
+3. Press **Read the price from this sensor**. BamDude reads the sensor before it saves: if the sensor cannot be read, nothing is saved and the message says why.
+
+From then on:
+
+- **The sensor is read once an hour**, just before the hourly energy snapshots, so each hour of energy is costed at the price of that hour. A price that changes more often than hourly is sampled, not averaged.
+- **The unit is converted.** A sensor that reports a price per MWh or per Wh (its unit of measurement ends in `/MWh` or `/Wh`) is converted to a price per kWh. Any other unit is taken as per kWh.
+- **A negative price counts as 0.** No print gets a cost below zero.
+- **An unavailable sensor keeps the last price.** If Home Assistant does not answer, or the sensor's value is not a number (`unavailable`, `unknown`), the last price that was read stays in effect until the next successful read. The server log says the price was not read.
+- **The price field is read-only.** It is labelled **Last price read from Home Assistant (per kWh)** and cannot be typed into while the sensor is the source. Switch the source back to **Fixed price** to enter a price by hand.
+- **The push endpoint keeps working.** `POST /api/v1/settings/electricity-price` (below) is still accepted while the sensor is the source; the pushed price takes effect at once and is recorded in the history, and the next hourly read replaces it with the sensor's value.
 
 ---
 
@@ -169,7 +189,9 @@ The icon disappears as soon as enough snapshots exist. No configuration needed; 
 
 ## :material-home-automation: Tibber / Octopus / Dynamic Tariff Integration
 
-If you're on a dynamic electricity tariff (Tibber, Octopus, Nordpool, …), push the live rate into BamDude from Home Assistant — every cost calculation will then use the current rate instead of a static value.
+If you're on a dynamic electricity tariff (Tibber, Octopus, Nordpool, …) and the price is a sensor in Home Assistant, the simplest setup is to let BamDude read it: see [Price from a Home Assistant sensor](#price-from-a-home-assistant-sensor) above. It needs no API key and no automation.
+
+The alternative is to push the rate into BamDude from Home Assistant, as described here — useful when the price needs a template, or when you want it to arrive the moment it changes instead of once an hour. Every pushed price is recorded in the price history with its time, so energy used after the push is costed at the new price and energy used before it keeps the old one.
 
 ### 1. Create an API key
 
@@ -219,7 +241,7 @@ automation:
 | Nordpool | `sensor.nordpool_kwh_*` |
 
 !!! tip "Verify the sensor returns a number"
-    BamDude expects a numeric value for `energy_cost_per_kwh`. If your sensor returns a string with a currency symbol, adjust the template (`{{ states('sensor.x')|float }}`) before pushing.
+    BamDude expects a numeric value of 0 or more for `energy_cost_per_kwh`; a negative number is refused. If your sensor returns a string with a currency symbol, adjust the template (`{{ states('sensor.x')|float }}`) before pushing. The pushed value is taken as a price per kWh — unlike the sensor source, the push does no unit conversion.
 
 For more on the Home Assistant integration architecture see [Smart Plugs → Home Assistant](smart-plugs.md).
 

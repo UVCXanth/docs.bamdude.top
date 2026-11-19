@@ -42,7 +42,7 @@ Every printer shows what is due on it and when, measured in **print hours** rath
 ## :material-cogs: What BamDude does on its own after that
 
 - **The right tasks per model.** The bundled types carry a mechanical class; a printer joins the farm and its card gets the tasks for its class, the moment it is added. A type that does not apply is never offered on that printer.
-- **Hours come from the printer.** Every print adds to the printer's runtime; a task's *hours since* is runtime plus your offset minus the hours at its last reset. The bar on the card fills as the interval is consumed.
+- **Hours come from the printer.** Every print adds to the printer's runtime — only the time BamDude sees it connected and printing: a pause, or a stretch the printer spent off the network, adds nothing; a task's *hours since* is runtime plus your offset minus the hours at its last reset. The bar on the card fills as the interval is consumed.
 - **Due soon at 90 %.** A task turns *due soon* inside the last tenth of its interval, *overdue* past it, and the printer card's maintenance pill picks up the worst task on the machine.
 - **The nudge is an event.** *Maintenance Due* fires through whichever providers subscribe to it — Telegram with its button, ntfy or Pushover at their *plan-ahead* priority — and the daily digest lists it. It is off by default on a new provider; turn it on there.
 - **Who and when is recorded.** A reset from the page records the user; one from Telegram records the chat. Both land in the history with the hours at that moment.

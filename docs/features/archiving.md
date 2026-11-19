@@ -71,7 +71,8 @@ Each archive row carries the file, the parsed metadata, the run state, and full 
     | `started_at`, `completed_at` | Wall-clock bounds of the run (NULL until they happen). |
     | `failure_reason` | Short cause code (e.g. `firmware_error`). |
     | `error_message` | Verbose diagnostic from the dispatcher / scheduler — shown on hover over the badge. |
-    | `energy_start_kwh`, `energy_kwh`, `energy_cost` | Per-print energy from the printer's smart plug. `energy_start_kwh` is captured at print start so the delta survives backend restarts mid-print. |
+    | `energy_start_kwh`, `energy_kwh`, `energy_cost` | Per-print energy from the printer's smart plug. `energy_start_kwh` is captured at print start so the delta survives backend restarts mid-print. `energy_cost` is the energy at the [electricity price of its own time](energy.md#cost-calculation). |
+    | `wear_cost`, `wear_rate` | [Printer wear](stats.md#printer-wear) charged to the print — its measured duration at the printer's hourly rate — and the rate that was applied. Both empty when the printer had no rate or the duration was not measured. |
 
 === "Provenance"
 

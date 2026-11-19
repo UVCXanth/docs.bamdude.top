@@ -150,6 +150,9 @@ BamDude recognises this and says so, naming the previous dongle, instead of leav
 !!! tip "Static IP"
     Reserve the plug's IP in your router. DHCP renewal can flip the IP and break BamDude's link until you re-enter the address.
 
+!!! note "One Tasmota plug per printer"
+    A printer can have one Tasmota plug. Linking a second one is refused — when you add a plug, when you move a plug to another printer, and when you change an existing plug's type to Tasmota. Plugs of the other types can share a printer with it; see [Which plug powers the printer](#which-plug-powers-the-printer).
+
 ### Power control
 
 Once linked, the printer card grows a **plug icon**. Click → toggles power state. Tooltip shows current draw + cumulative kWh.
@@ -241,6 +244,18 @@ Then create a Smart Plug entry pointing at `script.x1c_full_power_on` (HA script
 - :material-checkbox-marked: **Run when on** — fire the script on power-on
 - :material-checkbox-marked: **Show on Printer Card** — surface the toggle directly on the card instead of behind the cog
 
+#### When a linked script runs
+
+A script linked to a printer follows that printer's power. A script with **Auto On** runs when the printer's plug is switched on, one with **Auto Off** when it is switched off — and at print start, like any plug with **Auto On**.
+
+- **Switched by hand.** An explicit on or off of any plug of that printer runs the printer's scripts for that direction. A toggle — the single switch-style button of a Home Assistant entity shown on the printer card — runs none.
+- **Switched by BamDude.** The scripts also run when BamDude switches the plug itself: a scheduled switch (**Daily Schedule**), the delayed or temperature-based switch-off after a print, a switch-off that was pending when BamDude restarted and is carried out after the restart, and a switch-off by [failure detection](obico.md). Here only the plug marked **This plug powers the printer** counts — an accessory switching off is not the printer switching off.
+- **Once per direction within two minutes.** When several plugs feed one printer and all switch off after a print, the scripts run once, not once per plug.
+- **A disabled script is not run.** A script whose **Enabled** switch is off is run by nothing but its own button — on the manual path as well as the automatic one.
+- **A script is never "turned off".** Scripts are one-shot: BamDude only ever runs them. Failure detection's power-off switches the plugs and runs the **Auto Off** scripts; it sends no "turn off" to a script.
+
+An automatic switch-on, and the scripts that follow it, wait while the [crash-start pause](farm-startup.md) is in effect, like every other automatic power-on.
+
 ---
 
 ## :material-api: REST / Webhook setup
@@ -284,6 +299,8 @@ When power / energy live on a separate URL or path:
 | **Energy multiplier** | Unit fix |
 | **Lifetime Energy path** | JSON path to the **cumulative** kWh counter, if the plug reports one |
 | **Lifetime multiplier** | Unit fix for the cumulative counter |
+
+A multiplier is any number above 0, up to 10000 — however small. A plug that counts energy in **watt-seconds** (myStrom, for example) needs about `0.00000028` to arrive at kWh (1 Ws = 1 / 3 600 000 kWh). The same holds for the multipliers of an [MQTT plug](#mqtt-plug-setup).
 
 !!! important "Fill in the Lifetime Energy path if your plug has one"
     The two energy paths are separate because a given endpoint may expose either, both, or neither — and they are **not interchangeable**. Anything that spans time needs a counter that only goes up:
@@ -552,6 +569,12 @@ Smart plugs are auto-resubscribed to MQTT on every BamDude startup via the `subs
 
 The startup-restore code path, the create route, and the update route all funnel through the same helper, so the topic configuration can't drift between create and reconnect.
 
+### A plug whose settings need correcting
+
+A plug stored with settings its type cannot work with — a Tasmota plug without an IP address, a Home Assistant plug without an entity, an MQTT plug without any topic, a REST plug with neither an ON nor an OFF address, a Zigbee plug without a paired device, or a type BamDude does not know — is still listed. Its card, and its row on the printer card, carry the note **This plug's settings need correcting** with what is missing. The other plugs are not affected.
+
+BamDude does not switch or poll such a plug until it is corrected. Open **Edit**, fill in what is missing and save — the note clears.
+
 ---
 
 ## :material-help-circle: Per-type troubleshooting
@@ -572,6 +595,23 @@ The startup-restore code path, the create route, and the update route all funnel
 
 === "Home Assistant"
     **Test button fails**
+
+    The test names the cause instead of a general "failed":
+
+    | The test says | What to do |
+    |---------------|------------|
+    | The address is not accepted | Enter an `http://` or `https://` address of your Home Assistant |
+    | Home Assistant refused the access token | Create a new long-lived token and paste it |
+    | Nothing answered at this address | Check the host, the port and that Home Assistant is running |
+    | Home Assistant did not answer in time | Check the address and the network |
+    | The certificate is not issued by an authority this server trusts | Use a certificate from a trusted authority, or add your own authority to the trust store of the machine BamDude runs on |
+    | The certificate was issued for another name | Enter the host name the certificate was issued for, not an IP address or another name |
+    | The certificate has expired | Renew it |
+    | The secure connection failed | Check that this address and port serve https, or enter the address with `http://` |
+    | The server answered with a redirect | Enter the address Home Assistant itself answers at |
+    | Something answered, but not Home Assistant | Check the address and the port |
+
+    To check from the command line:
 
     1. Verify HA URL is reachable from BamDude: `curl -H "Authorization: Bearer YOUR_TOKEN" $HA_URL/api/states` — should return JSON. If it returns 401, regenerate the long-lived token.
     2. HA URL needs the protocol prefix (`http://` or `https://`) — bare hostnames fail.

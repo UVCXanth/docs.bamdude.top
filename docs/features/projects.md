@@ -69,8 +69,8 @@ The strip above the lines is computed by the server on every read; the browser n
 | **Covered** | Printed kits plus kits allocated from stock, capped separately on every line before the order is added up. This is the bar's numerator and the quantity left to make is derived from it. An overprint of one product cannot cover another product's shortage. |
 | **Can assemble** | The covered printed kits, limited by the purchased parts actually acquired. This does not mean the order was shipped or closed. |
 | **Left to cover** | What is still to be made after prints *and* kits from stock, summed from the deficits of individual lines. |
-| **Print time · Filament · Cost · Defective** | Summed over the order's prints. Time is the measured duration where one was recorded, else the slicer's estimate; filament is summed as it stands, including prints that never finished. |
-| **Margin** | Price minus cost, shown when a price is set. |
+| **Print time · Filament · Cost · Defective** | Summed over the order's prints. Time is the measured duration where one was recorded, else the slicer's estimate; filament is summed as it stands, including prints that never finished. **Cost** names its components: `filament`, `electricity` — each print's energy at the [electricity price of its own time](energy.md#cost-calculation) — and `wear`, the [printer wear](stats.md#printer-wear) charged to the order's prints, shown when any of them carries a figure. |
+| **Margin** | Price minus cost, shown when a price is set. The cost here includes printer wear. |
 | **Other prints** | How many prints belong to the order but to none of its lines. |
 
 Each line expands into a row per printed part:

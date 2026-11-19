@@ -65,7 +65,7 @@ The snapshot table is bounded — old rows are pruned after a configurable reten
 
 A **Records** panel picks out the extremes of the selected range: **Longest Print**, **Heaviest Print**, **Most Expensive**, **Busiest Day** and the current **Success Streak**.
 
-**Most Expensive counts the electricity, not just the filament.** It ranks prints on filament **plus** the power the print actually drew, and shows the split (`filament` / `power`) so the figure can be checked against the print's own page. A long print that ran a printer for ten hours does not lose the podium to a short one on pricier filament while having cost more to run.
+**Most Expensive counts the electricity, not just the filament.** It ranks prints on filament **plus** the power the print actually drew **plus** the [printer wear](#printer-wear) charged to it, and shows the split (`filament` / `power` / `wear`) so the figure can be checked against the print's own page. A long print that ran a printer for ten hours does not lose the podium to a short one on pricier filament while having cost more to run.
 
 !!! info "A print with no smart plug is ranked on its filament alone"
     Its power was never measured, and putting a made-up number on the podium would
@@ -79,8 +79,10 @@ A **Records** panel picks out the extremes of the selected range: **Longest Prin
 | Cost | Formula |
 |---|---|
 | **Per-print filament cost** | Sum of each tracked spool's share (`grams_from_spool × spool.cost / spool.weight`). Any grams **not** covered by an assigned spool are topped up at `default_filament_cost / 1000` per gram, **when a default is set**. So a multi-colour print with only some AMS slots mapped to inventory still reflects the whole print, not just the tracked slots. |
-| **Per-print energy cost** | `energy_kwh × energy_cost_per_kwh`. Zero when no plug capture (`energy_kwh IS NULL`). |
-| **Total** | Filament + energy. |
+| **Per-print energy cost** | The print's energy costed along the plug's counter, each step at the electricity price in effect then — not the whole print at one price. Zero when no plug capture (`energy_kwh IS NULL`). See [Energy → Cost Calculation](energy.md#cost-calculation). |
+| **Cost At The Plug** | What the plugs counted — for all time or for the selected range — costed the same way, along each plug's hourly snapshots. Changing the electricity price does not re-cost the past. |
+| **Per-print wear** | The print's measured duration × the printer's **Wear cost per printing hour**, stamped when the print ends. Empty when the printer has no rate or the duration was not measured. See [Printer wear](#printer-wear). |
+| **Total** | Filament + energy + wear. |
 
 !!! warning "A rate you have not set is no rate"
     With no `default_filament_cost` configured, untracked filament is **not**
@@ -96,6 +98,15 @@ A **Records** panel picks out the extremes of the selected range: **Longest Prin
     not in your inventory.
 
 These feed the per-archive cost line in the archive detail card and the project / print-plan totals.
+
+### Printer wear
+
+A printer can carry an hourly rate for its own wear — nozzles, belts, the machine paying itself off. Set it in the printer's settings (**Edit Printer** → **Wear cost per printing hour**); an empty field or `0` turns it off for that printer.
+
+- **Which prints get a figure.** Every print that ends on a printer with a rate — completed, failed or cancelled — is charged for the time it actually ran: the measured time from its start to its end, at the rate the printer had at that moment.
+- **Which do not.** A print whose duration was not measured gets no figure, rather than a guessed one: a print closed after a restart of BamDude or closed by an operator, and a print BamDude joined when it was already running. A printer without a rate charges nothing.
+- **A changed rate applies to new prints only.** The figure is stored with the print when it ends. Changing or clearing the rate later does not touch prints that have already ended, and prints that ended before a rate was set are not charged afterwards.
+- **Where it shows.** On the archive card, next to the print's other costs (the tooltip names the rate); on this page as the **Printer Wear** tile, shown when the selected period has any wear charged, and as `wear` in the **Most Expensive** split; and in an order's cost in the [Workshop](projects.md#the-figures), as its own `wear` component — so the order's margin counts it too.
 
 ## :material-database-export: Exporting
 
@@ -192,9 +203,10 @@ After ~1 hour of runtime the indicator disappears for any range that starts afte
 
 Cost tiles only show numbers when the underlying inputs are configured.
 
-1. **Settings → System** — set **Currency** (`USD`, `EUR`, `UAH`, etc.) and **`energy_cost_per_kwh`**
+1. **Settings → Printing → Cost Tracking** — set **Currency** (`USD`, `EUR`, `UAH`, etc.) and the electricity price: a fixed **Electricity cost per kWh** (`energy_cost_per_kwh`), or a Home Assistant sensor as the **Electricity price source** — see [Energy → Cost Calculation](energy.md#cost-calculation)
 2. **Settings → Filaments / Spoolman** — set per-spool `cost` + `weight` (or a global `default_filament_cost` per kg)
-3. Stats picks up the rates immediately; new prints store them on the archive at completion time
+3. Optionally, a **Wear cost per printing hour** on each printer — see [Printer wear](#printer-wear)
+4. New prints store their costs on the archive at completion time. A changed electricity price applies to energy used from that moment on; energy used earlier keeps the price of its own time
 
 ### Recalculate Costs
 

@@ -57,6 +57,14 @@ Defaults seed once on first boot. Hidden defaults can be restored later via **Re
 
 Create your own maintenance tasks on the **Maintenance** page, under **Maintenance Types** → **Add Custom Type**.
 
+Deleting a custom type removes it from every printer, together with its maintenance history. The confirmation says so before you delete.
+
+### One item per printer and type
+
+A printer has exactly one maintenance item of each type: one interval, one "last done" and one history. A second item of the same type cannot be created.
+
+A database from an earlier version may hold duplicates — two items of one type on one printer, after which a task could show as due right after it was marked done. The update merges them: the item that was performed last is kept with its own interval and state (when none was ever performed, the oldest one), and the history of the others moves to it.
+
 ### Hiding Default Types
 
 Remove irrelevant default types by clicking the delete icon. Restore all defaults with **Restore Default Tasks**.
@@ -69,6 +77,8 @@ Remove irrelevant default types by clicking the delete icon. Restore all default
 |------|-------------|
 | **Print Hours** | Based on actual print time (e.g., every 100 hours) |
 | **Calendar Days** | Based on wall-clock time (e.g., every 30 days) |
+
+**What counts as a print hour.** The hours counter grows only while BamDude sees the printer connected and printing: it adds the time between two consecutive checks that both find the printer connected and in the printing state. Paused time is not counted — a paused printer does not move. Time the printer spent offline is not counted either: when a printer drops off the network and comes back later with a print running, the gap is not added, and counting resumes from the moment it is seen printing again. The same holds for a printer that was in Maintenance Mode or archived.
 
 ---
 
