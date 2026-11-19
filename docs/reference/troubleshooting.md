@@ -178,6 +178,8 @@ See [Cameras reconnect by themselves](../features/camera.md#cameras-reconnect).
 2. **Plate cleared?** Check if "Clear Plate & Start Next" button is showing
 3. **Scheduled time?** Check if print has a future schedule
 4. **Queue Only mode?** Check for purple "Staged" badge
+5. **Printer switching on?** A row reading *Printer powering on* starts once the printer has connected; see [Smart plug automation](../features/print-queue.md#smart-plug-automation)
+6. **Last print failed?** Jobs set to **Only run if the previous print succeeded** wait; the printer card says so and offers **Acknowledge failure** — see [Only after a successful previous print](../features/print-queue.md#previous-success)
 
 ### A queued print is deferred again and again {#dispatch-stalled}
 

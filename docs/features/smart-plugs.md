@@ -460,7 +460,9 @@ A printer can have several plugs linked to it: its own mains feed plus accessori
 It's **on by default**, so nothing changes for a setup that has one plug per printer. Turn it off on accessories, because only the plug that's marked as the power source:
 
 - **marks the printer offline** when it's switched off. An accessory doing that would blank the printer's state and stop the queue from sending it work, even though the printer is running fine.
-- **gets switched on** to wake the printer for a queued print. Powering up a filter fan would never bring the printer online, and the queue would sit waiting for a connection that can't happen.
+- **is switched on first** when the printer's own queue wakes it for a job. The queue switches one plug — among the printer's enabled plugs with **Auto On**, a power-source plug first, then the lowest id — and the other enabled Auto On plugs follow once the printer has connected. Powering up a filter fan first would never bring the printer online, and the queue would sit waiting for a connection that can't happen.
+
+The [Auto-Queue](auto-queue.md) wakes an offline printer differently: when a job aimed at a model finds every such printer off, it switches on **all** enabled Auto On plugs of the one printer it picks, at once.
 
 Accessory plugs still switch on and off normally, and still report power and energy — they just don't speak for the printer's state.
 
@@ -468,7 +470,7 @@ Accessory plugs still switch on and off normally, and still report power and ene
 
 ### Auto Power On
 
-When a queued print is ready, BamDude turns on the plug that powers the printer, waits for it to boot, then starts the print.
+When a queued print is ready and its printer is off, BamDude turns on the printer's power plug (see [Which plug powers the printer](#which-plug-powers-the-printer)) and goes on with the rest of the queue instead of waiting for this printer. The job shows *Printer powering on* while the printer boots and starts once it has connected; the printer's other enabled Auto On plugs are switched on then. A printer that has not connected within three minutes is left alone for ten minutes before it is switched on again, and so is one whose plug could not be reached or would not switch.
 
 ### Auto Power Off
 
