@@ -169,7 +169,7 @@ The video keeps the camera's resolution. The time a stitch may take grows with t
 **When the video cannot be made.** If the stitch fails or is interrupted (a restart, a restore from a backup), or its result can no longer be attached because the print's video was changed meanwhile, the frames are **kept** so the video can still be made by hand:
 
 - they stay under `timelapse_frames/<printer id>/<session>/` in the data directory, as `layer_00001.jpg`, `layer_00002.jpg`, …, next to a `session.json` that says which print they belong to and why they were kept;
-- they are kept for 24 hours, and at most 2 GB of kept frames in all — the oldest are removed first;
+- they are kept for 24 hours, and at most 2 GB of kept frames in all — the oldest are removed first. The limits are applied the moment frames start being kept and again every hour;
 - they are not part of backups.
 
 Frames are removed once the video is attached. When the print itself failed or was cancelled, its frames are removed and no video is made.
