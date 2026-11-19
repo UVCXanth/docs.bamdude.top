@@ -164,6 +164,18 @@ When an external camera is enabled and the printer publishes per-layer-change MQ
 
 This produces dramatically higher-quality timelapses than fixed-interval capture because each frame corresponds to a clean state of the print (head parked off the part, between layers).
 
+The video keeps the camera's resolution. The time a stitch may take grows with the number of frames, up to an hour.
+
+**When the video cannot be made.** If the stitch fails or is interrupted (a restart, a restore from a backup), or its result can no longer be attached because the print's video was changed meanwhile, the frames are **kept** so the video can still be made by hand:
+
+- they stay under `timelapse_frames/<printer id>/<session>/` in the data directory, as `layer_00001.jpg`, `layer_00002.jpg`, …, next to a `session.json` that says which print they belong to and why they were kept;
+- they are kept for 24 hours, and at most 2 GB of kept frames in all — the oldest are removed first. The limits are applied the moment frames start being kept and again every hour;
+- they are not part of backups.
+
+Frames are removed once the video is attached. When the print itself failed or was cancelled, its frames are removed and no video is made.
+
+**Limits while recording.** When the frames being recorded reach 10 GB, or the disk is down to its reserve (512 MB or 5 % of the volume, whichever is larger), BamDude stops capturing frames for that print and writes a warning to the log. The print is not affected, and the frames already captured are still stitched.
+
 ---
 
 ## :material-rotate-right: Camera rotation

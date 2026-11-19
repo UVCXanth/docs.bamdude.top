@@ -253,6 +253,26 @@ A job belongs to the credential that created it — that browser session, or tha
 
 The finished file is always sent whole — `200` with `Accept-Ranges: none`; a `Range` header is ignored. Jobs live in memory: a restart forgets them, and a result that nobody fetched is removed after an hour.
 
+### Timelapse edits
+
+An edit of an archive's video runs in the background. Starting, reading and cancelling an edit need `archives:update_all`.
+
+| Endpoint | Description |
+|---|---|
+| `POST /archives/{id}/timelapse/process` | Start an edit. Query: `trim_start`, `trim_end` (seconds), `speed` (0.25–4), `save_mode` (`new` — the default, keeps the original — or `replace`), `audio_volume` (0–1), `mute`, and `audio_name` when music is sent. **The music is the request body itself** (`Content-Type: application/octet-stream`), 100 MB at most; there is no multipart form. Answers `202` with the job. |
+| `GET /archives/{id}/timelapse/edit-jobs` | The caller's own edits of this archive. |
+| `GET /archives/{id}/timelapse/edit-jobs/{job_id}` | One edit: `phase`, `progress` (0–1), `error`, `save_mode`, `result`. |
+| `DELETE /archives/{id}/timelapse/edit-jobs/{job_id}` | Ask the edit to stop. It reads `cancelled` only once its encoder has ended, and a cancel that is accepted saves nothing. Once the result is being saved the answer is `409 cancel_too_late`. |
+| `GET /archives/{id}/timelapse/variants` | The videos saved beside the original with `save_mode=new`. |
+| `DELETE /archives/{id}/timelapse/variants/{asset}` | Remove one of them (the right to delete the archive). |
+
+`phase` is one of `queued`, `encoding`, `publishing`, `cancelling`, `done`, `failed`, `cancelled`. `progress` is `1` only in `done`, that is, after the result was saved. A failed edit carries an `error` code: `source_changed` (the archive's video was replaced or removed meanwhile — nothing was saved), `target_gone`, `authority_lost`, `interrupted` (a restore or a restart), `encode_failed`, `encode_timeout`, `encode_stalled`, `output_invalid`, `process_unreaped`, `publish_failed`, `cleanup_failed`.
+
+Refusals at the start: `415 legacy_request` (a multipart or URL-encoded form — the request of before), `409 edit_in_progress` (this video is already being edited), `409 source_changed` (the video changed while the edit was being started), `429 edits_busy`, `400 edit_invalid` / `audio_invalid`, `413 audio_too_large`, `422 video_unreadable`, `503 restoring` / `ffmpeg_missing`. An edit belongs to the credential that created it; another caller's edit and one that does not exist are the same `404`. Edits live in memory: a restart forgets them and removes what they left on disk.
+
+!!! warning "Changed request"
+    `POST /archives/{id}/timelapse/process` used to take a multipart form and answer when ffmpeg had finished. It now takes the query parameters above, answers `202` at once, and its result is read from the job. A form is refused with `415 legacy_request` — it is never read as the new request.
+
 ## :material-bell-ring: Webhooks and realtime events
 
 BamDude does **not** expose outbound webhooks for application events. Use a [notification provider](../features/notifications.md) (Telegram, Discord, ntfy, Pushover, Email, Home Assistant) when you need a one-way push.
