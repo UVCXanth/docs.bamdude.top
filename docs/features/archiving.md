@@ -503,7 +503,7 @@ Saving does not wait in the browser. The window shows what the server is doing �
 - One video is edited by one edit at a time; a second **Save** for the same video is refused until the first ends. The server encodes one video at a time, so an edit may wait for its turn.
 - If the archive's video is replaced or removed while an edit is running, the edit's result is **not** saved, and the window says so. Nothing is overwritten by a result that arrives late.
 - An edit stops, and saves nothing, if your right to change archives is removed or your session ends while it runs, and when a restore from a backup starts.
-- A cancelled edit reads as cancelled only once the encoder has really stopped.
+- A cancelled edit reads as cancelled only once the encoder has really stopped. If the encoder could not be stopped (the edit ends with `process_unreaped`), no other video is encoded — no edit and no layer timelapse — until that process has ended.
 - The edited video keeps the resolution of the original.
 - A video saved with **Save as new** is listed under **Download print videos**, marked **Saved from the editor, beside the original**. It can be downloaded there and, with the right to delete archives, removed with the bin button beside it. It is included in backups like the attached video.
 
