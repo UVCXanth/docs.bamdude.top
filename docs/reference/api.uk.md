@@ -259,19 +259,19 @@ Endpoint-и за stream-токен-шлюзом (щоб його отримат�
 
 | Endpoint | Опис |
 |---|---|
-| `POST /archives/{id}/timelapse/process` | Розпочати редагування. Query: `trim_start`, `trim_end` (секунди), `speed` (0.25–4), `save_mode` (`replace` або `new`), `audio_volume` (0–1), `mute` і `audio_name`, коли надсилається музика. **Музика — це саме тіло запиту** (`Content-Type: application/octet-stream`), щонайбільше 100 МБ; multipart-форми немає. Відповідає `202` із завданням. |
+| `POST /archives/{id}/timelapse/process` | Розпочати редагування. Query: `trim_start`, `trim_end` (секунди), `speed` (0.25–4), `save_mode` (`new` — типове, зберігає оригінал — або `replace`), `audio_volume` (0–1), `mute` і `audio_name`, коли надсилається музика. **Музика — це саме тіло запиту** (`Content-Type: application/octet-stream`), щонайбільше 100 МБ; multipart-форми немає. Відповідає `202` із завданням. |
 | `GET /archives/{id}/timelapse/edit-jobs` | Власні редагування цього архіву. |
 | `GET /archives/{id}/timelapse/edit-jobs/{job_id}` | Одне редагування: `phase`, `progress` (0–1), `error`, `save_mode`, `result`. |
-| `DELETE /archives/{id}/timelapse/edit-jobs/{job_id}` | Попросити редагування зупинитися. Воно має `cancelled` лише після того, як кодувальник завершився. |
+| `DELETE /archives/{id}/timelapse/edit-jobs/{job_id}` | Попросити редагування зупинитися. Воно має `cancelled` лише після того, як кодувальник завершився, і прийняте скасування нічого не зберігає. Коли результат уже зберігається, відповідь — `409 cancel_too_late`. |
 | `GET /archives/{id}/timelapse/variants` | Відео, збережені поряд з оригіналом через `save_mode=new`. |
 | `DELETE /archives/{id}/timelapse/variants/{asset}` | Прибрати одне з них (право видаляти архів). |
 
 `phase` — одне з `queued`, `encoding`, `publishing`, `cancelling`, `done`, `failed`, `cancelled`. `progress` дорівнює `1` лише в `done`, тобто після збереження результату. Невдале редагування має код `error`: `source_changed` (відео архіву тим часом замінили або прибрали — нічого не збережено), `target_gone`, `authority_lost`, `interrupted` (відновлення або перезапуск), `encode_failed`, `encode_timeout`, `encode_stalled`, `output_invalid`, `process_unreaped`, `publish_failed`, `cleanup_failed`.
 
-Відмови на старті: `409 edit_in_progress` (це відео вже редагують), `429 edits_busy`, `400 edit_invalid` / `audio_invalid`, `413 audio_too_large`, `422 video_unreadable`, `503 restoring` / `ffmpeg_missing`. Редагування належить обліковим даним, які його створили; чуже редагування й неіснуюче — це той самий `404`. Редагування живуть у пам'яті: перезапуск їх забуває і прибирає залишене ними на диску.
+Відмови на старті: `415 legacy_request` (multipart- або URL-encoded-форма — запит старого зразка), `409 edit_in_progress` (це відео вже редагують), `409 source_changed` (відео змінилося, поки запускалося редагування), `429 edits_busy`, `400 edit_invalid` / `audio_invalid`, `413 audio_too_large`, `422 video_unreadable`, `503 restoring` / `ffmpeg_missing`. Редагування належить обліковим даним, які його створили; чуже редагування й неіснуюче — це той самий `404`. Редагування живуть у пам'яті: перезапуск їх забуває і прибирає залишене ними на диску.
 
 !!! warning "Змінений запит"
-    `POST /archives/{id}/timelapse/process` раніше приймав multipart-форму й відповідав, коли ffmpeg завершувався. Тепер він приймає наведені вище query-параметри, одразу відповідає `202`, а результат читається із завдання.
+    `POST /archives/{id}/timelapse/process` раніше приймав multipart-форму й відповідав, коли ffmpeg завершувався. Тепер він приймає наведені вище query-параметри, одразу відповідає `202`, а результат читається із завдання. Форма відхиляється з `415 legacy_request` — як новий запит вона не читається ніколи.
 
 ## :material-bell-ring: Webhook-и та події в реальному часі
 
