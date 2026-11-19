@@ -227,7 +227,7 @@ nano .env
 | `TRUSTED_PROXY_IPS` | порожньо | Розділені комою IP реверс-проксі, чий `X-Forwarded-For` довіряємо (резолвінг справа наліво). Потрібно за nginx для коректного per-IP rate limit. |
 | `AUTH_REFRESH_COOKIE_SECURE` | не задано (автовизначення) | Примусово виставити полярність `Secure` на cookie refresh-токена. Автовизначення зі схеми запиту -- правильний дефолт; ставте `true`, щоб примусово увімкнути, `false` -- щоб вимкнути (тільки для LAN HTTP dev). |
 | `MFA_ENCRYPTION_KEY` | не задано | URL-safe base64 Fernet-ключ. Якщо задано, TOTP-секрети та OIDC client secrets шифруються at-rest. Plaintext fallback працює без нього, але логує попередження при старті. |
-| `APP_URL` | `http://localhost:5173` | Публічний базовий URL BamDude. Використовується для абсолютних посилань у password-reset / MFA-recovery листах, OIDC callback URL і Obico cached-frame URL, який ML-API Obico забирає назад. Налаштування `external_url` під Settings → System перебиває цю змінну, якщо задане. |
+| `APP_URL` | `http://localhost:5173` | Публічний базовий URL BamDude. Використовується для абсолютних посилань у password-reset / MFA-recovery листах, OIDC callback URL і Obico cached-frame URL, який ML-API Obico забирає назад. Налаштування **Зовнішній URL** (`external_url`) у «Налаштування → Мережа» перебиває цю змінну, якщо задане. |
 
 #### Інтеграції (опціонально)
 

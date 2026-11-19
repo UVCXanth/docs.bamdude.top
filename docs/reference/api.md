@@ -47,7 +47,7 @@ BamDude supports two authentication mechanisms. Both enforce the same permission
 
 === "API key (recommended for scripts)"
 
-    Generate keys in **Settings → System → API Keys**. They look like `bd_<random_token>` and never auto-expire — revoke them per-key when no longer needed.
+    Generate keys in **Settings → API Keys**. They look like `bd_<random_token>` and never auto-expire — revoke them per-key when no longer needed.
 
     Send via either header:
 

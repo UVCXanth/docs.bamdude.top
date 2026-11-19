@@ -218,9 +218,10 @@ The connection to Home Assistant is set up once per BamDude install, in its own 
 **Settings → Smart Plugs → Add → Home Assistant**. While Home Assistant is not connected, the dialog says *Home Assistant is not configured. Set it up in Settings → Network → Home Assistant* and the entity list is disabled. Once it is connected, the **Select Entity** list loads every `switch.*` / `light.*` / `input_boolean.*` / `script.*` entity exposed by HA, without the entities another plug already uses.
 
 - Pick the entity that controls the plug (`switch.x1c_smart_plug` etc.).
-- For **separate energy sensor entities** (Tapo P110M, IKEA Tradfri, Shelly Plus Plug — they expose power/energy as `sensor.*` entities, not on the switch), the form has secondary dropdowns for the matching sensor:
-    - **Power sensor** — `sensor.x1c_smart_plug_current_consumption`
-    - **Energy sensor** — `sensor.x1c_smart_plug_total_consumption`
+- For **separate energy sensor entities** (Tapo P110M, IKEA Tradfri, Shelly Plus Plug — they expose power/energy as `sensor.*` entities, not on the switch), the dialog has an **Energy Monitoring (Optional)** block with three searchable sensor lists:
+    - **Power Sensor (W)** — current draw, e.g. `sensor.x1c_smart_plug_current_consumption`
+    - **Energy Today (kWh)** — the day's figure, if the device has one
+    - **Total Energy (kWh)** — the cumulative counter, e.g. `sensor.x1c_smart_plug_total_consumption`. Per-print energy and the date-range figures need this one
 
 ### HA scripts (multi-device control)
 
@@ -629,7 +630,7 @@ BamDude does not switch or poll such a plug until it is corrected. Open **Edit**
 
     **Energy values stuck at zero**
 
-    The selected switch/light entity probably doesn't carry energy attributes. Pick the matching `sensor.*_total_consumption` in the **Energy sensor** dropdown — most modern integrations expose energy as a separate sensor entity.
+    The selected switch/light entity probably doesn't carry energy attributes. Pick the matching `sensor.*_total_consumption` in the **Total Energy (kWh)** list — most modern integrations expose energy as a separate sensor entity.
 
 === "REST / Webhook"
     **ON works, status check fails**

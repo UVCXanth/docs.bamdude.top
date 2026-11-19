@@ -274,7 +274,7 @@ If the spool has **no stored K-profile** for that specific printer + nozzle comb
 
 - The slot's live `cali_idx` (whatever profile was already loaded — manually picked from the printer screen, or carried over from the previous spool in the same slot) is re-issued to the AMS so it sticks.
 - If the slot has no calibration loaded at all (`cali_idx < 0`), no command is sent — the firmware default behaviour stands.
-- A diagnostic log line records `No stored K-profile for spool … — preserved live cali_idx=N` so the choice is observable in Settings → System → Diagnostics.
+- A diagnostic log line records `No stored K-profile for spool … — preserved live cali_idx=N` so the choice is observable in the log: **Information → Application Logs**.
 
 Why this matters: on some firmware revisions a re-tap with nothing re-issued lets the slot fall back to calibration index 0 without a word, and the first sign is a quality drop mid-print. Re-issuing the live index changes nothing for a slot that already holds your manually-picked calibration, and corrects the rare slot that would otherwise regress.
 
@@ -286,7 +286,7 @@ Why this matters: on some firmware revisions a re-tap with nothing re-issued let
 
 - Verify the printer is online and BamDude shows a green status dot.
 - Make sure the printer isn't mid-print or actively running its own calibration — MQTT commands can be queued behind the active operation.
-- Check the printer's MQTT logs (Settings → System → Diagnostics) — fetch is a regular MQTT command and surfaces the same way as any other.
+- Check the log (**Information → Application Logs**) — fetch is a regular MQTT command and surfaces the same way as any other.
 
 **Push to Printer fails**
 

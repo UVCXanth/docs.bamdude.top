@@ -125,7 +125,7 @@ volumes:
 | `TRUSTED_PROXY_IPS` | empty | Comma-separated reverse-proxy IPs trusted for `X-Forwarded-For` (set this when fronting BamDude with nginx / Caddy / Traefik) |
 | `AUTH_REFRESH_COOKIE_SECURE` | unset (auto) | Force the refresh-cookie `Secure` flag. Auto-detect from request scheme by default. |
 | `MFA_ENCRYPTION_KEY` | unset | URL-safe base64 Fernet key for at-rest encryption of TOTP / OIDC secrets. |
-| `APP_URL` | `http://localhost:5173` | Public-facing base URL — used in password-reset / MFA emails, OIDC callbacks, and the Obico cached-frame URL. The `external_url` setting in Settings → System overrides this. |
+| `APP_URL` | `http://localhost:5173` | Public-facing base URL — used in password-reset / MFA emails, OIDC callbacks, and the Obico cached-frame URL. The **External URL** setting (`external_url`) in Settings → Network overrides this. |
 | `PUID` / `PGID` | `1000` / `1000` | UID / GID the container runs as. Match the owner of your mounted volumes to avoid permission errors. |
 | `VIRTUAL_PRINTER_PASV_ADDRESS` | unset | Override the FTP-PASV IP advertised by the virtual printer. Required in **bridge mode** (set to the Docker host's LAN IP); leave unset in host-mode. |
 | `VIRTUAL_PRINTER_ADVERTISE_ADDRESS` | unset | The address slicers reach BamDude on, sent as the upload destination by a virtual printer bound to a real printer. Needed in **bridge mode** (the Docker host's LAN IP); leave unset in host-mode. |

@@ -580,7 +580,7 @@ Digest, який не вдалося надіслати, зберігає сво
 
 Плейсхолдер `{finish_photo_url}` кладе camera-snapshot готової плити в сповіщення про завершення / провал. Потребує доступної external URL:
 
-1. **Settings** → **System** → **External URL** — постав адресу, до якої отримувачі мають доступ (напр. `https://bamdude.example.com` чи `http://192.168.1.100:8000`)
+1. **Налаштування** → **Мережа** → **Зовнішній URL** — постав адресу, до якої отримувачі мають доступ (напр. `https://bamdude.example.com` чи `http://192.168.1.100:8000`)
 2. Налаштування auto-detect-иться з браузера, коли вперше відкриваєш System settings
 3. Відредагуй шаблон і додай `{finish_photo_url}` куди хочеш фото
 
@@ -685,7 +685,7 @@ Toggle не видаляє digest-и-в-роботі — події, що впа
 ### Вимоги
 
 - Authentication увімкнена (вона завжди увімкнена)
-- SMTP сконфігурований у **Settings** → **System** → **Email**
+- SMTP налаштовано в **Налаштування** → **Автентифікація** → **Email автентифікація** (картка **Конфігурація SMTP**)
 - **Settings** → **Notifications** → **User Notifications** перемкнуто on
 - У користувача є email на акаунті
 - Користувач має право `notifications:user_email` (за замовчуванням у **Administrators** + **Operators** — див. [Authentication](authentication.uk.md))

@@ -171,7 +171,7 @@ This lands in both the bundle you download and the pack attached to a [bug repor
 
 The bundle requires **debug logging to be currently enabled** — the endpoint refuses to generate one otherwise (`400 Debug logging must be enabled before generating a support bundle`). Workflow:
 
-1. Settings → System → flip DEBUG logging on.
+1. On the **Information** page, under **Support & Troubleshooting**, turn **Debug Logging** on.
 2. Reproduce the issue.
 3. Generate the bundle.
 4. Flip DEBUG logging back off (it stays on otherwise — the state is persisted in the `Settings` table and re-applied on restart).
@@ -222,7 +222,7 @@ The check response carries `is_prerelease`, `is_docker`, and `latest_version` so
 - Runs `git fetch origin --tags --prune --force` followed by `git reset --hard refs/tags/<ref>`. This works for **any tag regardless of branch** — beta tags live on `dev`, not `main`.
 - Installs Python deps (`pip install -r requirements.txt`) and rebuilds the frontend bundle (`npm install && npm run build`) when npm is available.
 
-The endpoint requires `settings:update`. Trigger from **Settings → System → Install Update** when an update is shown as available.
+The endpoint requires `settings:update`. Trigger from **Settings → General → Updates → Install Update** when an update is shown as available.
 
 ### Docker installs
 

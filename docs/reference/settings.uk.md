@@ -1,6 +1,6 @@
 ---
 title: Reference налаштувань
-description: Кожен ключ під Settings → System / Print / Archive / Inventory / Network / Integrations
+description: Кожен ключ налаштувань — загальні, друк, архів, інвентар, мережа та інтеграції
 ---
 
 # Reference налаштувань

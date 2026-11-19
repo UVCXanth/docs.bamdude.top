@@ -35,7 +35,7 @@ Hover any bar to see the breakdown for that day.
 
 ## :material-printer-3d-nozzle: Per-printer breakdown
 
-A table at the bottom rolls every printer's contribution: prints, filament, time, energy, cost. Click a row to drill into the archive list pre-filtered to that printer.
+**Prints by Printer** is a bar chart with one bar per printer and a switch for what the bar measures: the number of prints, the filament weight or the print hours. Energy and cost are not broken down per printer — the energy tiles are farm-wide figures.
 
 **Defects by printer** — printed, defective and the rate per machine over the selected timeframe, worst rate first; completed prints only.
 
@@ -59,7 +59,7 @@ If a plug isn't bound, or the plug is offline at one of the two boundaries, `ene
 
 Independently of the prints, BamDude takes an **hourly snapshot** of every plug's cumulative kWh into `smart_plug_energy_snapshots`. They are what **Energy At The Plug** is read from for a date range: per plug `max(0, last_in_range - baseline)`, summed across plugs. They do not fill in a print whose own capture is missing.
 
-The snapshot table is bounded — old rows are pruned after a configurable retention window so it doesn't grow forever.
+Snapshots are kept: there is no retention setting for them and nothing prunes them, so a date range of any age can still be answered. The table grows by one row per plug per hour, plus one at each print start.
 
 ## :material-trophy: Records
 

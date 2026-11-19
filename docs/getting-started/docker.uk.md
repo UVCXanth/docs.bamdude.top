@@ -125,7 +125,7 @@ volumes:
 | `TRUSTED_PROXY_IPS` | порожньо | Розділені комою IP реверс-проксі, що довіряються для `X-Forwarded-For` (встановлюйте, коли BamDude стоїть за nginx / Caddy / Traefik) |
 | `AUTH_REFRESH_COOKIE_SECURE` | не задано (auto) | Примусово встановити прапорець `Secure` для refresh-cookie. За замовчуванням -- автовизначення зі схеми запиту. |
 | `MFA_ENCRYPTION_KEY` | не задано | URL-safe base64 Fernet-ключ для at-rest шифрування TOTP / OIDC секретів. |
-| `APP_URL` | `http://localhost:5173` | Публічний базовий URL — використовується в password-reset / MFA листах, OIDC callback-ах і Obico cached-frame URL. Налаштування `external_url` в Settings → System перебиває цю змінну. |
+| `APP_URL` | `http://localhost:5173` | Публічний базовий URL — використовується в password-reset / MFA листах, OIDC callback-ах і Obico cached-frame URL. Налаштування **Зовнішній URL** (`external_url`) у «Налаштування → Мережа» перебиває цю змінну. |
 | `JWT_SECRET_KEY` | автогенерація, зберігається | Не змінюйте на запущеній інсталяції -- це анулює всі видані токени. |
 | `PUID` / `PGID` | `1000` / `1000` | UID / GID, від якого працює контейнер. Виставляй у відповідність власника mounted volumes, щоб уникнути permission-помилок. |
 | `VIRTUAL_PRINTER_PASV_ADDRESS` | не задано | Перевизначити FTP-PASV IP, який анонсує віртуальний принтер. Обов'язково в **bridge mode** (LAN-IP Docker-хоста); у host-mode лиши порожнім. |

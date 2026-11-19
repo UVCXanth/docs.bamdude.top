@@ -343,7 +343,7 @@ Some migrations are slow whatever the backend, because the bottleneck is opening
 
 ## :material-heart-pulse: Checking that it is healthy
 
-**System → Database health** answers «is this database well, and if not, which part» on either backend. Note the page: it is the top-level **System** entry in the sidebar, not a Settings tab.
+**System → Database health** answers «is this database well, and if not, which part» on either backend. Note the page: it is the top-level **Information** entry in the sidebar, not a Settings tab.
 
 | What it shows | What to look at |
 |---|---|

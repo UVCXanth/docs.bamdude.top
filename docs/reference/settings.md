@@ -1,6 +1,6 @@
 ---
 title: Settings reference
-description: Every key under Settings → System / Print / Archive / Inventory / Network / Integrations
+description: Every settings key — general, printing, archive, inventory, network and integrations
 ---
 
 # Settings reference

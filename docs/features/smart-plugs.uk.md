@@ -195,7 +195,7 @@ curl "http://PLUG_IP/cm?cmnd=Status%2010"
 !!! tip "Задано змінними середовища"
     Якщо в середовищі BamDude задано `HA_URL` і `HA_TOKEN`, підключення вмикається автоматично, а обидва поля доступні лише для читання й позначені *(Керується середовищем)* — вручну нічого налаштовувати не треба.
 
-Далі — **Settings → Smart Plugs → Add → Home Assistant**. Поки Home Assistant не підключено, діалог показує *Home Assistant не налаштовано. Налаштуйте в Налаштування → Мережа → Home Assistant*, а список сутностей вимкнений. Після підключення список **Виберіть сутність** містить кожну сутність `switch.*` / `light.*` / `input_boolean.*` / `script.*` з HA, крім тих, які вже зайняла інша розетка. Окремі сенсорні сутності (Tapo P110M, IKEA Tradfri, Shelly Plus Plug) маємо dropdown-и **Power sensor** + **Energy sensor**.
+Далі — **Settings → Smart Plugs → Add → Home Assistant**. Поки Home Assistant не підключено, діалог показує *Home Assistant не налаштовано. Налаштуйте в Налаштування → Мережа → Home Assistant*, а список сутностей вимкнений. Після підключення список **Виберіть сутність** містить кожну сутність `switch.*` / `light.*` / `input_boolean.*` / `script.*` з HA, крім тих, які вже зайняла інша розетка. Для пристроїв, що віддають потужність і енергію окремими сутностями `sensor.*` (Tapo P110M, IKEA Tradfri, Shelly Plus Plug), у діалозі є блок **Моніторинг енергії (необов'язково)** з трьома списками сенсорів із пошуком: **Датчик потужності (Вт)** — поточне споживання; **Енергія сьогодні (кВт·год)** — денна цифра, якщо пристрій її має; **Загальна енергія (кВт·год)** — накопичувальний лічильник, саме він потрібен для енергії на друк і цифр за діапазон дат.
 
 ### HA scripts (multi-device)
 
@@ -408,7 +408,7 @@ BamDude юзає broker із **Settings → MQTT**. MQTT-розетки діля
 
     - Перевірка з командного рядка → `curl -H "Authorization: Bearer ..." $HA_URL/api/states` має дати JSON. 401 → перегенеруй token. Timeout → reverse-proxy strip-ає `Authorization`.
     - Dropdown порожній → плагін exposeить як `binary_sensor.*` (read-only). Завернути у `input_boolean.*` template.
-    - Energy нулі → вибрати окремий `sensor.*_total_consumption` у dropdown Energy sensor.
+    - Energy нулі → вибрати окремий `sensor.*_total_consumption` у списку **Загальна енергія (кВт·год)**.
 
 === "REST"
     - ON works, status fails → **Status path** drill-у JSON, або **ON value** не точний (глянь curl-ом, що API повертає).

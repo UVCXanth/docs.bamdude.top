@@ -41,8 +41,8 @@ The database snapshot does not freeze the accompanying directories. For a comple
 
 ## :material-download: Manual Backup
 
-1. **Settings → System → Backup & Restore**
-2. Click **Create Backup**
+1. Open **Settings → Backup** and find the **Local Backup** card
+2. Click **Download**
 3. Browser downloads `bamdude-backup-YYYYMMDD-HHMMSS.zip`
 
 The ZIP is streamed from a temp file rather than buffered in memory, so multi-gigabyte backups don't OOM the process. The temp file is deleted automatically once the response finishes.
@@ -53,7 +53,7 @@ API: `GET /api/v1/settings/backup` (requires `settings:backup`).
 
 ## :material-clock-outline: Scheduled Local Backups
 
-Set under **Settings → System → Local Backup Schedule**. The scheduler ticks once per minute and fires due jobs into the same ZIP builder the manual button uses, then prunes older backups beyond the retention limit.
+Set under **Settings → Backup → Scheduled Local Backups**. The scheduler ticks once per minute and fires due jobs into the same ZIP builder the manual button uses, then prunes older backups beyond the retention limit.
 
 | Setting | Default | Notes |
 |---------|---------|-------|
@@ -96,7 +96,7 @@ In Docker the failure is quieter: a host path that was never bind-mounted is sti
 
 ## :material-source-branch: Git Backup (GitHub / GitLab / Gitea / Forgejo)
 
-Distinct from the ZIP flow. **Settings → Backup & Restore → Git Backup** pushes selected backup categories to a GitHub, GitLab, Gitea or Forgejo repository — useful for off-site profile sync, multi-host farm coordination, and PR-based change history of your printer settings.
+Distinct from the ZIP flow. **Settings → Backup → Git Backup** pushes selected backup categories to a GitHub, GitLab, Gitea or Forgejo repository — useful for off-site profile sync, multi-host farm coordination, and PR-based change history of your printer settings.
 
 !!! warning "Approve existing schedules after upgrading"
     Git backups can contain integration credentials and private farm data. Use a **private repository**. After upgrading, an active administrator with Git backup permission must explicitly save each existing configuration before exports resume. A successful connection test alone does not approve it.
@@ -129,7 +129,7 @@ Distinct from the ZIP flow. **Settings → Backup & Restore → Git Backup** pus
         - Choose your expiration (`No expiration` is recommended for unattended scheduled backups).
         - Under **Select scopes**, check `repo` (required for repository access and commits).
     3. **Configure in BamDude**:
-        - **Settings** → **Backup & Restore** → Git Backup.
+        - **Settings** → **Backup** → Git Backup.
         - Provider: `github`.
         - Repository URL: e.g. `https://github.com/username/bamdude-backup`.
         - Enter the PAT.
@@ -265,7 +265,7 @@ Push frequency, content checkboxes, and credentials can all be edited live witho
 ## :material-upload: Restoring a Backup ZIP
 
 1. Keep a backup of the current installation if you may need to return to it. Use the same or a newer BamDude version than the one that created the backup.
-2. While BamDude is running, open **Settings → System → Restore** and upload the ZIP. Placing a ZIP in the data directory does not start a restore automatically.
+2. While BamDude is running, open **Settings → Backup**, press **Restore** in the **Restore Backup** row of the **Local Backup** card and upload the ZIP. Placing a ZIP in the data directory does not start a restore automatically.
 3. BamDude checks ZIP paths, CRC, the manifest (when present), the application database and any included Zigbee database before stopping background services. Unsafe entries, corrupt or missing files, missing application tables and unknown migration versions are rejected before changing live data.
 4. Restore prepares and verifies all incoming files on their destination filesystems. It retains the old contents, replaces the files, then replaces the database. Directory roots and Docker mount points stay in place. Pending migrations run after the replacement; recorded migrations are not replayed.
 5. **Restart BamDude after restore**, then verify printers, archive search, File Manager files and sign-in. If restore failed after services were paused, restart before returning to normal work as well.
@@ -361,7 +361,7 @@ DB is corrupted, deleted, or otherwise unrecoverable:
 1. Stop BamDude.
 2. Remove the corrupted `bamdude.db` (or drop the PostgreSQL database).
 3. Start BamDude — it creates a fresh empty DB on first boot.
-4. **Settings → System → Restore** → upload your latest backup ZIP.
+4. **Settings → Backup → Restore Backup** → upload your latest backup ZIP.
 5. BamDude replaces the empty DB with the restored one and runs pending migrations.
 
 ### New installation
@@ -371,7 +371,7 @@ Moving to a new server / new Docker host:
 1. Install BamDude on the new host (Docker compose, bare metal, whichever).
 2. Boot once so the data directory is created and the setup-gate is sitting on `setup_required`.
 3. Copy your backup ZIP onto the new host.
-4. **Settings → System → Restore** → upload the ZIP — note the same setup-gate whitelists `/restore`-style flow when no admin exists yet, but in practice the easiest path is to complete setup with a placeholder admin first, then restore (which replaces the placeholder with your real users).
+4. **Settings → Backup → Restore Backup** → upload the ZIP — note the same setup-gate whitelists `/restore`-style flow when no admin exists yet, but in practice the easiest path is to complete setup with a placeholder admin first, then restore (which replaces the placeholder with your real users).
 
 ### Data migration
 

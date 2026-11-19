@@ -67,7 +67,7 @@ APP_URL=https://bamdude.example.com
 # TRUSTED_FRAME_ORIGINS=http://homeassistant.local:8123
 ```
 
-The `Settings → System → External URL` field in the UI is the same value as `APP_URL` env. Whichever is set takes precedence in the order: DB setting > env var > `http://localhost:5173` fallback.
+The `Settings → Network → External URL` field in the UI is the same value as `APP_URL` env. Whichever is set takes precedence in the order: DB setting > env var > `http://localhost:5173` fallback.
 
 ---
 
@@ -229,7 +229,7 @@ You forgot the `Upgrade` / `Connection: upgrade` headers in nginx. The UI loads 
 
 ### "Mixed content blocked" in browser console
 
-A relative URL somewhere is resolving to `http://`. Most often `Settings → System → External URL` is set to `http://...` while you're accessing over HTTPS. Set it to the `https://` URL or empty (BamDude falls back to `APP_URL` env var).
+A relative URL somewhere is resolving to `http://`. Most often `Settings → Network → External URL` is set to `http://...` while you're accessing over HTTPS. Set it to the `https://` URL or empty (BamDude falls back to `APP_URL` env var).
 
 ### LAN HTTP stopped working after I visited HTTPS once
 
@@ -256,7 +256,7 @@ The refresh cookie made it back to nginx but not to BamDude. Either:
 Before declaring victory:
 
 - [ ] `TRUSTED_PROXY_IPS` set to the IP nginx uses to reach BamDude.
-- [ ] `APP_URL` (env) or **External URL** (Settings → System) points at the public HTTPS URL.
+- [ ] `APP_URL` (env) or **External URL** (Settings → Network) points at the public HTTPS URL.
 - [ ] `proxy_set_header X-Forwarded-Proto $scheme;` present.
 - [ ] `proxy_http_version 1.1;` + `Upgrade` + `Connection: upgrade` present.
 - [ ] `proxy_read_timeout` bumped (≥600 s; 3600 s for camera streams).

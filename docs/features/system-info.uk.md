@@ -140,7 +140,7 @@ Multi-line entry-ї (особливо stack traces) пересобираютьс
 
 Bundle вимагає, щоб **debug logging був наразі ввімкнений** — endpoint відмовляється генерувати інакше (`400 Debug logging must be enabled before generating a support bundle`). Workflow:
 
-1. Settings → System → перемкни DEBUG logging on.
+1. На сторінці **Інформація**, у блоці **Підтримка та усунення неполадок**, увімкни **Налагоджувальне логування**.
 2. Відтвори issue.
 3. Згенеруй bundle.
 4. Перемкни DEBUG logging back off (інакше залишається on — стан персистить у `Settings`-таблиці і re-apply при рестарті).
@@ -222,7 +222,7 @@ Check-response несе `is_prerelease`, `is_docker`, `latest_version` — UI р
 - Виконує `git fetch origin --tags --prune --force` потім `git reset --hard refs/tags/<ref>`. Працює для **будь-якого tag незалежно від гілки** — бета-теги живуть на `dev`, не `main`.
 - Встановлює Python-deps (`pip install -r requirements.txt`) і ребілдить frontend-бандл (`npm install && npm run build`) коли npm доступний.
 
-Endpoint потребує `settings:update`. Запуск з **Settings → System → Install Update** коли update показано як available.
+Endpoint потребує `settings:update`. Запуск з **Налаштування → Загальне → Оновлення → Встановити оновлення**, коли оновлення показано як доступне.
 
 ### Docker-інстали
 

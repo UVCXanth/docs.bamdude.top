@@ -69,7 +69,7 @@ APP_URL=https://bamdude.example.com
 # TRUSTED_FRAME_ORIGINS=http://homeassistant.local:8123
 ```
 
-Поле **Settings → System → External URL** в UI має те саме значення що й env `APP_URL`. Пріоритет: DB-налаштування > env > fallback `http://localhost:5173`.
+Поле **Налаштування → Мережа → Зовнішній URL** в UI має те саме значення що й env `APP_URL`. Пріоритет: DB-налаштування > env > fallback `http://localhost:5173`.
 
 ---
 
@@ -231,7 +231,7 @@ TRUSTED_FRAME_ORIGINS=http://homeassistant.local:8123,https://ha.example.com
 
 ### "Mixed content blocked" в консолі браузера
 
-Десь відносний URL резолвиться у `http://`. Найчастіше **Settings → System → External URL** виставлено на `http://...` поки ти заходиш по HTTPS. Прописати `https://`-URL або очистити (BamDude підпадне на env `APP_URL`).
+Десь відносний URL резолвиться у `http://`. Найчастіше **Налаштування → Мережа → Зовнішній URL** виставлено на `http://...` поки ти заходиш по HTTPS. Прописати `https://`-URL або очистити (BamDude підпадне на env `APP_URL`).
 
 ### LAN HTTP перестав працювати після одного візиту по HTTPS
 
@@ -258,7 +258,7 @@ Refresh-cookie дійшов до nginx але не до BamDude. Або:
 Перед оголошенням перемоги:
 
 - [ ] `TRUSTED_PROXY_IPS` стоїть на IP з якого nginx стукається в BamDude.
-- [ ] `APP_URL` (env) або **External URL** (Settings → System) на публічному HTTPS URL.
+- [ ] `APP_URL` (env) або **Зовнішній URL** (Налаштування → Мережа) на публічному HTTPS URL.
 - [ ] `proxy_set_header X-Forwarded-Proto $scheme;` присутній.
 - [ ] `proxy_http_version 1.1;` + `Upgrade` + `Connection: upgrade` присутні.
 - [ ] `proxy_read_timeout` піднятий (≥600 сек; 3600 сек для камер).

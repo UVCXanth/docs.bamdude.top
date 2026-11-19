@@ -18,8 +18,8 @@ BamDude reads two values from each smart plug:
 
 When a print starts, the lifetime counter is captured on the archive row as `energy_start_kwh`. When the print finishes, BamDude reads the counter again and stores the delta as `energy_kwh`. The starting value lives **on the archive row, not in memory** — so a backend restart mid-print does not lose the baseline, and the delta is still computed when the print completes. (If the print *ends* during the outage, see "If the print ends while BamDude is down" below.)
 
-!!! warning "Figures recorded before 0.5.3 understate prints started outside BamDude"
-    "At print start" has always been the intent, and for prints BamDude dispatched itself it was also the fact. For a print started from the printer's screen or sent straight from a slicer, the baseline used to be read once the archive row existed — and that row was only created after BamDude had fetched the print's 3MF back off the printer, which on a P1S measured 8m40s. Everything the printer drew in the meantime, bed heating included, was left out. The error was always in the same direction, so it never averaged out. Historical rows are not recalculated; there is nothing to recalculate them from.
+!!! note "The baseline is read at print start for every print"
+    That includes a print started from the printer's screen or sent straight from a slicer: its archive row is created the moment the print starts, before BamDude fetches the 3MF back off the printer, so bed heating and everything else drawn during that download is inside the figure. A recorded figure is never recalculated — there is nothing to recalculate it from — so an old archive of such a print, written when the baseline was read only after the download, still understates its energy.
 
 For lifetime / date-range views, an hourly background loop snapshots each plug's lifetime counter into `smart_plug_energy_snapshots`. Date-range totals are then computed as `last_snapshot_in_range − last_snapshot_before_range` per plug.
 
@@ -81,7 +81,7 @@ Some plugs keep reporting their watts while their lifetime energy counter stands
 | *Energy unknown* with the reason | The history does not cover the window, the end of the print was not observed (a print closed after a restart), the plug was reconfigured during the print, the server clock went back before the plug's measurement began, or there was too much history to evaluate | empty — **not** zero |
 | the figure as before | The counter moved normally | the counter's difference, as always |
 
-Estimated and unknown prints are counted where print energy is shown: the Statistics page says how many prints are estimated from the power history and how many have no reliable figure (and are not counted as zero), and an order's cost line marks its electricity *≈* when it contains estimates. The plug totals, *Energy At The Plug* and date-range totals never contain an estimate — they are what the counters said. Archives recorded before this version are not recalculated. Once BamDude has written a print's energy — measured, estimated or unknown — that figure is final: a later callback reads a later counter (idle draw, the next job) and never replaces it, and a figure you reconstructed yourself is kept as it is.
+Estimated and unknown prints are counted where print energy is shown: the Statistics page says how many prints are estimated from the power history and how many have no reliable figure (and are not counted as zero), and an order's cost line marks its electricity *≈* when it contains estimates. The plug totals, *Energy At The Plug* and date-range totals never contain an estimate — they are what the counters said. Once BamDude has written a print's energy — measured, estimated or unknown — that figure is final: a later callback reads a later counter (idle draw, the next job) and never replaces it, and a figure you reconstructed yourself is kept as it is.
 
 **Measurement source.** When you change what a plug measures — its address, entity, topic, JSON path, multiplier, Zigbee device, printer, or the phantom-watts setting below — BamDude starts a new measurement source. Readings and counter snapshots from before the change never feed an estimate made after it; a print that spans the change gets *Energy unknown — source changed*. Renaming a plug changes nothing.
 
@@ -255,7 +255,6 @@ The Statistics page shows energy as four tiles, for all time or for the selected
 
 - **Energy While Printing** and **Cost While Printing** — what the prints themselves drew
 - **Energy At The Plug** and **Cost At The Plug** — everything the plugs counted, idle included
-- **Per-printer breakdown** so you can see which machine is drawing most
 
 When some prints' energy is estimated from the power history, or unknown, the printing figures say how many — see [When a Plug's Counter Stops](#when-a-plugs-counter-stops).
 
@@ -281,8 +280,8 @@ All four are computed by the server. See [Statistics](stats.md) for the full wid
 !!! tip "Failed prints still cost"
     `energy_kwh` is recorded for `failed` and `cancelled` archives too — that's another data point arguing for [Failure Analysis](failure-analysis.md) and [Obico](obico.md). Every fail is real money on the meter.
 
-!!! tip "Snapshot baselines need uptime"
-    The hourly snapshot loop only runs while BamDude is running. If you stop the container for two days and ask for a 7-day total, the missing 48h shows up as a flat baseline — the warming-up icon will surface this.
+!!! tip "Snapshots need uptime, the counter does not"
+    The hourly snapshot loop only runs while BamDude is running. If you stop the container for two days, no snapshots are taken — but the plug keeps counting, and the first snapshot after the start carries everything used in between. A 7-day total across the gap is therefore still complete; only its hour-by-hour detail is lost, and the energy of the gap is costed at the price in effect at the last snapshot before it. The warming-up icon does not mark such a gap: it appears only when a plug has no snapshot from before the start of the range.
 
 !!! tip "Printing figures for invoicing, plug figures for ROI"
     Use **Cost While Printing** when invoicing customers — they shouldn't pay for your standby. Use **Cost At The Plug** when calculating whether the farm is paying for itself.

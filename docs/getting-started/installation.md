@@ -227,7 +227,7 @@ nano .env
 | `TRUSTED_PROXY_IPS` | empty | Comma-separated reverse-proxy IPs whose `X-Forwarded-For` is trusted (right-to-left resolution). Required behind nginx for accurate per-IP rate limiting. |
 | `AUTH_REFRESH_COOKIE_SECURE` | unset (auto-detect) | Force `Secure` polarity on the refresh-token cookie. Auto-detect from the request scheme is the right default; set `true` to force, `false` to disable (LAN HTTP dev only). |
 | `MFA_ENCRYPTION_KEY` | unset | URL-safe base64 Fernet key. When set, TOTP secrets and OIDC client secrets are encrypted at rest. Plaintext fallback works without it but logs a warning at boot. |
-| `APP_URL` | `http://localhost:5173` | Public-facing base URL of BamDude. Used to build absolute links in password-reset / MFA-recovery emails, OIDC callback URL, and the Obico cached-frame URL the Obico ML API fetches back. The `external_url` setting under Settings → System overrides this when set. |
+| `APP_URL` | `http://localhost:5173` | Public-facing base URL of BamDude. Used to build absolute links in password-reset / MFA-recovery emails, OIDC callback URL, and the Obico cached-frame URL the Obico ML API fetches back. The **External URL** setting (`external_url`) under Settings → Network overrides this when set. |
 
 #### Integrations (optional)
 

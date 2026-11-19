@@ -580,7 +580,7 @@ The copy a link points to has an unguessable address, needs nothing but the link
 
 The `{finish_photo_url}` placeholder puts a camera snapshot of the finished plate into completion / failure notifications. It needs a reachable external URL to work:
 
-1. **Settings** → **System** → **External URL** — set it to the address recipients can reach (e.g. `https://bamdude.example.com` or `http://192.168.1.100:8000`)
+1. **Settings** → **Network** → **External URL** — set it to the address recipients can reach (e.g. `https://bamdude.example.com` or `http://192.168.1.100:8000`)
 2. The setting auto-detects from your browser the first time you open System settings
 3. Edit your template and add `{finish_photo_url}` wherever you want the photo
 
@@ -685,7 +685,7 @@ Separate from the provider system above, BamDude can email the **owner** of a pr
 ### Requirements
 
 - Authentication enabled (it always is)
-- SMTP configured under **Settings** → **System** → **Email**
+- SMTP configured under **Settings** → **Authentication** → **Email Authentication** (the **SMTP Configuration** card)
 - **Settings** → **Notifications** → **User Notifications** toggled on
 - The user has an email address on their account
 - The user holds the `notifications:user_email` permission (granted to **Administrators** + **Operators** by default — see [Authentication](authentication.md))
