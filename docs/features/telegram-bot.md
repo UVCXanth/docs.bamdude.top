@@ -85,7 +85,7 @@ The bot uses inline keyboard buttons for navigation instead of text commands:
 - **Speed presets** -- Quick speed adjustment buttons
 - **Camera** -- Request a live snapshot
 - **Calibration** -- Start bed leveling, vibration compensation, etc.
-- **Queue** -- Paginated queue view with status indicators
+- **Queue** -- Paginated queue view with status indicators; **Up** / **Down** move a waiting job (with its batch) one place among the waiting jobs of the same printer's queue
 
 ---
 

@@ -27,6 +27,8 @@ A row that has no captured copy of its own is a legacy row until a later operati
 4. Among eligible printers, a ready exact-model printer wins; otherwise a ready compatible printer may win. The job moves to that printer's queue with its routing rules; if no candidate exists, the panel shows a waiting reason.
 5. The printer queue applies its usual plate-clear, drying, staggered-start, and swap-macro gates. Filament and source checks run again before the actual start command.
 
+Each placement is its own short step, checked against the job as the router read it. A job edited, staged, rescheduled, reordered or cancelled in that moment is not placed with its old settings — it waits for the next pass — and a placement that fails leaves the placements made before it in the same pass in place.
+
 ## :material-sort-numeric-ascending: SJF + starvation guard
 
 When **Shortest job first** is enabled (**Settings → Printing → Queue & Scheduling → Auto-Queue Routing → Shortest job first**), pending rows are sorted by:
@@ -251,6 +253,7 @@ Checks repeat before preparation and immediately before the start command. A cha
 | Cancel an `assigned` auto-queue item | Cancels the **per-printer queue item** the router created. The auto row stays in `assigned` for audit. |
 | Edit a `pending` item | The full Schedule dialog — target model / location, schedule, print options, macros. A batch edit applies to every copy; a single copy edits alone. |
 | Edit after assignment | Edit the per-printer queue item instead. |
+| Edit, reorder or cancel a batch while one of its jobs is being placed | Refused with `409` (*This job changed or started while it was being edited. Nothing was saved*; for a cancel, *The selected jobs changed*). Refresh and try again; the placed job keeps its printer. |
 
 ---
 
