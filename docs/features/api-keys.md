@@ -104,7 +104,10 @@ Two layers gate every API-keyed call:
     - `can_manage_archives` — required for print-archive create / edit / delete. `archives:purge` — the destructive hard-delete that bypasses the recycle bin — **stays admin-only** and is never granted by this scope
     - `can_manage_maintenance` — required for logging maintenance, resetting counters, editing intervals, and managing the maintenance-type catalog (read-only maintenance stays under `can_read_status`)
     - `can_access_cloud` — required for cloud-token-backed endpoints (slicer presets, MakerWorld)
-    - `can_update_energy_cost` — required for `POST /settings/electricity-price` (the narrowly-scoped Home-Assistant dynamic-tariff endpoint — see [Energy → Tibber / Octopus / Dynamic Tariff Integration](energy.md#tibber-octopus-dynamic-tariff-integration)). Does NOT grant general `SETTINGS_UPDATE`.
+    - `can_update_energy_cost` — required for `POST /settings/electricity-price` (the narrowly-scoped Home-Assistant dynamic-tariff endpoint — see [Energy → Tibber / Octopus / Dynamic Tariff Integration](energy.md#tibber-octopus-dynamic-tariff-integration)). Does NOT grant general `SETTINGS_UPDATE`; ticked as **Update the electricity price** when the key is created; off by default.
+    - `can_print_labels` — required for direct-to-device label printing: what a BamDude Bridge on a desk authenticates with to fetch queued labels and report on them ([Labels](labels.md)). Reaches nothing else; off by default
+    - `can_access_mcp` / `can_read_mcp_logs` — the MCP connection for AI assistants, and its diagnostic logs ([AI assistants](../addons/ai-assistants/index.md)); off by default
+    - `can_send_notifications` — required for `POST /notifications/external-message`: the key's program sends the farm a message, always under the key's name and its owner, who also needs `notifications:update` ([Notifications → Messages from external apps](notifications.md#external-app-messages)); off by default
 3. **`printer_ids` scope** narrows printer-bound calls. A key with `printer_ids = [3, 7]` returns 403 on `/printers/5/status` even if `can_read_status` is on.
 
 !!! warning "Strict scope confinement"

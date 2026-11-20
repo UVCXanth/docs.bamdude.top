@@ -368,6 +368,7 @@ Generic-format webhooks шлють стандартизований JSON-кон�
 | `user_created`, `password_reset` | Account-management емейли (HTML + plain). |
 | `user_print_start` / `user_print_complete` / `user_print_failed` / `user_print_stopped` | Per-user email коли користувач — власник друку. |
 | `test` | Тест-надсилання з редактора провайдера. |
+| `external_app_message` | Інша програма надіслала повідомлення через API — див. [Повідомлення від зовнішніх програм](#external-app-messages). |
 
 ### Наближається пауза { #pause-coming-up }
 
@@ -409,6 +410,60 @@ https://bamdude.example/archives?outcome=unchecked
 ```
 
 Посилання відкриває сторінку Архівів з увімкненим фільтром **Неперевірені**; його немає, коли **Зовнішній URL** у **Налаштування → Мережа** не задано.
+
+### Повідомлення від зовнішніх програм { #external-app-messages }
+
+Інша програма ферми — Home Assistant, скрипт, бот — може повідомити людям ферми щось через канали BamDude: *зникло світло*, *сушарка закінчила*. Вона надсилає один запит, і повідомлення приходить як подія **Зовнішня програма** (`external_app_message`).
+
+- **Хто може надсилати.** Лише API-ключ, створений з позначкою **Надсилати сповіщення як зовнішня програма** (**Налаштування → API-ключі**; за замовчуванням вимкнено), власник якого активний і має право керувати сповіщеннями (`notifications:update` — є в Адміністраторів та Операторів). Із браузера після входу ці повідомлення не надсилаються.
+- **Хто отримує.** Вбудовані сповіщення показують його всім за замовчуванням. Провайдери й Telegram-чати отримують його, коли для них увімкнено **Зовнішня програма**, — за замовчуванням вимкнено в обох. Це загальна новина ферми, тож провайдер, обмежений кількома принтерами, теж її отримує.
+- **Рівень.** Відправник обирає `info` (за замовчуванням), `warning` або `error`. Рівень фарбує повідомлення у вбудованих сповіщеннях і ставить ℹ️, ⚠️ або 🚨 на початку заголовка в інших каналах.
+- **Відправника видно завжди** — назву ключа та його власника: у вбудованих сповіщеннях окремим рядком (**Від: Home Assistant · admin**), в інших каналах останнім рядком повідомлення. Редагування шаблону його не прибирає, тож повідомлення програми не видасть себе за повідомлення BamDude.
+- **Що можна надіслати.** Простий текст: заголовок до 120 символів, повідомлення до 2000 і, за бажанням, посилання (лише `http` або `https`), яке вбудовані сповіщення показують як **Відкрити посилання**. Керівні символи прибираються, а `*` замінюється, щоб не вмикати жирний шрифт у Telegram.
+- **Як часто.** 20 повідомлень на хвилину з одного ключа. Наступне відхиляється з `429` і заголовком `Retry-After`.
+
+Запит:
+
+```http
+POST /api/v1/notifications/external-message
+X-API-Key: bd_…
+Content-Type: application/json
+
+{"title": "Power lost", "message": "The farm is on battery.", "level": "error", "link": "https://ha.local/lovelace/power"}
+```
+
+Відповідь каже, кого повідомлення досягло, — людей, чиї вбудовані сповіщення його прийняли, і провайдерів, яких попросили його надіслати: `{"inbox_recipients": 3, "channels": 2}`.
+
+З Home Assistant — `rest_command` і дія, що його викликає:
+
+```yaml
+rest_command:
+  bamdude_message:
+    url: "http://YOUR_BAMDUDE_IP:8000/api/v1/notifications/external-message"
+    method: POST
+    headers:
+      X-API-Key: !secret bamdude_api_key
+    content_type: "application/json"
+    payload: '{{ {"title": title, "message": message, "level": level | default("info")} | to_json }}'
+```
+
+```yaml
+action: rest_command.bamdude_message
+data:
+  title: "Power lost"
+  message: "The farm is on battery."
+  level: "error"
+```
+
+Типове повідомлення в інших каналах:
+
+```
+🚨 Power lost
+The farm is on battery.
+https://ha.local/lovelace/power
+
+— Home Assistant · admin
+```
 
 ---
 
@@ -592,6 +647,17 @@ Digest, який не вдалося надіслати, зберігає сво
 | `{rate_g_day}` | Темп витрати, грамів на день |
 | `{days_left}` | На скільки днів вистачить запасу |
 | `{lead_time_days}` | Термін постачання в днях (`stock_break_alert` і `stock_depleted_alert`) |
+
+**Зовнішні програми** (`external_app_message`):
+
+| Змінна | Значення |
+|---|---|
+| `{title}` | Заголовок, який надіслала програма |
+| `{message}` | Її текст |
+| `{level}` | `info`, `warning` або `error` |
+| `{level_icon}` | ℹ️, ⚠️ або 🚨 |
+| `{link}` | Її посилання; порожнє, якщо його немає |
+| `{sender}` | Ключ і його власник — код однаково дописує цей рядок до кожного повідомлення |
 
 **Job owner emails** (`user_print_start`, `user_print_complete`, `user_print_failed`, `user_print_stopped`):
 

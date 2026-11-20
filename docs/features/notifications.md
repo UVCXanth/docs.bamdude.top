@@ -368,6 +368,7 @@ If a colour is gone for good and you do not want even that one message, turn off
 | `user_created`, `password_reset` | Account-management emails (HTML + plain). |
 | `user_print_start` / `user_print_complete` / `user_print_failed` / `user_print_stopped` | Per-user email notifications when the user owns the print. |
 | `test` | Validation send from the provider editor. |
+| `external_app_message` | Another program sent a message through the API — see [Messages from external apps](#external-app-messages). |
 
 ### Pause coming up { #pause-coming-up }
 
@@ -409,6 +410,60 @@ https://bamdude.example/archives?outcome=unchecked
 ```
 
 The link opens the Archives page with the **Unchecked** filter on; it is left out when no **External URL** is set under **Settings → Network**.
+
+### Messages from external apps { #external-app-messages }
+
+Another program of the farm — Home Assistant, a script, a bot — can tell the farm's people something through BamDude's channels: *the power is out*, *the dryer has finished*. It sends one request, and the message arrives as the **External App** event (`external_app_message`).
+
+- **Who may send.** Only an API key created with **Send notifications as an external app** ticked (**Settings → API Keys**; off by default), whose owner is active and may manage notifications (`notifications:update` — Administrators and Operators have it). A signed-in browser cannot send these messages.
+- **Who receives it.** Everybody's inbox shows it by default. Providers and Telegram chats receive it once **External App** is switched on for them — it is off for both by default. It is farm-wide news, so a provider limited to some printers receives it too.
+- **Its level.** The sender chooses `info` (the default), `warning` or `error`. The level colours the message in the inbox and puts ℹ️, ⚠️ or 🚨 at the start of its title in the other channels.
+- **Its sender is always shown** — the key's name and its owner: in the inbox on a line of its own (**From: Home Assistant · admin**), in the other channels as the last line of the message. Editing the template cannot remove it, so a program's message cannot pass for one of BamDude's own.
+- **What may be sent.** Plain text: a title of up to 120 characters, a message of up to 2000, and optionally a link (`http` or `https` only), which the inbox shows as **Open link**. Control characters are dropped, and `*` is replaced so it cannot switch Telegram's bold text on.
+- **How often.** 20 messages a minute per key. The next one is refused with `429` and a `Retry-After` header.
+
+The request:
+
+```http
+POST /api/v1/notifications/external-message
+X-API-Key: bd_…
+Content-Type: application/json
+
+{"title": "Power lost", "message": "The farm is on battery.", "level": "error", "link": "https://ha.local/lovelace/power"}
+```
+
+The answer says whom it reached — people whose inbox took it, and providers that were asked to send it: `{"inbox_recipients": 3, "channels": 2}`.
+
+From Home Assistant, a `rest_command` and an action that calls it:
+
+```yaml
+rest_command:
+  bamdude_message:
+    url: "http://YOUR_BAMDUDE_IP:8000/api/v1/notifications/external-message"
+    method: POST
+    headers:
+      X-API-Key: !secret bamdude_api_key
+    content_type: "application/json"
+    payload: '{{ {"title": title, "message": message, "level": level | default("info")} | to_json }}'
+```
+
+```yaml
+action: rest_command.bamdude_message
+data:
+  title: "Power lost"
+  message: "The farm is on battery."
+  level: "error"
+```
+
+The default message in the other channels:
+
+```
+🚨 Power lost
+The farm is on battery.
+https://ha.local/lovelace/power
+
+— Home Assistant · admin
+```
 
 ---
 
@@ -592,6 +647,17 @@ Templates substitute `{variable}` placeholders. The schema is locked per event, 
 | `{rate_g_day}` | Consumption rate, grams per day |
 | `{days_left}` | Days of stock left |
 | `{lead_time_days}` | Lead time in days (`stock_break_alert` and `stock_depleted_alert`) |
+
+**External apps** (`external_app_message`):
+
+| Variable | Meaning |
+|---|---|
+| `{title}` | The title the program sent |
+| `{message}` | Its text |
+| `{level}` | `info`, `warning` or `error` |
+| `{level_icon}` | ℹ️, ⚠️ or 🚨 |
+| `{link}` | Its link; empty without one |
+| `{sender}` | The key and its owner — the code adds this line to every message anyway |
 
 **Job owner emails** (`user_print_start`, `user_print_complete`, `user_print_failed`, `user_print_stopped`):
 
