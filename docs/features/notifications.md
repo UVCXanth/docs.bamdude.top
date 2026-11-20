@@ -354,6 +354,13 @@ The pause-state is also visualised on the Printers page in real time — a pause
 
 Both are off by default on providers and Telegram chats. The message names the filament in full — material, subtype and **colour** — in its title and body, so Black and White of one product are two different messages. A filament is in one state or the other, and a break is the more urgent news: a recipient subscribed to both events gets the break message only, while a recipient subscribed to **reorder alerts only** gets the reorder message for a filament that is already in break. Nobody receives both for the same filament.
 
+A filament whose every spool is archived is not running out — it ran out. Its row stays in the forecast for 90 days, but the alerts treat it differently:
+
+- while the same material, subtype and colour is on the shelf under **another brand**, nothing is sent about it at all — the farm has simply moved to another brand;
+- otherwise it is announced **once** as **Out of stock**, with its own text (template `stock_depleted_alert`), to exactly the recipients a stock break reaches. A stock break repeats once a day; a filament that ran out is not repeated. It is announced again only if it runs out again after a spool of it — of any brand — was back on the shelf.
+
+If a colour is gone for good and you do not want even that one message, turn off alerts for its row in the Forecast view.
+
 **User / system:**
 
 | Event | Fires when |
@@ -574,7 +581,7 @@ Templates substitute `{variable}` placeholders. The schema is locked per event, 
 | `{finished_at}` | When the print finished, in the server's time zone (`2024-01-15 13:30`) |
 | `{archive_url}` | Link to the Archives page with the **Unchecked** filter on; empty without an External URL |
 
-**Inventory events** (`stock_reorder_alert`, `stock_break_alert`):
+**Inventory events** (`stock_reorder_alert`, `stock_break_alert`, and `stock_depleted_alert` — the text a filament that ran out is announced with):
 
 | Variable | Meaning |
 |---|---|
@@ -584,7 +591,7 @@ Templates substitute `{variable}` placeholders. The schema is locked per event, 
 | `{stock_g}` | Stock left, grams |
 | `{rate_g_day}` | Consumption rate, grams per day |
 | `{days_left}` | Days of stock left |
-| `{lead_time_days}` | Lead time in days (`stock_break_alert` only) |
+| `{lead_time_days}` | Lead time in days (`stock_break_alert` and `stock_depleted_alert`) |
 
 **Job owner emails** (`user_print_start`, `user_print_complete`, `user_print_failed`, `user_print_stopped`):
 
