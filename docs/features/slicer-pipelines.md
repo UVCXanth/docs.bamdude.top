@@ -46,7 +46,7 @@ The same list, **Saved settings**, is offered in three places; each fills the fi
 
 ### When a saved preset has been deleted
 
-Presets change. If a saved set references one that no longer exists, BamDude **does not** apply that slot — the field keeps its current value, and the affected fields are named in a warning under the picker.
+Presets change. If a saved set references one that no longer exists, BamDude **does not** apply that slot — the field is not filled from the set — it keeps what it holds, and an automatic pick follows the printer the set chose — and the affected fields are named in a warning under the picker.
 
 This matters: silently applying a dead reference would leave that dropdown blank while the dialog still looked ready to slice, and you'd send a job with a preset you never chose. Re-pick the flagged slot by hand and the warning clears.
 

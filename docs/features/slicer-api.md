@@ -225,7 +225,7 @@ Two switches above the preset fields narrow the lists to what the farm can print
 
 | Switch | Narrows | To |
 |---|---|---|
-| **Only models of my farm** | **Printer profile** | Profiles of the printer models of your farm — every printer that is not archived, online or not, paused or in maintenance — and of a nozzle size fitted on one of them, when the profile states a size. A printer whose nozzles are not known rules out no size. |
+| **Only models of my farm** | **Printer profile** | Profiles of the printer models of your farm — every printer that is not archived, online or not, paused or in maintenance, and of the models whose files Bambu Studio lets that printer print (a P1S also takes P1P and X1-series profiles) — and of a nozzle size fitted on one of them, when the profile states a size. A printer whose nozzles are not known rules out no size. |
 | **Only filaments that are loaded** | Every filament field | Profiles of the filaments loaded on the online printers. Once a printer profile is chosen, only the online printers of that model count. |
 
 - **Online**, for the loaded filaments, means connected, active and not archived.
