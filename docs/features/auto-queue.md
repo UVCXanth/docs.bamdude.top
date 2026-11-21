@@ -59,7 +59,7 @@ When the toggle is off, items dispatch in FIFO order (by `position`).
 | **Shortest job first** | Enables SJF + the starvation guard. Default: off (FIFO). |
 | **Rebalance across printer models** | Lets idle printers of another model take an order line's pending copies — see [Rebalancing](#rebalancing-across-printer-models). Default: off. |
 | **Use compatible printers in Auto Queue** | Allows compatible-model fallback when no exact-model printer is ready. Default: off. A manual choice of a compatible model does not depend on this switch. |
-| **Automatically return failed AutoQueue jobs** | Returns a proven failed job to the Auto-Queue — see [Automatic return after a failed print](#automatic-return-after-a-failed-print). Default: off. |
+| **Automatically return failed AutoQueue prints** | Returns a proven failed print to the Auto Queue. See [Automatic return after a failed print](#automatic-return-after-a-failed-print). Default: off. |
 
 The router itself is **always on** — there's no master switch. If no auto-queue items exist, the scheduler is a 30 s no-op.
 
@@ -290,8 +290,14 @@ This deduplication is held in memory: after restarting BamDude, one alert about 
 
 ## Automatic return after a failed print
 
-Enable **Automatically return failed AutoQueue jobs** under **Settings → Printing → Queue & Scheduling → Auto-Queue Routing**. It is off by default. A proven live failed print may return its logical job at most twice, after at least two minutes. The accepted file and saved options are retained. Each physical attempt keeps its own archive and costs; the old failed row shows **Returned to Auto Queue**, and Retry/Repeat stay unavailable for that row. Clear and removal remain separate operator actions.
+Enable **Automatically return failed AutoQueue prints** under **Settings → Printing → Queue & Scheduling → Auto-Queue Routing**. It is off by default. A proven live failed print may return its logical job at most twice, after at least two minutes. The accepted file and saved options are retained. Each physical attempt keeps its own archive and costs; the old failed row shows **Returned to Auto Queue**, and Retry/Repeat stay unavailable for that row. Clear and removal remain separate operator actions.
 
 The failed printer stays in its error/pause state and gets no new work until you press **Resume queue**; after that it ranks last among current eligible candidates. Busy printers remain excluded: BamDude does not hold the job waiting for them. If the failed printer is the only candidate, the job waits in the Auto-Queue, its reason naming the stopped printer. If it is placed on that printer after the queue is resumed, use **Move to AutoQueue** before it starts to return it manually; the automatic-return count is preserved. Returned jobs are excluded from automatic model rebalancing. Explicit reviewed order replanning remains available.
 
 A failure recovered only by reconciliation after a disconnect or restart is not returned automatically. For example, if the farm was offline when a printer failed and only discovers the old failure on reconnect, the job remains failed for review. If the live settlement had already been saved before the restart, it may finish returning after current checks pass. This is not a guarantee that every failed print will retry. The queue shows why a proven return was deferred, including the two-return limit.
+
+## Automatic return before sending
+
+When a printer refuses an upload or becomes unavailable before BamDude sends the start command, an unchanged AutoQueue job with portable settings can return immediately. It keeps its original place, file and options. The failed printer’s queue stops until **Resume queue**. The old row stays in **Issues** and links to the returned job. Its Retry, Repeat and Clone actions are unavailable.
+
+The Auto Queue badge names the refusing printer and shows the count out of two. This limit is separate from the setting and limit for [failed prints](#automatic-return-after-a-failed-print). When the proof is incomplete, the printer copy was edited, the order closed, or the limit was reached, the job stays in the printer’s queue for review. If another printer is ready and eligible, the returned job can go there on the next routing pass.
