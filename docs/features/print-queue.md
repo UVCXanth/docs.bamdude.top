@@ -334,6 +334,8 @@ Pick a future date + time. The job stays in `pending` until the scheduled clock 
 
 Sets `manual_start = true` on the row — the dispatcher ignores it until you click Start. Useful for staging an entire batch upfront and then releasing it in one go (or for slicer-uploads-to-VP that you want to hold until you've reviewed them).
 
+If the printer accepts AutoQueue work, jobs from AutoQueue may print before a future or staged job. When its time arrives or you release it for manual start, the job keeps its position among jobs that can start. It waits for any print already claimed by the printer to finish. Pause the queue when you want to keep the printer from taking new AutoQueue work.
+
 ### Shortest job first — an auto-queue setting
 
 **Settings → Printing → Auto-Queue Routing → Shortest job first** (off by default) changes the order the **auto-queue distributor** works through its *unassigned* jobs. It does not touch a per-printer queue, which is always walked by `position`.
@@ -661,7 +663,7 @@ The same guard covers the moment immediately after a print completes on H2D / H2
 
 The printer card shows its **queue state** separately from the printer's physical state, including when the queue is empty or the printer is offline. In the sidebar, the existing job count remains; a separate dot at the right edge is yellow for a paused printer queue and red for a queue error. Error takes priority. A physical printer pause and an old failed job alone do not set this dot.
 
-The queue block on the printer card names the job the scheduler will start next — the first waiting job that is neither staged nor scheduled for later — under **Next in queue**. When only scheduled or staged jobs wait, it names the one due first under **Scheduled for …**, or says **Staged — starts only by hand**. When the printer's last print failed, a note on the card says that jobs set to run only after a successful previous print are held, and offers **Acknowledge failure**; see [Only after a successful previous print](#previous-success).
+The queue block on the printer card names the job the scheduler will start next — the first waiting job that is neither staged nor scheduled for later — under **Next in queue**. When only scheduled or staged jobs wait, it names the one due first under **Scheduled for …**, or says **Staged — starts only by hand**. If the queue accepts AutoQueue work, the heading explains that it may print first. When the printer's last print failed, a note on the card says that jobs set to run only after a successful previous print are held, and offers **Acknowledge failure**; see [Only after a successful previous print](#previous-success).
 
 **View archive** in a queued job's menu opens the Archives page on the page that holds that archive and highlights it; when the current filters leave it out, the page says *The linked archive is not in the current list - try clearing filters*.
 
