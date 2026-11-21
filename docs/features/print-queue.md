@@ -325,7 +325,7 @@ Default. Job starts as soon as the printer is idle and the dispatcher reaches it
 
 ### Scheduled
 
-Pick a future date + time. The job stays in `pending` until the scheduled clock hits, then enters dispatch. If the printer is off and one of its smart plugs has auto-on set, the scheduler switches it on **at that moment** and the job starts once the printer has connected (see [Smart plug automation](#smart-plug-automation)) — there is no pre-warm offset that fires ahead of the clock.
+Pick a future date + time. The job stays in `pending` until the scheduled clock hits, then enters dispatch. If the printer is off and one of its smart plugs has auto-on set, the scheduler switches it on **at that moment** and the job starts once the printer has connected (see [Smart plug automation](#smart-plug-automation)) — there is no pre-warm offset that fires ahead of the clock. When that time passes, the scheduled wait clears on the next scheduler pass, including for older jobs waiting behind another print.
 
 !!! note "`scheduled_time` is a gate, not a sort key"
     A queue is walked strictly in `position` order — drag-and-drop, the up / down / bump buttons and the copy/clone paths are the only things that decide who is next. A future `scheduled_time` makes the scheduler skip that row and move on to the one below it; it never reorders the queue around it.
