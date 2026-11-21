@@ -29,6 +29,8 @@ A row that has no captured copy of its own is a legacy row until a later operati
 
 Each placement is its own short step, checked against the job as the router read it. A job edited, staged, rescheduled or cancelled in that moment is not placed with its old settings — it waits for the next pass. A reorder is not part of that check: it waits for the placement and then changes the positions of the jobs still waiting, and the placed job keeps its printer. A job is placed only on the printer the router checked — one deleted and replaced by a new printer under the same number meanwhile gets nothing, in the automatic pass and with *Assign now* alike. A placement that fails leaves the placements made before it in the same pass in place.
 
+Both the automatic pass and *Assign now* require the queue identity from the eligibility check. If that identity is missing, the job stays in AutoQueue unless another eligible printer can take it. *Assign now* returns `409` if no eligible printer remains.
+
 ## :material-sort-numeric-ascending: SJF + starvation guard
 
 When **Shortest job first** is enabled (**Settings → Printing → Queue & Scheduling → Auto-Queue Routing → Shortest job first**), pending rows are sorted by:
