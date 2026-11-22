@@ -471,7 +471,7 @@ BamDude attaches printer timelapses to the matching archive automatically and le
 | **MP4** | X1, X1C, X1E, A1, A1 mini, H2D | Attached directly |
 | **AVI** | P1S, P1P | Saved immediately + converted to MP4 in the background via ffmpeg (`-threads 1`, `nice -n 19`) — runs at low priority so your Pi doesn't choke on it |
 
-The timelapse is available in the archive viewer the moment the print finishes; AVI re-encoding happens silently in the background.
+Once the printer saves a timelapse and BamDude attaches it, you can watch it in the archive. This also works for failed and cancelled prints that were recording. AVI conversion runs in the background.
 
 ### Where the recording is looked for
 

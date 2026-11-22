@@ -135,8 +135,10 @@ sudo systemctl restart bamdude
         - Введи PAT.
         - Натисни **Test Connection**.
 
+    Якщо репозиторій ще не має комітів, перше резервне копіювання ініціалізує його типову гілку невеликим текстовим файлом. Файли резервної копії зберігаються в гілку, налаштовану в BamDude.
+
     !!! note "Fine-grained tokens"
-        Замість classic токенів можна fine-grained. Дай `Read access to Metadata` — `Read and Write access to code` додасться автоматично при створенні.
+        Для fine-grained токена виберіть репозиторій резервних копій і надайте право **Contents → Read and write**.
 
 === ":material-gitlab: GitLab"
 
