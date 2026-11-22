@@ -677,6 +677,8 @@ Expand a collapsed batch first, then use **Move to auto queue** on one pending c
 
 Review the proposal before confirming. The job keeps its source bytes, order line, author, schedule and one-copy quantity. Print options use the original creator's standard profile; the server lists changes. A manually staged job requires consent to automatic assignment and start. Physical filament pins require consent to automatic filament selection. Macros and physical mappings are resolved again when a printer is chosen.
 
+The proposal also shows changes to feed, colour and material matching, and per-slot overrides. These choices move with the job whether it returns to an existing AutoQueue entry or creates one there.
+
 The distributor can assign the job immediately, even back to this printer. Moving does not resume the source queue or clear a plate gate. It does not return quantities to an order's working plan. If the response is lost, check both queues before taking another action; do not assume the move failed.
 
 ## Restart recovery and duplicate claims {#restart-claims}
