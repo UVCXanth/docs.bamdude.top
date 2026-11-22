@@ -183,6 +183,8 @@ Start a print from your file library using an interactive flow:
 4. Choose target printer
 5. Confirm to print or add to queue
 
+Print now and both paths for adding to a printer's queue use the linked account's saved profile for the selected model. If that account has no profile for the model, BamDude uses the system profile. AutoQueue resolves the profile when it selects a printer.
+
 The flow uses aiogram's FSM (Finite State Machine) for multi-step interactions.
 
 ---

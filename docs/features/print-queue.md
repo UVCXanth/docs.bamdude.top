@@ -71,6 +71,8 @@ Pending jobs are a backlog, so you can continue filling and ordering a queue. A 
 
 If BamDude observes a new external print whose archive does not identify the current claim, it keeps both records visible and pauses further automatic starts. It never guesses ownership from the newest row or a filename.
 
+A print whose filename matches a built-in firmware job, such as `auto_cali_for_user`, gets a distinct filename on the printer. Its name in the library and archives stays the same.
+
 ### The items
 
 Every queue item carries one of exactly six statuses (visible on the queue card chip):
