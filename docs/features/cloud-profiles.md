@@ -149,6 +149,8 @@ Once connected, the slice modal and other consumers can read your Bambu Cloud da
 
 Custom (private) presets land first in the list, public (built-in) presets after. The Slice dialog lists them as two groups — **Bambu Cloud — my presets** and **Bambu Cloud** — beside [Local Profiles](local-profiles.md), Orca Cloud and the slicer's standard presets. Nothing is merged by name: a preset that exists under one name in several sources is listed once per source (see [Slicer API → Preset lists](slicer-api.md#preset-lists)).
 
+The **Preset source** segment of the Slice dialog, [filament calibration](filament-calibration.md) and [Assemble project](assemble-project.md) counts the presets you saved in Bambu Cloud as **My Presets** — with your imported profiles and every [Orca Cloud](orca-cloud.md) profile, since Orca Cloud holds only your own — and Bambu's stock cloud presets as **Built-in**. The same rule decides which presets this page lets you edit.
+
 A cloud filament preset's **material** comes from the filament family the preset belongs to — by its setting id, else by the family the preset names, else from its own filament type — and never from its name. A preset for a printer the slicer's bundle does not cover therefore still has a material; one whose material nothing states counts as "unknown" rather than guessed, and stays eligible in the Slice dialog's pre-pick.
 
 !!! note "The tab shows your presets only"

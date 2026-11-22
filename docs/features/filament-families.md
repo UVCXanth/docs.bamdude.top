@@ -32,7 +32,7 @@ Three ways in:
 - **Profiles → Orca Cloud → Create filament** — the same, against [Orca Cloud](orca-cloud.md) (needs a write-scoped pairing).
 - **The spool form's family picker → "Create new family…"** — enter a spool of a new material without leaving the form.
 
-You pick **printer profiles**, the way the slicers do ("Bambu Lab P1S 0.4 nozzle") — your farm's models come pre-checked. For every profile you tick, a full root preset is cloned: from the generic profile of that type (through the slicer sidecar), or from any preset you already have. Without a configured sidecar the family is still created, identity-only, and clearly says its presets are pending.
+You pick **printer profiles**, the way the slicers do ("Bambu Lab P1S 0.4 nozzle") — your farm's models come pre-checked. For every profile you tick, a full root preset is cloned: from the generic profile of that type (through the slicer sidecar) — **From type (standard profile)** — or from a preset you already have — **From an existing preset**, a searchable list (**Preset to start from**) of your imported, Bambu Cloud and Orca Cloud filament profiles; the standard ones are what *From type* starts from. Without a configured sidecar the family is still created, identity-only, and clearly says its presets are pending.
 
 ### Managing what you authored
 

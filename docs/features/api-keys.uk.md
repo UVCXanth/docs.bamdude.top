@@ -105,6 +105,9 @@ curl -H "Authorization: Bearer bd_..." http://localhost:8000/api/v1/printers/
     - `can_manage_maintenance` — для логування обслуговування, скидання лічильників, редагування інтервалів і керування каталогом типів обслуговування (read-only доступ до обслуговування лишається під `can_read_status`)
     - `can_access_cloud` — для cloud-token-backed ендпоінтів (slicer presets, MakerWorld)
     - `can_update_energy_cost` — для `POST /settings/electricity-price` (вузько-обмежений Home-Assistant dynamic-tariff endpoint — див. [Energy → Tibber / Octopus / Dynamic Tariff Integration](energy.uk.md#tibber-octopus-dynamic-tariff)). НЕ дає загальний `SETTINGS_UPDATE`.
+    - `can_print_labels` — для друку етикеток напряму на пристрій: ним автентифікується BamDude Bridge на настільному комп'ютері, щоб забирати етикетки з черги й звітувати про них ([Етикетки](labels.uk.md)). Більше нікуди не дістає; за замовчуванням вимкнено
+    - `can_access_mcp` / `can_read_mcp_logs` — MCP-підключення для AI-асистентів і його діагностичні журнали ([AI-асистенти](../addons/ai-assistants/index.uk.md)); за замовчуванням вимкнено
+    - `can_send_notifications` — для `POST /notifications/external-message`: програма цього ключа надсилає фермі повідомлення, завжди з назвою ключа та його власником, якому також потрібне `notifications:update` ([Сповіщення → Повідомлення від зовнішніх програм](notifications.uk.md#external-app-messages)); за замовчуванням вимкнено
 3. **`printer_ids` scope** звужує printer-bound дзвінки. Ключ з `printer_ids = [3, 7]` поверне 403 на `/printers/5/status`, навіть якщо `can_read_status=true`.
 
 !!! warning "Сувора ізоляція scope-ів"

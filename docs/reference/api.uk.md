@@ -173,7 +173,7 @@ BamDude обмежує частоту запитів на endpoint-ах авте
 | `/model-sources/manyfold/*` | Джерело моделей Manyfold | стан, список і пошук моделей (`models`), модель з її файлами (`models/{model_id}`), її зображення, імпорт одного файла (`import`) та підключення (`connection`, `connection/test`). Права для кожного маршруту: [Бібліотека Manyfold → Довідка для розробників](../features/manyfold.md#developer-reference) |
 | `/projects/*` | Групування за проєктами | CRUD, план друку, архіви проєкту |
 | `/macros/*` | G-code- та MQTT-action-макроси | CRUD, виконання |
-| `/notifications/*`, `/notification-templates/*`, `/user-notifications/*`, `/telegram/*` | Вихідні канали | CRUD провайдерів, перевизначення шаблонів, тестове надсилання, конфіг Telegram-бота |
+| `/notifications/*`, `/notification-templates/*`, `/user-notifications/*`, `/telegram/*` | Вихідні канали | CRUD провайдерів, перевизначення шаблонів, тестове надсилання, конфіг Telegram-бота, [повідомлення від зовнішніх програм](../features/notifications.uk.md#external-app-messages) (`POST /notifications/external-message`) |
 | `/spoolman/*`, `/inventory/*` | Облік котушок | синхронізація, мапінг слотів, каталог кольорів/котушок |
 | `/smart-plugs/*` | Конфіг розумних розеток | CRUD, енергетичні snapshot-и, ручне on/off |
 | `/system/*`, `/support/*`, `/updates/*`, `/firmware/*` | Здоров'я + діагностика + оновлення | `health`, налаштування, бекап, відновлення, debug-bundle, перевірка прошивки |

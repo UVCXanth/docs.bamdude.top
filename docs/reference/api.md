@@ -173,7 +173,7 @@ The 43 route modules under `backend/app/api/routes/` are registered under the `/
 | `/model-sources/manyfold/*` | Manyfold model source | status, model list and search (`models`), a model with its files (`models/{model_id}`), its preview, the import of one file (`import`), and the connection (`connection`, `connection/test`). Per-route rights: [Manyfold library → Developer reference](../features/manyfold.md#developer-reference) |
 | `/projects/*` | Project grouping | CRUD, print plan, archives by project |
 | `/macros/*` | G-code + MQTT-action macros | CRUD, execute |
-| `/notifications/*`, `/notification-templates/*`, `/user-notifications/*`, `/telegram/*` | Outbound channels | provider CRUD, template overrides, test send, Telegram bot config |
+| `/notifications/*`, `/notification-templates/*`, `/user-notifications/*`, `/telegram/*` | Outbound channels | provider CRUD, template overrides, test send, Telegram bot config, [messages from external apps](../features/notifications.md#external-app-messages) (`POST /notifications/external-message`) |
 | `/spoolman/*`, `/inventory/*` | Spool tracking | sync, slot mapping, color/spool catalog |
 | `/smart-plugs/*` | Smart plug config | CRUD, energy snapshots, manual on/off |
 | `/system/*`, `/support/*`, `/updates/*`, `/firmware/*` | Health + diagnostics + updates | `health`, settings, backup, restore, debug bundle, firmware check |

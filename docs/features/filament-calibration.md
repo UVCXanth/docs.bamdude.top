@@ -30,6 +30,23 @@ Per-mode preset overrides (wall loops, line width, initial-layer speed, spiral m
 
 The sliced `.gcode.3mf` is then FTP'd to the printer and run as a **real print through the normal dispatch pipeline**. Because it goes through the same path as any library job, plate-change macros and chamber-light MQTT actions fire just as they would for a regular print.
 
+### Choosing the slicer, the plate and the presets { #choosing-presets }
+
+The page that prints and the download page share one set of controls: the slicer cards (the choice is remembered for this printer), **Bed plate**, **Saved settings**, the cloud status with **Refresh**, the **Preset source** segment — **All**, **My Presets**, **Built-in**, the same remembered choice as in the [slice dialog](slicer-api.md#preset-lists) — and the **Printer profile**, **Process profile** and **Filament profile** fields. Process and filament profiles made for another printer are hidden here rather than grouped: a calibration print for the wrong printer only wastes a bed.
+
+**On the page that prints:**
+
+- **Printer profile** lists only the profiles proven for this printer: the profile's name, or the name of the preset it was saved from, states this printer's model and the chosen nozzle size. A bare model entry (`Bambu Lab A1`) or a profile of another model is never proven. The first proven profile is picked for you. When none is proven, every printer profile is shown and the start waits: *This printer profile is not known to be this printer with the chosen nozzle. Choose a profile of this printer to start.* A profile you chose that stops being proven — after a change of nozzle — stays, carries the same note and holds the start until you choose another.
+- **Process profile** is picked only from processes that fit the chosen printer. When none fits, nothing is picked and the start waits for your choice.
+- **Filament profile** is picked by the **filament family** of the slot you selected: a profile of that family that fits the printer. Until the printers have said which family the slot holds, or when that cannot be read, or when no profile of the family is found, nothing is picked and the field names the slot — *Waiting for the printer to say which filament family is in …*, *The filament family in … could not be read*, *No profile of the filament family in … was found* — and you choose the profile yourself. You can choose it at any time, and a profile you chose stays when the answer arrives. Selecting another slot picks again for that slot.
+- **Saved settings** lists only the sets whose printer profile is proven, and fills the printer, process and bed plate; the filament stays the slot's.
+
+**On the download page** any printer profile can be chosen. A profile of another model is allowed, and the field says so: *This printer profile is for another model, so the file is for that model.* The filament is the first profile that fits the printer, and **Saved settings** also fills it.
+
+**The bed plate** is the one the file is built for and the one it is sliced with. **Textured Cool Plate** is offered with OrcaSlicer only; for Bambu Studio — chosen or by default — it is refused before anything is built or sliced.
+
+Choosing presets needs the right to upload to the library (`library:upload`): without it the controls give way to *Choosing presets here needs the right to slice files.*, and the start and the sliced download are unavailable. The pre-slice download keeps working.
+
 !!! note "Slicer sidecar required"
     The wizard needs a reachable OrcaSlicer or Bambu Studio sidecar to slice. Configure it under **Settings** before running a calibration. Without a slicer the wizard cannot produce a printable 3MF.
 
