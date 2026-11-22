@@ -744,7 +744,7 @@ That selection prevents automatic matching from replacing the chosen spool with 
 
 In **Auto-Queue** mode, no printer is pinned: sources are resolved for the machine selected by the router. Saving slicer slots does not transfer one printer's AMS numbers across the farm.
 
-In both queue modes, explicitly disabling **Use AMS** in the slicer's job retains an external-only restriction. Enabling it permits automatic selection of supported feeds; it does not assume an AMS exists on a printer without one. The plate, used channels, and nozzle bindings are validated from the file itself. See [Filament Routing](filament-routing.md).
+In printer-queue mode, disabling **Use AMS** in the slicer restricts that job to external feed. In AutoQueue mode, the target printer is selected later and the router chooses a compatible feed. A slicer's **Use AMS** setting for that upload leaves feed selection to AutoQueue, including when the command arrives after the upload. The plate, used channels and nozzle bindings are validated from the file. See [Filament Routing](filament-routing.md).
 
 ---
 
@@ -772,12 +772,11 @@ System defaults live alongside the per-user saved profiles under **Settings → 
 1. Open the **Add / Edit** profile dialog.
 2. Pick **System (slicer fallback)** as the user.
 3. Choose the **printer model** the defaults apply to.
-4. Set the four toggles and save.
+4. Set the print options, swap events and event macros, then save.
 
 There is **at most one system default per printer model** — picking the same model again edits the existing one rather than creating a duplicate.
 
-!!! note "`use_ams` is not a system default"
-    `use_ams` is **not** one of the saved-profile toggles, so it is intentionally excluded from the system default. AMS usage stays **slicer-sent-or-column-default** — set it in the slicer (or rely on the model's built-in default), not here.
+In printer-queue mode the system profile for the selected printer supplies the event-macro selection. Its swap macros run only when swap mode is enabled on that printer and the file's captured declaration allows them. A file that contains its own swap sequence keeps it. A swap request with an unknown declaration leaves the file in the library for review.
 
 !!! tip "Example — always timelapse on a P1S fleet"
     To force timelapse on every silent-slicer dispatch to your P1S printers — even from a slicer build that doesn't send the flag — add a **System (slicer fallback)** profile for the **P1S** model with timelapse on. Every queue item that lands on a P1S without an explicit timelapse choice inherits it.
