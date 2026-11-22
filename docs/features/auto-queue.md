@@ -146,7 +146,7 @@ The panel is a real queue, not just a pile:
 - **Items list in true dispatch order.** Adjacent copies of one submission collapse into a compact **×N** row; the row expands into its individual copies.
 - **Everything drags.** A collapsed batch moves as a block, an expanded copy moves anywhere in the order — queue five copies of A, add two of B, pull one B to the front and leave the other at the end, and the list shows exactly that. With **Shortest job first** enabled the drag handles hide and a hint explains that the distributor owns the order.
 - **Every copy edits in the full Schedule dialog** — the same one the per-printer queue uses: target model and location, schedule, print options, macros. Editing a batch applies the change to all of its copies at once; a single copy can also be edited, deleted or force-assigned on its own.
-- Each row shows thumbnail, name, plate, target model, estimated print time, filament types, exact colours by channel and the waiting reason when no printer is eligible.
+- Each row shows thumbnail, name, plate, target model, estimated print time, filament types, exact colours for the channels the selected plate uses and the waiting reason when no printer is eligible.
 
 Once an item is assigned to a printer, it disappears from the panel and shows up in that printer's queue card with a small "auto-assigned" badge.
 

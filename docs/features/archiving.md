@@ -10,7 +10,7 @@ BamDude archives every print automatically — the 3MF file, an extracted thumbn
 ---
 
 
-After the printer confirms the start, **Edit archive** shows the requested and loaded colour for each filament channel with a confirmed difference. The comparison uses the captured plate and the physical spool selected at dispatch.
+After the printer confirms the start, **Edit archive** shows the requested and loaded colour for each filament channel with a confirmed difference. The comparison uses the captured plate and the physical spool in the final printer snapshot. If the evidence changes during preparation, BamDude defers the start.
 
 ## :material-archive: How Archiving Works
 
