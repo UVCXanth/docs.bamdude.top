@@ -31,11 +31,22 @@ That's the whole feature. It's a shortcut for repeatable work, not a dispatcher:
 
 **Use one** from the same dialog: pick it under **Apply saved settings** and all four selections fill in at once. Then slice as usual and queue the result however you normally would — [straight to a printer](print-queue.md) or [into the auto-queue](auto-queue.md).
 
-A line under the picker says what the set changed — *"Applied "name". Changed: Printer profile, Bed plate"* — or that nothing changed because these were already the selection. The process and filament profiles a set fills count as [your own choice](slicer-api.md#explicit-choice): the dialog's later automatic picks do not replace them.
+A line under the picker says what the set changed — *"Applied "name". Changed: Printer profile, Bed plate"* — or that nothing changed because these were already the selection. The process and filament profiles a set fills count as [your own choice](slicer-api.md#explicit-choice): the dialog's later automatic picks do not replace them. Filament presets go **by slot**: a set with fewer filaments than the file has slots fills the first ones, and the rest keep theirs.
+
+### Where saved settings can be applied
+
+The same list, **Saved settings**, is offered in three places; each fills the fields it has. Saving a set is done in the Slice dialog only.
+
+| Place | Fills |
+|---|---|
+| Slice dialog | Printer, process, every filament slot the set names, bed plate. |
+| [Filament calibration](filament-calibration.md) — the page that prints | Printer, process and bed plate. Only sets whose printer profile fits this printer and the chosen nozzle are listed; the filament stays the one of the chosen slot. |
+| [Filament calibration](filament-calibration.md) — the download page | Printer, process, bed plate and the first filament. |
+| [Assemble project](assemble-project.md) | Printer, process and the first filament, into the row whose list you used. The bed plate is not a row's and is left alone. |
 
 ### When a saved preset has been deleted
 
-Presets change. If a saved set references one that no longer exists, BamDude **does not** apply that slot — it keeps whatever the dialog picked automatically and names the affected slots in a warning under the picker.
+Presets change. If a saved set references one that no longer exists, BamDude **does not** apply that slot — the field is not filled from the set — it keeps what it holds, and an automatic pick follows the printer the set chose — and the affected fields are named in a warning under the picker.
 
 This matters: silently applying a dead reference would leave that dropdown blank while the dialog still looked ready to slice, and you'd send a job with a preset you never chose. Re-pick the flagged slot by hand and the warning clears.
 
@@ -52,7 +63,7 @@ A saved bed plate is applied only when the slicer of this job has it. Otherwise 
 
 | Permission | Grants |
 |---|---|
-| `pipelines:read` | See saved settings and load them in the Slice dialog. |
+| `pipelines:read` | See saved settings and apply them in the Slice dialog, filament calibration and Assemble project. Without it the list is not shown. |
 | `pipelines:write` | Create, edit, and delete saved settings. |
 
 **Administrators** and **Operators** get both; **Viewers** get read only.

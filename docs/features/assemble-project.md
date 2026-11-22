@@ -30,7 +30,13 @@ Each selected file is a row:
 
 ## :material-printer-3d: Printers
 
-Each printer row is a set of three presets — **Printer**, **Process**, **Filament** — from the same lists the slice dialog uses: your local presets, Orca Cloud, Bambu Cloud and the standard ones. **Add printer** adds another row, up to 8.
+Each printer row is a set of three presets — **Printer**, **Process**, **Filament** — from the same lists the [slice dialog](slicer-api.md#preset-lists) uses: your local presets, Orca Cloud, Bambu Cloud and the standard ones, grouped by source, with profiles for another printer in a trailing **Other printers** group. **Add printer** adds another row, up to 8.
+
+- **Above the rows**, once for all of them: the cloud status with **Refresh**, the **Preset source** segment (**All**, **My Presets**, **Built-in**) and the switches **Only models of my farm** and **Only filaments that are loaded** — the same ones as in the [slice dialog](slicer-api.md#farm-filters), and the same remembered choice. The loaded filaments are counted for each row's own printer.
+- **In each row**, **Saved settings** fills that row's printer, process and first filament from a [saved set](slicer-pipelines.md); the other rows stay as they are.
+- **A new row** starts on a printer profile with a 0.4 mm nozzle (never on a bare model entry), the process that fits it best and a PLA filament — taken from all the lists, whatever the filters show.
+- **Changing a row's printer** picks that row's automatic process and filament again; a process or filament you chose yourself stays.
+- **A preset that is no longer in the lists** — the row's printer profile, or a process or filament chosen by hand, from a saved set or by the project being laid out again — holds the row: *A chosen preset is no longer available — choose another one*. It holds until you choose another, or until **Refresh** lists it again, when the row takes it back. An automatic process or filament that disappears is simply picked again.
 
 Every row produces **its own project**, laid out for that printer's print area and saved with those presets. Assembling for an X1 Carbon and an A1 mini at once gives two files with two different layouts.
 

@@ -16,7 +16,7 @@ A plate swapper is a hardware accessory (most commonly for the A1 Mini) that han
 1. Runs a **`swap_mode_start`** macro before the first print
 2. Runs the print itself
 3. Runs a **`swap_mode_change_table`** macro after the print completes
-4. Bypasses the plate-clear confirmation
+4. Bypasses the plate-clear confirmation, and counts the print as checked with no defects — nobody takes it off the plate ([Checking a print's result](archiving.md#checking-a-prints-result))
 5. Starts the next queued print automatically
 
 The cycle continues until the queue is empty.
