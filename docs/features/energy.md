@@ -197,10 +197,10 @@ The alternative is to push the rate into BamDude from Home Assistant, as describ
 
 ### 1. Create an API key
 
-**Settings → API Keys → Create**, and flip the **Update electricity price** toggle on the key's row. This is a narrowly-scoped opt-in for `POST /settings/electricity-price` — it does **not** grant general settings-write capability (the wider `PATCH /settings` route is unchanged). Copy the key.
+**Settings → API Keys → Create**, and tick **Update the electricity price** before creating the key (it is off by default). This is a narrowly-scoped opt-in for `POST /settings/electricity-price` — it does **not** grant a general right to change settings. Copy the key.
 
 !!! note "Older docs referenced `PATCH /settings`"
-    The general `PATCH /settings` endpoint still works for API keys, but it exposes the entire settings payload (SMTP / LDAP / MQTT credentials, HA token, every UI rendering knob) — a much wider surface than the dynamic-tariff use case needs. The new `POST /settings/electricity-price` endpoint accepts only `{energy_cost_per_kwh}`, returns the full settings response so HA can confirm the new value applied, and is gated by the per-key `Update electricity price` toggle so admins explicitly opt in. Configs pointing at the legacy URL keep working; switch to the narrow URL on your next config refresh.
+    API keys cannot use the general `PATCH /settings`: changing settings is an administrator's right that no key scope grants, because the payload includes SMTP / LDAP / MQTT credentials and the HA token. `POST /settings/electricity-price` accepts only `{energy_cost_per_kwh}`, returns the full settings response so HA can confirm the new value applied, and needs the key's **Update the electricity price** opt-in. A configuration that still points at `PATCH /settings` gets `403` — switch it to the narrow URL.
 
 ### 2. Add a REST command in HA
 
