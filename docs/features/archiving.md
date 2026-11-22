@@ -9,6 +9,9 @@ BamDude archives every print automatically — the 3MF file, an extracted thumbn
 
 ---
 
+
+After the printer confirms the start, **Edit archive** shows the requested and loaded colour for each filament channel with a confirmed difference. The comparison uses the captured plate and the physical spool selected at dispatch.
+
 ## :material-archive: How Archiving Works
 
 When a print starts, BamDude creates a `print_archives` row that mirrors the run from start to finish, then pulls the 3MF off the printer's SD card via FTP and attaches it to that row:

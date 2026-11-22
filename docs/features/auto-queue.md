@@ -146,7 +146,7 @@ The panel is a real queue, not just a pile:
 - **Items list in true dispatch order.** Adjacent copies of one submission collapse into a compact **×N** row; the row expands into its individual copies.
 - **Everything drags.** A collapsed batch moves as a block, an expanded copy moves anywhere in the order — queue five copies of A, add two of B, pull one B to the front and leave the other at the end, and the list shows exactly that. With **Shortest job first** enabled the drag handles hide and a hint explains that the distributor owns the order.
 - **Every copy edits in the full Schedule dialog** — the same one the per-printer queue uses: target model and location, schedule, print options, macros. Editing a batch applies the change to all of its copies at once; a single copy can also be edited, deleted or force-assigned on its own.
-- Each row shows thumbnail, name, plate, target model, estimated print time and the waiting reason when no printer is eligible.
+- Each row shows thumbnail, name, plate, target model, estimated print time, filament types, exact colours by channel and the waiting reason when no printer is eligible.
 
 Once an item is assigned to a printer, it disappears from the panel and shows up in that printer's queue card with a small "auto-assigned" badge.
 
@@ -164,19 +164,15 @@ It needs the exact model, the selected location, and a **complete mapping for ev
 
 Among eligible candidates, readiness comes first, then the best color match. See [Filament Routing](filament-routing.md#channels) for worked examples.
 
-!!! note "«Drain the emptiest spool first» picks the tray, not the printer"
-    `prefer_lowest_filament` plays no part in choosing **which printer** gets the
-    job. It decides, on the printer already chosen, **which of its slots** an
-    equally-good match is mapped to: the one with the least filament left, so a
-    nearly-empty spool is burned down instead of a fresh one. The same switch
-    governs automatic matching for print-dialog and virtual-printer jobs.
-    An explicit physical slot selection is retained instead of ranked again.
-
-    It is on by default and lives under **Settings → Filament → General →
-    Filament checks → Drain the emptiest spool first**. On BamDude's own dispatch paths
-    — this router and the queue scheduler — it is additionally skipped for a
-    printer whose **AMS Filament Backup** is off; see
-    [Print Queue](print-queue.md) for why.
+!!! note "Drain the emptiest spool first"
+    When this setting is on, otherwise equally ranked printers with a known
+    remaining level are ordered by the average reported percentage in the
+    sources selected for this job. The lower average wins. This is a
+    tie-breaker after readiness, model, colour and staged work. A printer with
+    unknown levels can still take the job. The setting also governs automatic
+    source selection on the chosen printer. The AMS Filament Backup switch
+    still governs lowest-remaining tray selection on BamDude's own dispatch
+    paths. See [Print Queue](print-queue.md).
 
 ### Color, material, and profile variant
 
