@@ -139,10 +139,11 @@ The edit dialog's **Status** field offers the finished statuses under their own 
 
 ## :material-check-circle-outline: Checking a print's result { #checking-a-prints-result }
 
-A completed print carries a **Not checked** mark on its archive card and on its list row until somebody has looked at what came off the plate. The mark goes away when either happens:
+A completed print carries a **Not checked** mark on its archive card and on its list row until somebody has looked at what came off the plate. The mark goes away when any of these happens:
 
 - **Defects are recorded for the print** — by any of the [ways to record them](../scenarios/recording-defects.md), and a count of zero is an answer too.
 - **No defects** is pressed — in the print's menu, in its edit dialog, or for several prints at once in selection mode.
+- **The plate was swapped automatically** — on a printer in [swap mode](swap-mode.md), when the table-change macro answers successfully or the file's own swap sequence clears the plate. Nobody takes such a print off the plate, so it is counted as checked with no defects, at that moment. A swap that failed or was [held](swap-mode.md#a-held-table-swap), a swap settled by hand, and a print started from the printer's screen or a slicer keep the mark: somebody has to go to the printer anyway, and grades the print there. Defects can still be recorded later, from the archive or the Telegram buttons.
 
 The **Unchecked** filter in the Archives header lists only the prints that still wait.
 
@@ -684,6 +685,8 @@ The switch in the page header has three positions:
 ### Cross-view highlighting
 
 On a card or list row that is a reprint, clicking its purple duplicate badge scrolls to the original and highlights it for 5 seconds. When the original is not on the current page or is filtered out, the page says **Original print not visible - try clearing filters**.
+
+**View archive** in a queued job's menu on the Queue page opens this page on the page of the list that holds that archive, under your current filters and sort, and highlights it the same way. When the list as filtered does not hold it, the page says **The linked archive is not in the current list - try clearing filters**.
 
 ---
 

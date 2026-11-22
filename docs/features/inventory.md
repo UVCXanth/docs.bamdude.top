@@ -307,7 +307,7 @@ The **Forecast** view, next to **Table** / **Cards** / **History**, turns the ra
 - **Per-colour expanded editors** — lead-time-days, safety-margin (dual-unit days|grams), alert-snooze toggle. Each setting persists across sessions in the `filament_sku_settings` table; colours with no settings yet fall back to the global lead-time floor (the **Global lead time** field in the Forecast view).
 - **Top-5 chart** — stacked-area, multi-series projection of the five fastest-burning colours with ROP reference lines. Timeframe toggle: 1W / 1M / 6M.
 - **Shopping list (Logistics view)** — separate panel below the forecast table. Add SKUs to a `pending → purchased → received` queue. Marking an item *received* auto-creates `category='Stock'` spools via bulk-create (uses the average historical spool weight). CSV export + clear-all helpers.
-- **Notification toggles** — two notification-provider events sit under **Settings → Notifications → Inventory Alerts**: *Reorder Alert* (SKU crossed reorder point) and *Stock Break Alert* (will run out before lead time). Both are sent through the provider like any other event; see [Notifications](notifications.md).
+- **Notification toggles** — two notification-provider events sit under **Settings → Notifications → Inventory Alerts**: *Reorder Alert* (SKU crossed reorder point) and *Stock Break Alert* (will run out before lead time). Both are sent through the provider like any other event. A colour whose every spool is archived is announced once as out of stock instead — and not at all while another brand of the same colour is on the shelf; see [Notifications](notifications.md).
 
 The forecast tab works in **Spoolman mode** too: BamDude keeps its own record of every print it charges to a Spoolman spool and forecasts from it. See [Spoolman → Usage history and Forecast](spoolman.md#spoolman-usage-history).
 
@@ -372,12 +372,23 @@ The deduction pipeline is more nuanced than a flat "subtract slicer estimate at 
 
 | Scenario | Primary source | Fallback |
 |---|---|---|
-| **3MF available + completed print** | Per-filament `used_g` from the 3MF's `slice_info.config.json`, mapped to physical AMS trays via the `ams_mapping` captured from the MQTT print command | — |
+| **3MF available + completed print** | Per-filament `used_g` from the 3MF's `slice_info.config`, mapped to physical AMS trays via the `ams_mapping` captured from the MQTT print command | — |
 | **3MF available + failed/aborted partial print** | Per-layer G-code analysis: how many grams went through each filament up to the layer where the print stopped | Linear scaling = `total × completion_ratio` if per-layer data isn't parseable |
 | **Slicer-initiated print** (BambuStudio / OrcaSlicer / Handy) | `ams_mapping` captured from the live MQTT print command, ensuring the right tray is billed regardless of which app started it | — |
 | **Single-filament print** | The printer's currently-active tray | — |
 | **G-code-only print, no 3MF** | AMS `remain%` delta between print start and end (integer-precision, ~10 g per 1 % step on a 1 kg spool) | — |
 | **External print, fallback archive recovered later** | Re-uses the 3MF source the moment recovery completes, retroactively reconciling the deduction | — |
+
+#### What the slicer's grams include {#slicer-grams}
+
+The per-filament grams BamDude books (and shows as the print's estimate) are the slicer's **whole consumption** of each filament, not just the model. Bambu Studio adds up, per filament:
+
+- the **model**;
+- **supports**;
+- the **prime tower**;
+- the **flush** on every filament change (the purge the printer discards).
+
+The flush part is the slicer's own calculation from its flush-volume table; the printer purges about that much, but nobody weighs the waste. A plate whose G-code is larger than 1 GB is not analysed — it is booked from the AMS remaining-percentage instead — and analysing a very large plate may take up to 12 minutes.
 
 ### Runouts close the spool at exactly empty
 
@@ -435,7 +446,9 @@ The sync waits for the print to be booked. While a print runs, and until its fil
 
 ### Live "filament so far"
 
-While a print runs, the expanded printer card shows how much filament it has consumed so far — per-layer G-code accuracy, per slot on multicolour jobs, refreshed twice a minute — and says **"split across spools"** once a runout has genuinely divided the print between reels. Display-only: inventory is still written once, at completion.
+While a print runs, the expanded printer card shows how much filament it has consumed so far — per slot on multicolour jobs, refreshed twice a minute — and says **"split across spools"** once a runout has genuinely divided the print between reels. Display-only: inventory is still written once, at completion.
+
+The figure is the slicer's total for each filament ([what it includes](#slicer-grams)) times the share of the print done so far, and that share is measured from the G-code's own extrusion — model, supports and prime tower, layer by layer. The flush on a filament change is not in the G-code (the printer's filament-change routine does it), so the live figure spreads it evenly over the print instead of jumping at each change: in between it is an estimate, and at the end it equals the slicer's total.
 
 #### Mid-print spool change semantics
 

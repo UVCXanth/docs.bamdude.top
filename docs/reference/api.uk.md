@@ -166,14 +166,14 @@ BamDude обмежує частоту запитів на endpoint-ах авте
 |---------|-----------|--------------------|
 | `/auth/*` | Логін, refresh, setup, OIDC | `login`, `refresh`, `logout`, `setup`, `2fa/verify`, `oidc/exchange`, `forgot-password` |
 | `/users/*`, `/groups/*`, `/api-keys/*`, `/mfa/*` | Користувачі, групи, API-ключі, реєстрація MFA | CRUD, призначення груп, скидання MFA, резервні коди |
-| `/printers/*`, `/printer-queues/*`, `/cloud/*`, `/discovery/*` | Принтер + AMS + Bambu Cloud | статус, керування, RFID AMS, snapshot, stream-токен, мережеве виявлення |
+| `/printers/*`, `/cloud/*`, `/discovery/*` | Принтер + AMS + Bambu Cloud | статус, керування, RFID AMS, snapshot, stream-токен, мережеве виявлення |
 | `/archives/*` | Історія друку | список (`?outcome=unchecked` — завершені друки, результат яких ніхто не перевірив), отримання, передрук, видалення, **`outcome-checked`**, **`retry-download`**, **`cleanup/preview`**, **`cleanup/run`**, **`cleanup/status`** |
-| `/queue/*`, `/background-dispatch/*` | Керування чергою + dispatch | додавання, перевпорядкування, скасування, set-status, стан dispatch-у |
+| `/queue/*`, `/queues/*`, `/background-dispatch/*` | Керування чергою + dispatch | додавання, перевпорядкування, скасування, set-status, стан dispatch-у; власний стан черги принтера на `/queues/{id}` (пауза, відновлення, `acknowledge-failure`) |
 | `/library/*` | Файловий менеджер | завантаження, список, видалення, теги, нотатки (`files/{id}/notes`, `notes/{id}`), фото (`files/{id}/photos`), власне посилання файла (`files/{id}/external-url`), перейменування й переміщення папок (`PUT folders/{id}`), зовнішні папки та їхні скани (`folders/external`, `folders/{id}/scan`, `scan-jobs/{id}`) — і водночас інбокс для аплоадів з віртуального принтера. Права кожного маршруту: [Файловий менеджер → API-ендпоінти](../features/file-manager.uk.md#api-endpoints) |
 | `/model-sources/manyfold/*` | Джерело моделей Manyfold | стан, список і пошук моделей (`models`), модель з її файлами (`models/{model_id}`), її зображення, імпорт одного файла (`import`) та підключення (`connection`, `connection/test`). Права для кожного маршруту: [Бібліотека Manyfold → Довідка для розробників](../features/manyfold.md#developer-reference) |
 | `/projects/*` | Групування за проєктами | CRUD, план друку, архіви проєкту |
 | `/macros/*` | G-code- та MQTT-action-макроси | CRUD, виконання |
-| `/notifications/*`, `/notification-templates/*`, `/user-notifications/*`, `/telegram/*` | Вихідні канали | CRUD провайдерів, перевизначення шаблонів, тестове надсилання, конфіг Telegram-бота |
+| `/notifications/*`, `/notification-templates/*`, `/user-notifications/*`, `/telegram/*` | Вихідні канали | CRUD провайдерів, перевизначення шаблонів, тестове надсилання, конфіг Telegram-бота, [повідомлення від зовнішніх програм](../features/notifications.uk.md#external-app-messages) (`POST /notifications/external-message`) |
 | `/spoolman/*`, `/inventory/*` | Облік котушок | синхронізація, мапінг слотів, каталог кольорів/котушок |
 | `/smart-plugs/*` | Конфіг розумних розеток | CRUD, енергетичні snapshot-и, ручне on/off |
 | `/system/*`, `/support/*`, `/updates/*`, `/firmware/*` | Здоров'я + діагностика + оновлення | `health`, налаштування, бекап, відновлення, debug-bundle, перевірка прошивки |

@@ -67,7 +67,7 @@ All topics are prefixed with your configured prefix. **The default prefix is `ba
 
 | Topic | Description |
 |-------|-------------|
-| `bambuddy/queue/job_added` | A job landed in a printer's queue — however it arrived: the queue page or API, the slicer plugin, Auto-Queue handing it to a printer, a Virtual Printer, Retry / Clone / Repeat, the Telegram bot. A job waiting in Auto-Queue is announced when a printer receives it. |
+| `bambuddy/queue/job_added` | A job landed in a printer's queue — however it arrived: the queue page or API, the slicer plugin, Auto-Queue handing it to a printer, a Virtual Printer, Retry / Clone / Repeat, the Telegram bot. A job waiting in Auto-Queue is announced when a printer receives it. A job whose library file or archive is gone is named by the file it was queued from; a calibration test print is not announced. |
 | `bambuddy/queue/job_started` | Job started printing |
 | `bambuddy/queue/job_completed` | Job completed successfully |
 | `bambuddy/queue/job_failed` | Job ended any other way; `status` says how (`failed`, `cancelled`, …) |

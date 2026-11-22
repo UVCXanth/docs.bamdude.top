@@ -197,10 +197,10 @@ range_total = max(0, last_snapshot_in_range − last_snapshot_before_range)
 
 ### 1. Створіть API key
 
-**Settings → API Keys → Create** і ввімкніть на ключі toggle **Update electricity price**. Це вузько-обмежений opt-in для `POST /settings/electricity-price` — він **не** надає загальний settings-write дозвіл (старий `PATCH /settings` лишається). Скопіюйте ключ.
+**Налаштування → API-ключі → Створити** і перед створенням ключа поставте позначку **Оновлювати ціну електрики** (за замовчуванням вимкнено). Це вузький дозвіл лише на `POST /settings/electricity-price` — загального права змінювати налаштування він **не** дає. Скопіюйте ключ.
 
 !!! note "Старі docs згадували `PATCH /settings`"
-    Загальний `PATCH /settings` все ще працює з API key, але виставляє увесь settings payload (SMTP / LDAP / MQTT credentials, HA token, всі UI-ручки) — значно ширшу поверхню, ніж потрібно для dynamic-tariff кейсу. Новий `POST /settings/electricity-price` приймає тільки `{energy_cost_per_kwh}`, повертає повну settings response щоб HA міг переконатись що значення прийнялось, і захищений per-key toggle-ом — адмін має явно opt-in. Конфіги що вказують на legacy URL продовжать працювати; перейдіть на новий URL при наступному оновленні конфігу.
+    API-ключі не можуть користуватися загальним `PATCH /settings`: змінювати налаштування — право адміністратора, якого не дає жоден дозвіл ключа, бо там є облікові дані SMTP / LDAP / MQTT і токен HA. `POST /settings/electricity-price` приймає лише `{energy_cost_per_kwh}`, повертає повну відповідь налаштувань, щоб HA міг переконатися, що нове значення застосовано, і потребує дозволу ключа **Оновлювати ціну електрики**. Конфігурація, що досі вказує на `PATCH /settings`, отримає `403` — переведіть її на вузький URL.
 
 ### 2. Додайте REST command у HA
 
