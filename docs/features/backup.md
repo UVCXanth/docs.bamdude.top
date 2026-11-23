@@ -135,8 +135,10 @@ Distinct from the ZIP flow. **Settings → Backup → Git Backup** pushes select
         - Enter the PAT.
         - Click **Test Connection**.
 
+    If the repository has no commits, the first backup initializes its default branch with a small text marker. The backup files go to the branch configured in BamDude. If neither the configured branch nor the default branch can be read, BamDude requires GitHub to confirm the repository is empty before it writes anything.
+
     !!! note "Fine-grained tokens"
-        Instead of classic tokens, you can use GitHub's fine-grained tokens. Grant `Read access to Metadata` — `Read and Write access to code` is automatically included on creation.
+        For a fine-grained token, select the backup repository and grant **Contents → Read and write**.
 
 === ":material-gitlab: GitLab"
 
