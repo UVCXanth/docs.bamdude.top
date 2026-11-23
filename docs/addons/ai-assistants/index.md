@@ -22,6 +22,8 @@ Search requires order-read permission. Progress additionally requires product-re
 
 Readers use the existing Workshop calculations, signed cursors, timestamps, stable IDs and normal UI links. They do not reserve free stock, recalculate with writes, accept QC or change queues. A persisted running claim is not physical print proof: compare its item ID with fresh farm/printer diagnostics. Refresh the client's tool list or allowlist after upgrading. The dev endpoint can stay disabled; isolated fixture tests exercise MCP transport separately.
 
+A missing part-row history marks only the parts that its explicit filing or linked plate could affect as unknown; unrelated lines keep their known QC counts. Unresolved pooled work stays conservative. Whole-order coverage still reports the gap. A printer-scoped running-only query does not report omitted pending AutoQueue work. Progress shares one attribution with fulfilment per request, but each line page still loads and calculates the whole order: pagination limits the response size, not that computation.
+
 ## Period summaries
 
 Ask for a period summary with offset-aware start and end times and an IANA timezone, for example `Europe/Kyiv`. The range is at most 31 days, includes the start and excludes the end. Archives are selected by **creation time**, rather than completion time, with the same trash/source-only exclusions and outcome classification as Statistics. Printer-read, all-archives-read and statistics-read rights are required; the key's printer list narrows every count. Explicit hidden or missing printer IDs are refused together. Archives without a visible printer are excluded and this gap is named.
