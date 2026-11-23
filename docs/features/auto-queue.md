@@ -27,6 +27,12 @@ A row that has no captured copy of its own is a legacy row until a later operati
 4. Among eligible printers, a ready exact-model printer wins; otherwise a ready compatible printer may win. The job moves to that printer's queue with its routing rules; if no candidate exists, the panel shows a waiting reason.
 5. The printer queue applies its usual plate-clear, drying, staggered-start, and swap-macro gates. Filament and source checks run again before the actual start command.
 
+An active print or a due job that can start automatically keeps the printer out of the next placement pass. A future job or one waiting for manual start leaves the printer available. With equal readiness, model fit and colour match, the router prefers a printer without those jobs. *Assign now* keeps the job's scheduled time on the chosen printer, which can take another AutoQueue job before that time.
+
+Each placement is its own short step, checked against the job as the router read it. A job edited, staged, rescheduled or cancelled in that moment is not placed with its old settings — it waits for the next pass. A reorder is not part of that check: it waits for the placement and then changes the positions of the jobs still waiting, and the placed job keeps its printer. A job is placed only on the printer the router checked — one deleted and replaced by a new printer under the same number meanwhile gets nothing, in the automatic pass and with *Assign now* alike. A placement that fails leaves the placements made before it in the same pass in place.
+
+Both the automatic pass and *Assign now* require the queue identity from the eligibility check. If that identity is missing, the job stays in AutoQueue unless another eligible printer can take it. *Assign now* returns `409` if no eligible printer remains.
+
 ## :material-sort-numeric-ascending: SJF + starvation guard
 
 When **Shortest job first** is enabled (**Settings → Printing → Queue & Scheduling → Auto-Queue Routing → Shortest job first**), pending rows are sorted by:
@@ -55,7 +61,7 @@ When the toggle is off, items dispatch in FIFO order (by `position`).
 | **Shortest job first** | Enables SJF + the starvation guard. Default: off (FIFO). |
 | **Rebalance across printer models** | Lets idle printers of another model take an order line's pending copies — see [Rebalancing](#rebalancing-across-printer-models). Default: off. |
 | **Use compatible printers in Auto Queue** | Allows compatible-model fallback when no exact-model printer is ready. Default: off. A manual choice of a compatible model does not depend on this switch. |
-| **Automatically return failed AutoQueue jobs** | Returns a proven failed job to the Auto-Queue — see [Automatic return after a failed print](#automatic-return-after-a-failed-print). Default: off. |
+| **Automatically return failed AutoQueue prints** | Returns a proven failed print to the Auto Queue. See [Automatic return after a failed print](#automatic-return-after-a-failed-print). Default: off. |
 
 The router itself is **always on** — there's no master switch. If no auto-queue items exist, the scheduler is a 30 s no-op.
 
@@ -140,7 +146,7 @@ The panel is a real queue, not just a pile:
 - **Items list in true dispatch order.** Adjacent copies of one submission collapse into a compact **×N** row; the row expands into its individual copies.
 - **Everything drags.** A collapsed batch moves as a block, an expanded copy moves anywhere in the order — queue five copies of A, add two of B, pull one B to the front and leave the other at the end, and the list shows exactly that. With **Shortest job first** enabled the drag handles hide and a hint explains that the distributor owns the order.
 - **Every copy edits in the full Schedule dialog** — the same one the per-printer queue uses: target model and location, schedule, print options, macros. Editing a batch applies the change to all of its copies at once; a single copy can also be edited, deleted or force-assigned on its own.
-- Each row shows thumbnail, name, plate, target model, estimated print time and the waiting reason when no printer is eligible.
+- Each row shows thumbnail, name, plate, target model, estimated print time, filament types, exact colours for the channels the selected plate uses and the waiting reason when no printer is eligible.
 
 Once an item is assigned to a printer, it disappears from the panel and shows up in that printer's queue card with a small "auto-assigned" badge.
 
@@ -158,19 +164,15 @@ It needs the exact model, the selected location, and a **complete mapping for ev
 
 Among eligible candidates, readiness comes first, then the best color match. See [Filament Routing](filament-routing.md#channels) for worked examples.
 
-!!! note "«Drain the emptiest spool first» picks the tray, not the printer"
-    `prefer_lowest_filament` plays no part in choosing **which printer** gets the
-    job. It decides, on the printer already chosen, **which of its slots** an
-    equally-good match is mapped to: the one with the least filament left, so a
-    nearly-empty spool is burned down instead of a fresh one. The same switch
-    governs automatic matching for print-dialog and virtual-printer jobs.
-    An explicit physical slot selection is retained instead of ranked again.
-
-    It is on by default and lives under **Settings → Filament → General →
-    Filament checks → Drain the emptiest spool first**. On BamDude's own dispatch paths
-    — this router and the queue scheduler — it is additionally skipped for a
-    printer whose **AMS Filament Backup** is off; see
-    [Print Queue](print-queue.md) for why.
+!!! note "Drain the emptiest spool first"
+    When this setting is on, otherwise equally ranked printers with a known
+    remaining level are ordered by the average reported percentage in the
+    sources selected for this job. The lower average wins. This is a
+    tie-breaker after readiness, model, colour and staged work. A printer with
+    unknown levels can still take the job. The setting also governs automatic
+    source selection on the chosen printer. The AMS Filament Backup switch
+    still governs lowest-remaining tray selection on BamDude's own dispatch
+    paths. See [Print Queue](print-queue.md).
 
 ### Color, material, and profile variant
 
@@ -202,7 +204,7 @@ An order line's work is split between printer models when it is queued — by ha
 
 Among several models that qualify, the earliest finish wins, then the least surplus. Each free printer is counted once, across plates and lines: copies of the more urgent orders take the free printers first, and a faster plate nobody free can print never hides a slightly slower one that can be printed.
 
-**When it waits.** A print being sent to a printer counts with its own estimate and preparation, and one running past its estimate counts as ending now. If the copy's finish still cannot be forecast — a print without a time estimate, a printer held by a Home Assistant sensor or busy with nothing the forecast can date — the copy stays and says so; it is never compared as if it would start at once, and such a printer makes uncertain only the copies that could start on it. A printer whose queue is paused or in error is no home, and no target either: the auto-queue gives it no new work until it is resumed, so any printer that can take the copy wins. If a free printer of the copy's own model has not reported its filament yet, the copy waits for the next pass instead of moving on a guess. If the farm changes while the target file is being copied — the spool is taken out, the printer gets other work, the copy's settings change, a receiving printer is switched to swap mode or a saved print profile now asks it for swap macros the copied file cannot honour, the "compatible models" setting is switched off, the target file is re-sliced or its recorded yield or print time changes — the move is called off before anything is written and decided again on the next pass. When the scheduled pass and a button both decide to move the same copy, only one of them moves it, and a copy that was assigned or cancelled meanwhile is left alone.
+**When it waits.** A print being sent to a printer counts with its own estimate and preparation, and one running past its estimate counts as ending now. If the copy's finish still cannot be forecast — a print without a time estimate, a printer held by a Home Assistant sensor or busy with nothing the forecast can date — the copy stays and says so; it is never compared as if it would start at once, and such a printer makes uncertain only the copies that could start on it. A printer whose queue is paused or in error is no home, and no target either: the auto-queue gives it no new work until it is resumed, so any printer that can take the copy wins. If a free printer of the copy's own model has not reported its filament yet, the copy waits for the next pass instead of moving on a guess. If the farm changes while the target file is being copied — the spool is taken out, the printer gets other work, the copy's settings change, a receiving printer is switched to swap mode or a saved print profile now asks it for swap macros the copied file cannot honour, the "compatible models" setting is switched off, the target file is re-sliced or its recorded yield or print time changes — the move is called off before anything is written and decided again on the next pass. When the scheduled pass and a button both decide to move the same copy, only one of them moves it, and a copy that was assigned or cancelled meanwhile is left alone. A job released for manual start can take a stagger slot shared with other printers, so the rebalancer may leave a copy in place when that makes its finish uncertain. A paused or halted queue cannot take a stagger slot before it is resumed. Manual starts remain available when only AutoQueue routing is disabled.
 
 **Parts, not prints.** A copy is a claim on covering N parts. Moving a 6-part P1S plate to an A1 mini whose plate makes 2 parts turns one print into three; moving 2 parts onto a bigger bed turns them into one print with a surplus of less than one plate's worth, which lands on the shelf like any other surplus.
 
@@ -251,6 +253,8 @@ Checks repeat before preparation and immediately before the start command. A cha
 | Cancel an `assigned` auto-queue item | Cancels the **per-printer queue item** the router created. The auto row stays in `assigned` for audit. |
 | Edit a `pending` item | The full Schedule dialog — target model / location, schedule, print options, macros. A batch edit applies to every copy; a single copy edits alone. |
 | Edit after assignment | Edit the per-printer queue item instead. |
+| Edit or cancel a batch while one of its jobs is being placed | Refused with `409` (*This job changed or started while it was being edited. Nothing was saved*; for a cancel, *The selected jobs changed*). Refresh and try again; the placed job keeps its printer. |
+| Reorder jobs while one of them is being placed | Waits for that placement, then reorders the jobs still waiting; the placed job keeps its printer. |
 
 ---
 
@@ -284,8 +288,14 @@ This deduplication is held in memory: after restarting BamDude, one alert about 
 
 ## Automatic return after a failed print
 
-Enable **Automatically return failed AutoQueue jobs** under **Settings → Printing → Queue & Scheduling → Auto-Queue Routing**. It is off by default. A proven live failed print may return its logical job at most twice, after at least two minutes. The accepted file and saved options are retained. Each physical attempt keeps its own archive and costs; the old failed row shows **Returned to Auto Queue**, and Retry/Repeat stay unavailable for that row. Clear and removal remain separate operator actions.
+Enable **Automatically return failed AutoQueue prints** under **Settings → Printing → Queue & Scheduling → Auto-Queue Routing**. It is off by default. A proven live failed print may return its logical job at most twice, after at least two minutes. The accepted file and saved options are retained. Each physical attempt keeps its own archive and costs; the old failed row shows **Returned to Auto Queue**, and Retry/Repeat stay unavailable for that row. Clear and removal remain separate operator actions.
 
 The failed printer stays in its error/pause state and gets no new work until you press **Resume queue**; after that it ranks last among current eligible candidates. Busy printers remain excluded: BamDude does not hold the job waiting for them. If the failed printer is the only candidate, the job waits in the Auto-Queue, its reason naming the stopped printer. If it is placed on that printer after the queue is resumed, use **Move to AutoQueue** before it starts to return it manually; the automatic-return count is preserved. Returned jobs are excluded from automatic model rebalancing. Explicit reviewed order replanning remains available.
 
 A failure recovered only by reconciliation after a disconnect or restart is not returned automatically. For example, if the farm was offline when a printer failed and only discovers the old failure on reconnect, the job remains failed for review. If the live settlement had already been saved before the restart, it may finish returning after current checks pass. This is not a guarantee that every failed print will retry. The queue shows why a proven return was deferred, including the two-return limit.
+
+## Automatic return before sending
+
+When a printer refuses an upload or becomes unavailable before BamDude sends the start command, an unchanged AutoQueue job with portable settings can return immediately. It keeps its original place, file and options. The failed printer’s queue stops until **Resume queue**. The old row stays in **Issues** and links to the returned job. Its Retry, Repeat and Clone actions are unavailable.
+
+The Auto Queue badge names the refusing printer and shows the count out of two. This limit is separate from the setting and limit for [failed prints](#automatic-return-after-a-failed-print). When the proof is incomplete, the printer copy was edited, the order closed, or the limit was reached, the job stays in the printer’s queue for review. If another printer is ready and eligible, the returned job can go there on the next routing pass.
