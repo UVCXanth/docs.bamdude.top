@@ -377,6 +377,8 @@ The request is trimmed to what is actually there at the moment you save, and you
 
 The reservation comes back on its own when the line is deleted, when its quantity drops below the reservation, when the order is cancelled, and when the order is deleted. Deleting an order does one thing more: its finished prints stop belonging anywhere, so they are credited back onto the shelf as order-less prints. Both movements are marked *the order was deleted* in the table.
 
+Deleting an order or one of its lines takes its waiting jobs out of the order; they stay in their queues. When one of those jobs is being added to another printer, started or changed at that very moment, the deletion answers *The selected jobs changed. Refresh the queue and try again.* and changes nothing.
+
 Three things it deliberately does **not** do:
 
 - a **completed** order gives none of that back — not when it is cancelled, not when one of its lines goes, not when the order itself is deleted, and its prints are not re-credited either: those kits went out inside the units the customer received, and the prints went with them. **One door stays open even then.** Typing a new **From stock** number on a completed order's line still releases the old reservation and takes the new one — that field is the operator correcting what the order took off the shelf, and refusing it would leave a mistake with nowhere to be fixed. The other three doors only dispose of paperwork and say nothing about the parts, which is why they stay shut.

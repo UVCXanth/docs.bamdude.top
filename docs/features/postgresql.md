@@ -282,11 +282,12 @@ Switching to either PostgreSQL (bundled or external) does the migration for you,
 !!! info "No manual steps required"
     All tables, settings, archives, spools, queues and user accounts move across. Type conversion (SQLite `0/1` → boolean, datetime strings → timestamps), auto-increment sequences and the full-text index are all handled.
 
+    BamDude keeps the SQLite database's migration history, applies pending migrations in PostgreSQL, and verifies the resulting schema before opening the farm.
+
 ### What does NOT migrate
 
 - FTS5 virtual tables (replaced by PostgreSQL `tsvector`)
 - WAL/SHM files (SQLite-specific)
-- The internal migrations bookkeeping (recreated fresh)
 
 !!! tip "Reverting to SQLite"
     Remove `DATABASE_URL` (or set it empty) and restart. Your original data is still in `bamdude.db.migrated` — rename it back to `bamdude.db`.
