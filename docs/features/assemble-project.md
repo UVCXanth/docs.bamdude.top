@@ -51,7 +51,7 @@ No slicer sidecar is needed for assembling. The presets are read by BamDude itse
 | Setting | Default | Meaning |
 |---|---|---|
 | **Gap between parts, mm** | 2 | 0 to 50. |
-| **Rotation of parts on the plate** | Any angle | Arbitrary Z rotations, or no rotation / steps of 180°, 90°, 45°, 15° or 5°. Saved projects retain their previous choice. Fast search samples arbitrary angles at 15°; long search also tries continuous rotations. |
+| **Rotation of parts on the plate** | 90° | Arbitrary Z rotations, or no rotation / steps of 180°, 90°, 45°, 15° or 5°. Saved projects retain their previous choice. Quick assembly keeps 90° by default. Choosing Any angle explicitly samples at 15° in quick mode; long search also tries continuous rotations. A recoverable optional trial failure keeps the best validated layout. |
 | **Search for a denser layout — up to 5 minutes** | off | Several methods keep the best validated layout. The search budget is shared across printer rows; an in-progress native attempt may finish a few seconds later. |
 | **Centre the group on the plate** | on | Off leaves the parts where the packing put them, starting from the corner. |
 | **A separate file for each plate** | off | Off: one multi-plate project. On: a file per plate. |
