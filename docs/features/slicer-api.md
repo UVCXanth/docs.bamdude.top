@@ -428,3 +428,5 @@ The Settings → Profiles → Slicer API toggle and URL fields are gated by `set
 - [File Manager](file-manager.md) — where the Slice button lives.
 - [K-Profiles](kprofiles.md) — how to feed your local OrcaSlicer filament profiles into the `local` tier.
 - [MakerWorld import](makerworld.md) — pair imported plates with server-side slicing when no plate matches your printer.
+
+A slow or unavailable Ukrainian catalog leaves the editor usable with English text; changing language during loading preserves edits. The two lateral lattice angles retain distinct labels, and tooltip function names such as `Flow::spacing()` remain literal.
