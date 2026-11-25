@@ -96,7 +96,7 @@ The same authenticated `/api/v1/metrics` endpoint also exports the following **g
 | `bamdude_inventory_remaining_grams`, `bamdude_inventory_low_stock_spools` | Same estimates and threshold rules as Inventory; remaining is clamped per active spool. |
 | `bamdude_inventory_overdrawn_spools` | Active records whose lifetime use exceeds label weight; investigate, do not assume physically empty. |
 | `bamdude_assigned_spool_balance_grams`, `bamdude_assigned_spool_archived` | Per `printer_id`, `ams_id`, `tray_id`; signed remaining estimate and archived-assignment warning. |
-| `bamdude_accounted_filament_window_grams{printer_id,kind,window}` | Booked signed grams during rolling `24h`, `7d`, `30d`, by **ledger settlement time**. `kind=print` includes failed attempts and legacy print outcomes; `service_adjustment` keeps runout/AMS corrections separate. Missing printer attribution is `unassigned`. Active slicer estimates are excluded. |
+| `bamdude_accounted_filament_window_grams{printer_id,kind,window}` | Booked signed grams during rolling `24h`, `7d`, `30d`, by **ledger settlement time**. `kind=print` includes failed attempts and legacy print outcomes. `service_adjustment` covers runout and AMS corrections. The ledger's printer ID can outlive a deleted printer. Rows without an ID use `unassigned`. Active slicer estimates are excluded. |
 | `bamdude_pending_jobs{tier}` | `auto` awaiting distribution and `printer` awaiting dispatch; promoted AutoQueue rows are counted only in the printer tier. |
 | `bamdude_printer_maintenance`, `bamdude_printer_queue_paused`, `bamdude_printer_auto_distribute_eligible`, `bamdude_printer_awaiting_plate_clear` | Independent stored gates, keyed by `printer_id`, including printers in Maintenance Mode. Not physical proof. Missing queue headers omit queue flags. |
 | `bamdude_printer_telemetry_timestamp_known`, `bamdude_printer_telemetry_age_seconds` | Whether a last locally received MQTT timestamp is known and its age. Unknown age is omitted. A recent message does not prove every individual field is fresh. |
@@ -156,9 +156,12 @@ scrape_configs:
     metrics_path: '/api/v1/metrics'
     static_configs:
       - targets: ['bamdude-host:8000']
-    # If using bearer token auth:
-    bearer_token: 'YOUR_TOKEN'
+    authorization:
+      type: Bearer
+      credentials_file: '/etc/prometheus/bamdude.token'
 ```
+
+Put the same token you saved in BamDude in that file, readable by Prometheus.
 
 When Prometheus runs in a sibling Docker container next to BamDude, use `host.docker.internal` (Docker Desktop) or the BamDude container name on a shared network:
 
@@ -179,7 +182,7 @@ A 15-30 second scrape interval is plenty for printer telemetry — temperatures 
 
 ## :material-chart-bar: Grafana queries (PromQL)
 
-Add BamDude as a Prometheus data source in Grafana, then build panels with these queries:
+Select the Prometheus data source that scrapes BamDude when creating a Grafana panel.
 
 **Printer temperatures** — pick a specific printer or graph all of them:
 
@@ -254,6 +257,11 @@ bamdude_prints_total{result="failed"} 18
 # TYPE bamdude_filament_used_grams gauge
 bamdude_filament_used_grams 2042.0
 
+# HELP bamdude_accounted_filament_window_grams Signed booked spool-ledger grams by settlement time in a rolling window; gauge, do not rate or increase
+# TYPE bamdude_accounted_filament_window_grams gauge
+bamdude_accounted_filament_window_grams{printer_id="1",kind="print",window="24h"} 175.0
+bamdude_accounted_filament_window_grams{printer_id="1",kind="service_adjustment",window="24h"} -15.0
+
 # HELP bamdude_printers_connected Number of connected printers
 # TYPE bamdude_printers_connected gauge
 bamdude_printers_connected 2
@@ -270,6 +278,10 @@ Prometheus metrics are disabled. Enable them in **Settings → Network → Prome
 ### `/metrics` returns 401
 
 A bearer token is configured but the request didn't carry it (or carried the wrong one). Confirm `Authorization: Bearer <token>` matches the token in Settings exactly — copy/paste mistakes are the usual culprit.
+
+### `/metrics` returns 503 with an empty token
+
+Save a Prometheus token in BamDude and use it in the scrape configuration.
 
 ### Missing production detail
 

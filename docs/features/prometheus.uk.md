@@ -96,7 +96,7 @@ curl -H "Authorization: Bearer YOUR_TOKEN" http://bamdude:8000/api/v1/metrics
 | `bamdude_inventory_remaining_grams`, `bamdude_inventory_low_stock_spools` | Ті самі оцінки залишку й пороги, що в Inventory. Від'ємний залишок кожної активної котушки обмежено нулем. |
 | `bamdude_inventory_overdrawn_spools` | Активні котушки зі списанням понад вагу за етикеткою. Це не доказ фізично порожньої котушки. |
 | `bamdude_assigned_spool_balance_grams`, `bamdude_assigned_spool_archived` | За `printer_id`, `ams_id`, `tray_id`: оцінка залишку зі знаком та ознака архівної призначеної котушки. |
-| `bamdude_accounted_filament_window_grams{printer_id,kind,window}` | Проведені грами зі знаком за рухомі `24h`, `7d`, `30d`, за **часом запису в журнал**. `kind=print` включає невдалі спроби та старі типи результатів; `service_adjustment` відокремлює поправки runout/AMS. Невідомий принтер — `unassigned`. Оцінок активної нарізки тут немає. |
+| `bamdude_accounted_filament_window_grams{printer_id,kind,window}` | Проведені грами зі знаком за рухомі `24h`, `7d`, `30d`, за **часом запису в журнал**. `kind=print` включає невдалі спроби та старі типи результатів. `service_adjustment` охоплює поправки runout та AMS. Записаний ID може зберігатися після видалення принтера. Для рядків без ID використовується `unassigned`. Оцінки активної нарізки виключено. |
 | `bamdude_pending_jobs{tier}` | `auto` — ще не розподілені; `printer` — очікують запуску. Переданий запис AutoQueue вдруге не рахується. |
 | `bamdude_printer_maintenance`, `bamdude_printer_queue_paused`, `bamdude_printer_auto_distribute_eligible`, `bamdude_printer_awaiting_plate_clear` | Незалежні записані ознаки за `printer_id`, включно з режимом обслуговування. Не є фізичним підтвердженням. Якщо заголовка черги немає, її ознаки пропущено. |
 | `bamdude_printer_telemetry_timestamp_known`, `bamdude_printer_telemetry_age_seconds` | Чи відомий час останнього локально отриманого MQTT-повідомлення та його вік. Невідомий вік пропущено. Нове повідомлення не доводить свіжість кожного поля. |
@@ -154,9 +154,12 @@ scrape_configs:
     metrics_path: '/api/v1/metrics'
     static_configs:
       - targets: ['bamdude-host:8000']
-    # Якщо використовуєш bearer-token:
-    bearer_token: 'YOUR_TOKEN'
+    authorization:
+      type: Bearer
+      credentials_file: '/etc/prometheus/bamdude.token'
 ```
+
+Запиши в цей файл той самий токен, що й у BamDude, та надай Prometheus доступ до читання.
 
 Коли Prometheus крутиться в сусідньому Docker-контейнері поруч з BamDude — використовуй `host.docker.internal` (Docker Desktop) або ім'я BamDude-контейнера в спільній мережі:
 
@@ -177,7 +180,7 @@ static_configs:
 
 ## :material-chart-bar: Запити Grafana (PromQL)
 
-Додай BamDude як Prometheus data source у Grafana, далі будуй панелі цими запитами:
+Створюючи панель у Grafana, вибери джерело даних Prometheus, яке опитує BamDude.
 
 **Температури принтера** — конкретний принтер або всі одразу:
 
@@ -252,6 +255,11 @@ bamdude_prints_total{result="failed"} 18
 # TYPE bamdude_filament_used_grams gauge
 bamdude_filament_used_grams 2042.0
 
+# HELP bamdude_accounted_filament_window_grams Signed booked spool-ledger grams by settlement time in a rolling window; gauge, do not rate or increase
+# TYPE bamdude_accounted_filament_window_grams gauge
+bamdude_accounted_filament_window_grams{printer_id="1",kind="print",window="24h"} 175.0
+bamdude_accounted_filament_window_grams{printer_id="1",kind="service_adjustment",window="24h"} -15.0
+
 # HELP bamdude_printers_connected Number of connected printers
 # TYPE bamdude_printers_connected gauge
 bamdude_printers_connected 2
@@ -268,6 +276,10 @@ bamdude_printers_connected 2
 ### `/metrics` повертає 401
 
 Bearer-token виставлений, але запит його не приніс (або приніс не той). Підтверди, що `Authorization: Bearer <token>` точно збігається з токеном у Settings — copy/paste-помилки типова причина.
+
+### `/metrics` повертає 503, якщо токен порожній
+
+Збережи токен Prometheus у BamDude та вкажи його в конфігурації опитування.
 
 ### Немає виробничої деталізації
 
